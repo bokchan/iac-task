@@ -4,11 +4,11 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
-
-[dependency-groups]
-app = [
+dependencies = [
     "fastapi[standard]>=0.120.0",
 ]
+
+[dependency-groups]
 dev = [
     "pyrefly>=0.38.2",
     "pytest>=8.4.2",

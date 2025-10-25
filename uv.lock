@@ -672,11 +672,11 @@ wheels = [
 name = "webapp"
 version = "0.1.0"
 source = { virtual = "." }
-
-[package.dev-dependencies]
-app = [
+dependencies = [
     { name = "fastapi", extra = ["standard"] },
 ]
+
+[package.dev-dependencies]
 dev = [
     { name = "pyrefly" },
     { name = "pytest" },
@@ -684,9 +684,9 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [{ name = "fastapi", extras = ["standard"], specifier = ">=0.120.0" }]
 
 [package.metadata.requires-dev]
-app = [{ name = "fastapi", extras = ["standard"], specifier = ">=0.120.0" }]
 dev = [
     { name = "pyrefly", specifier = ">=0.38.2" },
     { name = "pytest", specifier = ">=8.4.2" },
