@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 
 app = FastAPI()
@@ -5,8 +7,9 @@ app = FastAPI()
 
 @app.get("/echo")
 async def echo():
-    """TODO Make configurable with ENV VAR"""
-    return {"message": "Hello World"}
+    """Return the string configured by the environment variable: ECHO_MESSAGE"""
+    msg = os.environ.get("ECHO_MESSAGE", "Hello World")
+    return {"message": msg}
 
 
 @app.get("/health")
