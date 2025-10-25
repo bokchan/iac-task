@@ -6,6 +6,9 @@ readme = "README.md"
 requires-python = ">=3.14"
 
 [dependency-groups]
+app = [
+    "fastapi[standard]>=0.120.0",
+]
 dev = [
     "pyrefly>=0.38.2",
     "ruff>=0.14.2",
