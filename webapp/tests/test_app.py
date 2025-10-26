@@ -2,7 +2,8 @@ import os
 from unittest import mock
 
 from fastapi.testclient import TestClient
-from main import app
+
+from webapp.main import app
 
 client = TestClient(app)
 
