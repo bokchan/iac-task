@@ -1,10 +1,4 @@
-from dataclasses import Field, dataclass
-
-
-@dataclass
-class Tag:
-    key: str
-    value: str
+from dataclasses import dataclass
 
 
 @dataclass
@@ -14,4 +8,3 @@ class AWSAccountConfig:
     user_id: str = "AIDASEAZYWFHQREJANLS6"
     region: str = "eu-central-1"
     log_group_prefix: str = "andreas-applogs"
-    # tags: list[Tag] = [Tag("Creator", "andreas"), Tag("Project", "iac-task")]
