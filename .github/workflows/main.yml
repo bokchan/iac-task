@@ -1,0 +1,17 @@
+# Need ID token write permission to use OIDC
+name: CI/CD Pipeline
+on: [push]
+permissions:
+  id-token: write
+jobs:
+  run_job_with_aws:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@main # Or a specific version
+        with:
+          role-to-assume: ${{ vars.AWS_GITHUB_ACTION_ROLE }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Additional steps
+        run: |
+          aws sts get-caller-identity
