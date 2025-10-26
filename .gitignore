@@ -208,3 +208,6 @@ __marimo__/
 
 # User specific
 docs
+
+# IDE
+.vscode
