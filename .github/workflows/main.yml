@@ -7,11 +7,15 @@ jobs:
   run_job_with_aws:
     runs-on: ubuntu-latest
     steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@main # Or a specific version
-        with:
-          role-to-assume: ${{ vars.AWS_GITHUB_ACTION_ROLE }}
-          aws-region: ${{ vars.AWS_REGION }}
-      - name: Additional steps
+      - name: Debug
         run: |
-          aws sts get-caller-identity
+          echo ${{ vars.AWS_REGION }}
+          echo ${{ vars.AWS_GITHUB_ACTION_ROLE }}
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@main # Or a specific version
+      #   with:
+      #     role-to-assume: ${{ vars.AWS_GITHUB_ACTION_ROLE }}
+      #     aws-region: ${{ vars.AWS_REGION }}
+      # - name: Additional steps
+      #   run: |
+      #     aws sts get-caller-identity
