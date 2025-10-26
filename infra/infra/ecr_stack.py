@@ -13,14 +13,14 @@ class EcrStack(Stack):
             "AndreasEcrRepository",
             repository_name="andreas-ecr-repository",
             image_tag_mutability=ecr.TagMutability.MUTABLE,
-            removal_policy=RemovalPolicy.RETAIN,
+            removal_policy=RemovalPolicy.DESTROY,
             image_scan_on_push=True,
         )
 
         # 1. Create the OIDC provider for GitHub Actions
         github_provider = iam.OpenIdConnectProvider(
             self,
-            "GitHubOidcProvider",
+            "AndreasGitHubOidcProvider",
             url="https://token.actions.githubusercontent.com",
             client_ids=["sts.amazonaws.com"],
         )
@@ -38,7 +38,7 @@ class EcrStack(Stack):
 
         github_role = iam.Role(
             self,
-            "GitHubActionRole",
+            "AndreasGitHubActionRole",
             assumed_by=github_principal,
             description="Role for GitHub Actions to push images to ECR",
         )

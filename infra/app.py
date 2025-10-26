@@ -12,7 +12,7 @@ aws_env = cdk.Environment(
 
 EcrStack(
     app,
-    "CiCdStack",
+    "AndreasEcrStack",
     env=aws_env,
 )
 
