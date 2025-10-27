@@ -29,12 +29,13 @@ class EcrStack(Stack):
             empty_on_delete=True,
         )
 
-        # 1. Create the OIDC provider for GitHub Actions
-        github_provider = iam.OpenIdConnectProvider(
+        # 1. Look up the existing OIDC provider for GitHub Actions.
+        # This is a singleton resource, so it's better to look it up than to create it.
+        github_provider = iam.OpenIdConnectProvider.from_open_id_connect_provider_arn(
             self,
             "GitHubOidcProvider",
-            url="https://token.actions.githubusercontent.com",
-            client_ids=["sts.amazonaws.com"],
+            # The ARN for the GitHub OIDC provider is well-known and follows this format.
+            open_id_connect_provider_arn=f"arn:aws:iam::{self.account}:oidc-provider/token.actions.githubusercontent.com",
         )
 
         # 2. Create a role for GitHub Actions to assume
@@ -76,12 +77,6 @@ class EcrStack(Stack):
             "EcrRepositoryName",
             value=self.repository.repository_name,
             description="The name of the ECR repository",
-        )
-        CfnOutput(
-            self,
-            "GitHubOidcProviderArn",
-            value=github_provider.open_id_connect_provider_arn,
-            description="The ARN of the GitHub OIDC Provider",
         )
         CfnOutput(
             self,
