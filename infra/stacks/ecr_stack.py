@@ -1,7 +1,7 @@
 from aws_cdk import CfnOutput, RemovalPolicy, Stack
 from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_iam as iam
-from config import Config
+from config import AppConfig
 from constructs import Construct
 
 
@@ -14,7 +14,7 @@ class EcrStack(Stack):
         self,
         scope: Construct,
         construct_id: str,
-        config: Config,
+        config: AppConfig,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -22,7 +22,7 @@ class EcrStack(Stack):
         repository = ecr.Repository(
             self,
             "AndreasEcrRepository",
-            repository_name=config.repository_name,
+            repository_name=config.ecr.repository_name,
             image_tag_mutability=ecr.TagMutability.IMMUTABLE,
             removal_policy=RemovalPolicy.DESTROY,
             image_scan_on_push=True,

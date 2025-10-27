@@ -6,43 +6,60 @@ from dotenv import load_dotenv
 # Load environment variables from .env file for local development
 load_dotenv()
 
-# --- Centralized Configuration ---
+
+@dataclass
+class EcrConfig:
+    """Configuration for the ECR stack."""
+
+    repository_name: str
 
 
 @dataclass
-class Config:
-    aws_region: str
+class AppConfig:
+    """Root configuration class for the application."""
+
     aws_account: str
-    github_repo: str
-    repository_name: str
+    aws_region: str
     environment: str
+    project_name: str
+    github_repo: str  # Format: "owner/repo"
+    ecr: EcrConfig
+
+    def get_resource_name(self, name: str) -> str:
+        """Generates a consistent resource name with a prefix."""
+        return f"{self.project_name}-{self.environment}-{name}"
 
 
-def get_environment_config(environment: str) -> Config:
+def get_environment_config(environment: str) -> AppConfig:
     """
-    Returns a configuration dictionary for the specified environment.
+    Loads and returns a strongly-typed configuration object for the specified environment.
     """
-    # Common configuration for all environments
-    shared_config = {
+    aws_account_id = os.getenv("AWS_ACCOUNT_ID")
+    if not aws_account_id:
+        raise ValueError("AWS_ACCOUNT_ID environment variable must be set.")
+
+    project_name = "Andreas"
+
+    # Shared configuration applicable to all environments
+    base_config = {
+        "aws_account": aws_account_id,
         "aws_region": os.getenv("AWS_REGION", "eu-central-1"),
-        "aws_account": os.getenv("AWS_ACCOUNT_ID"),
-        "github_repo": "bokchan/iac-task",  # Your GitHub repo: user/repo
-        "repository_name": "andreas-ecr-repository",
+        "environment": environment,
+        "project_name": project_name,
+        "github_repo": "bokchan/iac-task",
+        "ecr": EcrConfig(
+            repository_name=f"{project_name.lower()}-ecr-repository",
+        ),
     }
 
-    if not shared_config["aws_account"]:
-        raise ValueError("AWS_ACCOUNT_ID environment variable is not set.")
-
-    # Environment-specific overrides
+    # You can introduce environment-specific overrides here if needed
     if environment == "dev":
-        env_config = {}  # No overrides for dev yet
+        pass  # No overrides for dev yet
     elif environment == "prod":
-        env_config = {}  # No overrides for prod yet
+        # Example of an override for prod
+        # base_config["ecr"].repository_name = "andreas-prod-repository"
+        pass
     else:
         raise ValueError(f"Invalid environment specified: {environment}")
 
-    # Merge shared and environment-specific configs
-    config = {**shared_config, **env_config}
-    config["environment"] = environment
-
-    return Config(**config)
+    return AppConfig(**base_config)

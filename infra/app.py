@@ -19,12 +19,12 @@ aws_env = cdk.Environment(account=config.aws_account, region=config.aws_region)
 
 # Apply tags to all resources in the app for tracking and governance
 cdk.Tags.of(app).add("Creator", "andreas")
-cdk.Tags.of(app).add("Project", "iac-task")
+cdk.Tags.of(app).add("Project", config.project_name)
 cdk.Tags.of(app).add("Environment", environment)
 
 EcrStack(
     app,
-    f"Andreas-{environment.capitalize()}-EcrStack",
+    config.get_resource_name("EcrStack"),
     env=aws_env,
     config=config,
 )
