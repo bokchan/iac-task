@@ -11,7 +11,7 @@ cdk.Tags.of(app).add("Creator", "andreas")
 cdk.Tags.of(app).add("Project", "iac-task")
 
 aws_env = cdk.Environment(
-    account=AWSAccountConfig.account_id, region=AWSAccountConfig.region
+    account=AWSAccountConfig().account_id, region=AWSAccountConfig().region
 )
 
 EcrStack(
