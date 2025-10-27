@@ -12,6 +12,24 @@ class EcrConfig:
     """Configuration for the ECR stack."""
 
     repository_name: str
+    removal_policy: str = "DESTROY"  # Options: DESTROY, RETAIN
+
+
+@dataclass
+class VpcConfig:
+    """Configuration for the VPC stack."""
+
+    max_azs: int = 2
+
+
+@dataclass
+class AppServiceConfig:
+    """Configuration for the App stack (ECS service)."""
+
+    cpu: int = 256  # 0.25 vCPU
+    memory_limit_mb: int = 512  # 0.5 GB
+    desired_count: int = 1
+    container_port: int = 8000
 
 
 @dataclass
@@ -24,6 +42,8 @@ class AppConfig:
     project_name: str
     github_repo: str  # Format: "owner/repo"
     ecr: EcrConfig
+    vpc: VpcConfig
+    app_service: AppServiceConfig
 
     def get_resource_name(self, name: str) -> str:
         """Generates a consistent resource name with a prefix."""
@@ -50,15 +70,19 @@ def get_environment_config(environment: str) -> AppConfig:
         "ecr": EcrConfig(
             repository_name=f"{project_name.lower()}-ecr-repository",
         ),
+        "vpc": VpcConfig(),
+        "app_service": AppServiceConfig(),
     }
 
     # You can introduce environment-specific overrides here if needed
     if environment == "dev":
         pass  # No overrides for dev yet
     elif environment == "prod":
-        # Example of an override for prod
-        # base_config["ecr"].repository_name = "andreas-prod-repository"
-        pass
+        # Example of overrides for prod: more robust settings
+        base_config["app_service"].desired_count = 2
+        base_config["app_service"].cpu = 1024  # 1 vCPU
+        base_config["app_service"].memory_limit_mb = 2048  # 2 GB
+        base_config["ecr"].removal_policy = "RETAIN"
     else:
         raise ValueError(f"Invalid environment specified: {environment}")
 

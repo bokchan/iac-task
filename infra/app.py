@@ -2,7 +2,9 @@
 
 import aws_cdk as cdk
 from config import get_environment_config
+from stacks.app_stack import AppStack
 from stacks.ecr_stack import EcrStack
+from stacks.vpc_stack import VpcStack
 
 app = cdk.App()
 
@@ -22,11 +24,30 @@ cdk.Tags.of(app).add("Creator", "andreas")
 cdk.Tags.of(app).add("Project", config.project_name)
 cdk.Tags.of(app).add("Environment", environment)
 
-EcrStack(
+# Networking Stack
+vpc_stack = VpcStack(
+    app,
+    config.get_resource_name("VpcStack"),
+    env=aws_env,
+    config=config,
+)
+
+# ECR Stack for container images
+ecr_stack = EcrStack(
     app,
     config.get_resource_name("EcrStack"),
     env=aws_env,
     config=config,
+)
+
+# Application Stack (ECS Fargate Service)
+app_stack = AppStack(
+    app,
+    config.get_resource_name("AppStack"),
+    env=aws_env,
+    config=config,
+    vpc_stack=vpc_stack,
+    ecr_stack=ecr_stack,
 )
 
 app.synth()

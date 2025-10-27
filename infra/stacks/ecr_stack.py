@@ -19,7 +19,7 @@ class EcrStack(Stack):
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        repository = ecr.Repository(
+        self.repository = ecr.Repository(
             self,
             "Repository",
             repository_name=config.ecr.repository_name,
@@ -56,7 +56,7 @@ class EcrStack(Stack):
         )
 
         # 3. Grant the role permissions to push/pull to the ECR repository
-        repository.grant_pull_push(github_role)
+        self.repository.grant_pull_push(github_role)
 
         # 4. Output the role ARN and repository name
         CfnOutput(
@@ -68,13 +68,13 @@ class EcrStack(Stack):
         CfnOutput(
             self,
             "EcrRepositoryArn",
-            value=repository.repository_arn,
+            value=self.repository.repository_arn,
             description="The ARN of the ECR repository",
         )
         CfnOutput(
             self,
             "EcrRepositoryName",
-            value=repository.repository_name,
+            value=self.repository.repository_name,
             description="The name of the ECR repository",
         )
         CfnOutput(
@@ -86,6 +86,6 @@ class EcrStack(Stack):
         CfnOutput(
             self,
             "EcrRepositoryUri",
-            value=repository.repository_uri,
+            value=self.repository.repository_uri,
             description="The URI of the ECR repository",
         )
