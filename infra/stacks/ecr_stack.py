@@ -26,6 +26,7 @@ class EcrStack(Stack):
             image_tag_mutability=ecr.TagMutability.IMMUTABLE,
             removal_policy=RemovalPolicy.DESTROY,
             image_scan_on_push=True,
+            auto_delete_images=True,
         )
 
         # 1. Create the OIDC provider for GitHub Actions
