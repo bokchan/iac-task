@@ -5,6 +5,10 @@ from constructs import Construct
 
 
 class EcrStack(Stack):
+    """A CloudFormation stack that creates an ECR repository and configures OIDC provider and Role for
+    GitHub Actions to push images to it.
+    """
+
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
