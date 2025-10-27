@@ -1,6 +1,7 @@
 from aws_cdk import CfnOutput, RemovalPolicy, Stack
 from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_iam as iam
+from config import Config
 from constructs import Construct
 
 
@@ -13,8 +14,7 @@ class EcrStack(Stack):
         self,
         scope: Construct,
         construct_id: str,
-        repository_name: str,
-        github_repo: str,
+        config: Config,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -22,11 +22,11 @@ class EcrStack(Stack):
         repository = ecr.Repository(
             self,
             "AndreasEcrRepository",
-            repository_name=repository_name,
+            repository_name=config.repository_name,
             image_tag_mutability=ecr.TagMutability.IMMUTABLE,
             removal_policy=RemovalPolicy.DESTROY,
             image_scan_on_push=True,
-            auto_delete_images=True,
+            empty_on_delete=True,
         )
 
         # 1. Create the OIDC provider for GitHub Actions
@@ -41,7 +41,9 @@ class EcrStack(Stack):
         github_principal = iam.FederatedPrincipal(
             federated=github_provider.open_id_connect_provider_arn,
             conditions={
-                "StringLike": {"token.actions.githubusercontent.com:sub": github_repo}
+                "StringLike": {
+                    "token.actions.githubusercontent.com:sub": config.github_repo
+                }
             },
             assume_role_action="sts:AssumeRoleWithWebIdentity",
         )

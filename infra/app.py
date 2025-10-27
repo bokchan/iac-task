@@ -15,7 +15,7 @@ if not environment:
 
 config = get_environment_config(environment)
 
-aws_env = cdk.Environment(account=config["aws_account"], region=config["aws_region"])
+aws_env = cdk.Environment(account=config.aws_account, region=config.aws_region)
 
 # Apply tags to all resources in the app for tracking and governance
 cdk.Tags.of(app).add("Creator", "andreas")

@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
@@ -8,7 +9,16 @@ load_dotenv()
 # --- Centralized Configuration ---
 
 
-def get_environment_config(environment: str) -> dict:
+@dataclass
+class Config:
+    aws_region: str
+    aws_account: str
+    github_repo: str
+    repository_name: str
+    environment: str
+
+
+def get_environment_config(environment: str) -> Config:
     """
     Returns a configuration dictionary for the specified environment.
     """
@@ -35,4 +45,4 @@ def get_environment_config(environment: str) -> dict:
     config = {**shared_config, **env_config}
     config["environment"] = environment
 
-    return config
+    return Config(**config)
