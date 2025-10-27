@@ -18,6 +18,8 @@ EcrStack(
     app,
     "AndreasEcrStack",
     env=aws_env,
+    repository_name="andreas-ecr-repository",
+    github_repo="repo:bokchan/iac-task:*",
 )
 
 app.synth()
