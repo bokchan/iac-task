@@ -212,3 +212,4 @@ docs
 
 # IDE
 .vscode
+*\.code-workspace
