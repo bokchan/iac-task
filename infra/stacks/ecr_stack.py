@@ -65,4 +65,27 @@ class EcrStack(Stack):
             value=github_role.role_arn,
             description="The ARN of the role for GitHub Actions",
         )
-        CfnOutput(self, "EcrRepositoryName", value=repository.repository_name)
+        CfnOutput(
+            self,
+            "EcrRepositoryArn",
+            value=repository.repository_arn,
+            description="The ARN of the ECR repository",
+        )
+        CfnOutput(
+            self,
+            "EcrRepositoryName",
+            value=repository.repository_name,
+            description="The name of the ECR repository",
+        )
+        CfnOutput(
+            self,
+            "GitHubOidcProviderArn",
+            value=github_provider.open_id_connect_provider_arn,
+            description="The ARN of the GitHub OIDC Provider",
+        )
+        CfnOutput(
+            self,
+            "EcrRepositoryUri",
+            value=repository.repository_uri,
+            description="The URI of the ECR repository",
+        )
