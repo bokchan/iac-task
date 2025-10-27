@@ -12,9 +12,5 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "poethepoet>=0.37.0",
     "pytest>=6.2.5",
 ]
-
-[tool.poe.tasks]
-aws-ecr-login = { shell="aws ecr get-login-password --region eu-central-1 | docker login --username user --password-stdin https://146082935119.dkr.ecr.eu-central-1.amazonaws.com" }
