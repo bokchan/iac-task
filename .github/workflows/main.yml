@@ -10,13 +10,8 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Authenticate with AWS
-        run: |
-          echo ${{ vars.AWS_REGION }}
-          echo ${{ vars.AWS_GITHUB_ACTION_ROLE }}
-
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@main # Or a specific version
+        uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
           audience: sts.amazonaws.com
           role-to-assume: ${{ vars.AWS_GITHUB_ACTION_ROLE }}
@@ -30,16 +25,18 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }} # Create a repo variable for this
+          ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          # Add the image url to the output
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Test image pull from Amazon ECR
+        id: pull-image
+        run: |
+          docker pull ${{ steps.build-image.outputs.image }}
 
       - name: Output Image URL
         run: echo "Image pushed to ${{ steps.build-image.outputs.image }}"
-
-
-      # - name: Additional steps
-      #   run: |
-      #     aws sts get-caller-identity
