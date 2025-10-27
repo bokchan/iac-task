@@ -208,6 +208,8 @@ __marimo__/
 
 # User specific
 docs
+.DS_STORE
 
 # IDE
 .vscode
+*\.code-workspace
