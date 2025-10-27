@@ -6,6 +6,10 @@ from infra.ecr_stack import EcrStack
 
 app = cdk.App()
 
+# Apply tags to all resources in the app for tracking and governance
+cdk.Tags.of(app).add("Creator", "andreas")
+cdk.Tags.of(app).add("Project", "iac-task")
+
 aws_env = cdk.Environment(
     account=AWSAccountConfig.account_id, region=AWSAccountConfig.region
 )
