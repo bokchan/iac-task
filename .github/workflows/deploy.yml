@@ -123,7 +123,7 @@ jobs:
       - name: Deploy to Prod Environment
         working-directory: ./infra
         run: |
-          cdk deploy Andreas-prod-AppStack \
+          cdk synth Andreas-prod-AppStack \
             --require-approval never \
             -c environment=prod \
             -c image_tag=${{ needs.build-and-deploy.outputs.image_tag }}
