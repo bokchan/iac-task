@@ -16,14 +16,14 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy webapp dependency files first for better layer caching
-COPY webapp/pyproject.toml webapp/uv.lock ./
+COPY ./pyproject.toml ./uv.lock ./
 
 # Install dependencies into a virtual environment
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev
 
 # Copy application source code (excluding unnecessary files)
-COPY webapp/*.py webapp/README.md ./
+COPY ./*.py ./README.md ./
 
 # Install the application
 RUN --mount=type=cache,target=/root/.cache/uv \

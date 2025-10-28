@@ -1,8 +1,8 @@
 services:
   webapp:
     build:
-      dockerfile: webapp/Dockerfile
-      context: .
+      dockerfile: ./Dockerfile
+      context: webapp
       target: runtime  # Explicitly use the runtime stage
     # Host the FastAPI application on port 8000
     ports:
