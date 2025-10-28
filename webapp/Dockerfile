@@ -15,15 +15,15 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy webapp dependency files
-COPY webapp/pyproject.toml ./
+# Copy webapp dependency files first for better layer caching
+COPY webapp/pyproject.toml webapp/uv.lock ./
 
 # Install dependencies into a virtual environment
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev
 
-# Copy application source code
-COPY webapp/ .
+# Copy application source code (excluding unnecessary files)
+COPY webapp/*.py webapp/README.md ./
 
 # Install the application
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -62,9 +62,12 @@ USER nonroot
 # Expose the port FastAPI will run on
 EXPOSE 8000
 
-# Health check to ensure the application is running
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health')" || exit 1
+# Add security and metadata labels
+LABEL org.opencontainers.image.title="FastAPI WebApp" \
+      org.opencontainers.image.description="A FastAPI application for the IaC task" \
+      org.opencontainers.image.vendor="Andreas" \
+      org.opencontainers.image.source="https://github.com/bokchan/devops-project"
 
 # Use uvicorn to run the FastAPI application in production
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+# Note: LOG_LEVEL environment variable will be used if set, otherwise defaults to "info"
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1 --access-log --log-level ${LOG_LEVEL:-info}"]
