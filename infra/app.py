@@ -40,6 +40,13 @@ ecr_stack = EcrStack(
     config=config,
 )
 
+# Get image tag from context (passed from CI/CD)
+image_tag = app.node.try_get_context("image_tag")
+if not image_tag:
+    # Default to 'latest' for local development
+    image_tag = "latest"
+    print(f"Warning: No image_tag specified, using '{image_tag}'")
+
 # Application Stack (ECS Fargate Service)
 app_stack = AppStack(
     app,
@@ -48,6 +55,7 @@ app_stack = AppStack(
     config=config,
     vpc_stack=vpc_stack,
     ecr_stack=ecr_stack,
+    image_tag=image_tag,
 )
 
 app.synth()

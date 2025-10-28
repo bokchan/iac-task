@@ -58,7 +58,16 @@ class EcrStack(Stack):
         # 3. Grant the role permissions to push/pull to the ECR repository
         self.repository.grant_pull_push(github_role)
 
-        # 4. Output the role ARN and repository name
+        # 4. Add permissions to assume CDK bootstrap roles
+        github_role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["sts:AssumeRole"],
+                resources=[f"arn:aws:iam::{config.aws_account}:role/cdk-*"],
+            )
+        )
+
+        # 5. Output the role ARN and repository name
         CfnOutput(
             self,
             "GitHubActionRoleArn",
