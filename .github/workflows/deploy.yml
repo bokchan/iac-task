@@ -71,6 +71,7 @@ jobs:
             -c image_tag=${{ needs.build-and-deploy.outputs.image_tag }}
 
   deploy-prod:
+    if: false # Remove or modify this line to enable prod deployments
     needs: build-and-deploy
     runs-on: ubuntu-latest
     environment:
