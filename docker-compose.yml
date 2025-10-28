@@ -1,28 +1,65 @@
 services:
   webapp:
     build:
-      dockerfile: webapp/Dockerfile
-      context: .
+      dockerfile: ./Dockerfile
+      context: webapp
+      target: runtime  # Explicitly use the runtime stage
     # Host the FastAPI application on port 8000
     ports:
       - "8000:8000"
-
+    # Add container name for easier management
+    container_name: webapp-dev
+    # Restart policy for development
+    restart: unless-stopped
+    # Environment variables
     environment:
-      - ECHO_MESSAGE="Poetry is what makes the world go round"
+      - ECHO_MESSAGE="Music makes the world go round"
+      - LOG_LEVEL=debug
+      - PYTHONPATH=/app
+    # Add health check override for faster development feedback
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+    # Add to custom network for better isolation
+    networks:
+      - app-network
 
     develop:
       # Create a `watch` configuration to update the app
       # https://docs.docker.com/compose/file-watch/#compose-watch-versus-bind-mounts
       watch:
-        # Sync the working directory with the `/app` directory in the container
+        # Sync only Python source files for faster sync
         - action: sync
-          path: .
-          target: /app
-          # Exclude the project virtual environment — it could be for a
-          # different platform in the container
+          path: ./webapp/
+          target: /app/
           ignore:
             - .venv/
+            - __pycache__/
+            - "*.pyc"
+            - "*.pyo"
+            - "*.pyd"
+            - ".pytest_cache/"
+            - ".mypy_cache/"
+            - "*.egg-info/"
+            - "tests/"
 
-        # Rebuild the image if dependencies change by checking uv.lock
+        # Rebuild the image if webapp dependencies change
         - action: rebuild
-          path: ./uv.lock
+          path: ./webapp/pyproject.toml
+        - action: rebuild
+          path: ./webapp/uv.lock
+
+# Define networks for better container isolation
+networks:
+  app-network:
+    driver: bridge
+    name: webapp-dev-network
+
+# Define volumes for potential data persistence (if needed later)
+volumes:
+  app-data:
+    name: webapp-dev-data
