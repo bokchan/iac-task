@@ -1,11 +1,8 @@
 name: Build and Deploy Application
-# on:
-#   push:
-#     branches:
-#       - main
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
 permissions:
   id-token: write # Required for OIDC authentication with AWS
   contents: read # Required to check out the repository
