@@ -60,6 +60,7 @@ jobs:
         with:
           python-version: "3.14"
       - run: pip install uv && uv sync --all-packages
+        working-directory: ./infra
 
       - name: Deploy to Dev Environment
         working-directory: ./infra
@@ -82,5 +83,36 @@ jobs:
       # 2. Installing dependencies.
       # 3. Running `cdk deploy Andreas-prod-AppStack ...`
       # The manual approval is configured in GitHub repository settings for the 'production' environment.
-      - name: Placeholder for Production Deployment
-        run: echo "Production deployment would happen here after manual approval."
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials for Prod
+        uses: aws-actions/configure-aws-credentials@v5.1.0
+        with:
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Python and Install Dependencies
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - run: pip install uv && uv sync --all-packages
+        working-directory: ./infra
+
+      - name: Cache CDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-global-cdk-v2
+
+      - name: Install AWS CDK
+        run: npm install -g aws-cdk
+        working-directory: ./infra
+
+      - name: Deploy to Prod Environment
+        working-directory: ./infra
+        run: |
+          cdk deploy Andreas-prod-AppStack \
+            --require-approval never \
+            -c environment=prod \
+            -c image_tag=${{ needs.build-and-deploy.outputs.image_tag }}
