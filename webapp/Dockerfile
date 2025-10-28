@@ -15,15 +15,15 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy dependency files
-COPY pyproject.toml uv.lock ./
+# Copy webapp dependency files
+COPY webapp/pyproject.toml ./
 
 # Install dependencies into a virtual environment
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev
 
 # Copy application source code
-COPY . .
+COPY webapp/ .
 
 # Install the application
 RUN --mount=type=cache,target=/root/.cache/uv \
