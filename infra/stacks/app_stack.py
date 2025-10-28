@@ -18,6 +18,7 @@ class AppStack(Stack):
         config: AppConfig,
         vpc_stack: VpcStack,
         ecr_stack: EcrStack,
+        image_tag: str,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -31,7 +32,9 @@ class AppStack(Stack):
             memory_limit_mib=config.app_service.memory_limit_mb,
             desired_count=config.app_service.desired_count,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
-                image=ecs.ContainerImage.from_ecr_repository(ecr_stack.repository),
+                image=ecs.ContainerImage.from_ecr_repository(
+                    ecr_stack.repository, tag=image_tag
+                ),
                 container_port=config.app_service.container_port,
             ),
             public_load_balancer=True,
