@@ -62,6 +62,16 @@ jobs:
       - run: pip install uv && uv sync --all-packages
         working-directory: ./infra
 
+      - name: Cache CDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-global-cdk-v2
+
+      - name: Install AWS CDK
+        run: npm install -g aws-cdk
+        working-directory: ./infra
+
       - name: Deploy to Dev Environment
         working-directory: ./infra
         run: |
