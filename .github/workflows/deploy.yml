@@ -1,0 +1,86 @@
+name: Build and Deploy Application
+on: [push]
+
+permissions:
+  id-token: write # Required for OIDC authentication with AWS
+  contents: read # Required to check out the repository
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.get-image-tag.outputs.image_tag }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get image tag (Git SHA)
+        id: get-image-tag
+        run: echo "image_tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Configure AWS Credentials for Dev
+        uses: aws-actions/configure-aws-credentials@v5.1.0
+        with:
+          role-to-assume: ${{ secrets.DEV_AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }} ./webapp
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
+
+  deploy-dev:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials for Dev
+        uses: aws-actions/configure-aws-credentials@v5.1.0
+        with:
+          role-to-assume: ${{ secrets.DEV_AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Python and Install Dependencies
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - run: pip install uv && uv sync --all-packages
+
+      - name: Deploy to Dev Environment
+        working-directory: ./infra
+        run: |
+          cdk deploy Andreas-dev-AppStack \
+            --require-approval never \
+            -c environment=dev \
+            -c image_tag=${{ needs.build-and-deploy.outputs.image_tag }}
+
+  deploy-prod:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.get-alb-url.outputs.url }} # Optional: Display the ALB URL in the approval UI
+    steps:
+      # Steps for prod deployment would go here.
+      # This would include:
+      # 1. Configuring credentials with a `secrets.PROD_AWS_ROLE_ARN`.
+      # 2. Installing dependencies.
+      # 3. Running `cdk deploy Andreas-prod-AppStack ...`
+      # The manual approval is configured in GitHub repository settings for the 'production' environment.
+      - name: Placeholder for Production Deployment
+        run: echo "Production deployment would happen here after manual approval."
