@@ -1,6 +1,7 @@
 from aws_cdk import CfnOutput, RemovalPolicy, Stack
 from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_iam as iam
+from config import AppConfig
 from constructs import Construct
 
 
@@ -13,25 +14,25 @@ class EcrStack(Stack):
         self,
         scope: Construct,
         construct_id: str,
-        repository_name: str,
-        github_repo: str,
+        config: AppConfig,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        repository = ecr.Repository(
+        self.repository = ecr.Repository(
             self,
-            "AndreasEcrRepository",
-            repository_name=repository_name,
+            "Repository",
+            repository_name=config.ecr.repository_name,
             image_tag_mutability=ecr.TagMutability.IMMUTABLE,
             removal_policy=RemovalPolicy.DESTROY,
             image_scan_on_push=True,
+            empty_on_delete=True,
         )
 
         # 1. Create the OIDC provider for GitHub Actions
         github_provider = iam.OpenIdConnectProvider(
             self,
-            "AndreasGitHubOidcProvider",
+            "GitHubOidcProvider",
             url="https://token.actions.githubusercontent.com",
             client_ids=["sts.amazonaws.com"],
         )
@@ -40,20 +41,22 @@ class EcrStack(Stack):
         github_principal = iam.FederatedPrincipal(
             federated=github_provider.open_id_connect_provider_arn,
             conditions={
-                "StringLike": {"token.actions.githubusercontent.com:sub": github_repo}
+                "StringLike": {
+                    "token.actions.githubusercontent.com:sub": f"repo:{config.github_repo}:*"
+                }
             },
             assume_role_action="sts:AssumeRoleWithWebIdentity",
         )
 
         github_role = iam.Role(
             self,
-            "AndreasGitHubActionRole",
+            "GitHubActionRole",
             assumed_by=github_principal,
             description="Role for GitHub Actions to push images to ECR",
         )
 
         # 3. Grant the role permissions to push/pull to the ECR repository
-        repository.grant_pull_push(github_role)
+        self.repository.grant_pull_push(github_role)
 
         # 4. Output the role ARN and repository name
         CfnOutput(
@@ -62,4 +65,27 @@ class EcrStack(Stack):
             value=github_role.role_arn,
             description="The ARN of the role for GitHub Actions",
         )
-        CfnOutput(self, "EcrRepositoryName", value=repository.repository_name)
+        CfnOutput(
+            self,
+            "EcrRepositoryArn",
+            value=self.repository.repository_arn,
+            description="The ARN of the ECR repository",
+        )
+        CfnOutput(
+            self,
+            "EcrRepositoryName",
+            value=self.repository.repository_name,
+            description="The name of the ECR repository",
+        )
+        CfnOutput(
+            self,
+            "GitHubOidcProviderArn",
+            value=github_provider.open_id_connect_provider_arn,
+            description="The ARN of the GitHub OIDC Provider",
+        )
+        CfnOutput(
+            self,
+            "EcrRepositoryUri",
+            value=self.repository.repository_uri,
+            description="The URI of the ECR repository",
+        )
