@@ -16,10 +16,6 @@ env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-  # Ideally the github action role would be used instead of the long-lived credentials
-  # TODO: Update to use OIDC role
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
 
 jobs:
@@ -133,7 +129,7 @@ jobs:
       - name: Deploy to Prod Environment
         working-directory: ./infra
         run: |
-          cdk deploy Andreas-prod-AppStack \
+          cdk deploy --all \
             --require-approval never \
             -c environment=prod \
             -c image_tag=${{ needs.build-and-deploy.outputs.image_tag }}
