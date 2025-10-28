@@ -14,7 +14,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
           audience: sts.amazonaws.com
-          role-to-assume: ${{ vars.DEV_AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.DEV_AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
           role-session-name: MySessionName
       - name: Log in to Amazon ECR
