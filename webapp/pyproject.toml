@@ -5,8 +5,7 @@ description = "A FastAPI web application for the IaC task"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "fastapi[standard]>=0.120.0",
-    "requests>=2.31.0",  # Required for health check in Dockerfile
+    "fastapi[standard]>=0.120.0", # Required for health check in Dockerfile
 ]
 
 [dependency-groups]
