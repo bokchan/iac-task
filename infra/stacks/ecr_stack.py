@@ -63,7 +63,7 @@ class EcrStack(Stack):
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
                 actions=["sts:AssumeRole"],
-                resources=["arn:aws:iam::*:role/cdk-*"],
+                resources=[f"arn:aws:iam::{config.aws_account}:role/cdk-*"],
             )
         )
 
