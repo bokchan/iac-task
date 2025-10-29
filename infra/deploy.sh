@@ -56,7 +56,9 @@ esac
 # Load environment variables if .env file exists
 if [ -f "$SCRIPT_DIR/.env" ]; then
     echo "📋 Loading environment variables from .env"
-    export $(grep -v '^#' "$SCRIPT_DIR/.env" | xargs)
+    set -a
+    source "$SCRIPT_DIR/.env"
+    set +a
 fi
 
 # Set the environment for the deployment
@@ -74,20 +76,20 @@ if ! aws sts get-caller-identity &> /dev/null; then
     exit 1
 fi
 
-# Check if uv is installed
 if command -v uv &> /dev/null; then
     echo "📦 Installing Python dependencies with uv..."
     if [ ! -f ./.venv/bin/activate ]; then
         echo "❌ Virtual environment not found. Please create it with: python3 -m venv .venv"
         exit 1
     fi
+
     source ./.venv/bin/activate
     uv sync --frozen --active || uv pip install -r requirements.txt
 elif command -v pip &> /dev/null; then
     echo "📦 Installing Python dependencies with pip (uv not found)..."
     pip install -r requirements.txt
 else
-    echo "❌ Neither uv nor pip found. Please install uv: pip install uv"
+if [[ -n "$IMAGE_TAG" ]]; then
     exit 1
 fi
 
@@ -118,7 +120,7 @@ case $ACTION in
     destroy)
         echo "💥 Destroying stacks..."
         echo "⚠️  This will delete all resources in environment: $ENVIRONMENT"
-        if [[ -n "$IMAGE_TAG" ]]; then
+        if [ ! -z "$IMAGE_TAG" ]; then
             echo "   Image tag: $IMAGE_TAG"
         fi
         read -p "Are you sure? (y/N): " -n 1 -r
