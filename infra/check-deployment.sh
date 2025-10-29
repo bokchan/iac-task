@@ -178,6 +178,15 @@ if [ $? -eq 0 ]; then
         else
             echo "❌ HTTP $VERSION_STATUS"
         fi
+
+        # Test root endpoint
+        echo -n "   Root endpoint... "
+        ROOT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://$LB_DNS/" 2>/dev/null || echo "000")
+        if [ "$ROOT_STATUS" = "200" ]; then
+            echo "✅ HTTP $ROOT_STATUS"
+        else
+            echo "❌ HTTP $ROOT_STATUS"
+        fi
     else
         echo "❌ Could not find Load Balancer DNS in stack outputs"
     fi
