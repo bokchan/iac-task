@@ -186,10 +186,10 @@ else
 fi
 
 echo -e "\n📦 ECS Service Status"
-CLUSTER_NAME="$STACK_PREFIX-Cluster"
 
-# Get ECS cluster ARN
-CLUSTER_ARN=$(aws ecs list-clusters $AWS_CLI_PROFILE --region $AWS_REGION --query "clusterArns[?contains(@, '$CLUSTER_NAME')]" --output text 2>/dev/null)
+# Get ECS cluster ARN - look for any cluster that starts with our stack prefix
+# CDK creates clusters with additional suffixes, so we need a more flexible search
+CLUSTER_ARN=$(aws ecs list-clusters $AWS_CLI_PROFILE --region $AWS_REGION --query "clusterArns[?contains(@, '$STACK_PREFIX')]" --output text 2>/dev/null)
 
 if [ ! -z "$CLUSTER_ARN" ] && [ "$CLUSTER_ARN" != "None" ]; then
     echo "✅ Found ECS Cluster: $(basename $CLUSTER_ARN)"
@@ -203,12 +203,12 @@ if [ ! -z "$CLUSTER_ARN" ] && [ "$CLUSTER_ARN" != "None" ]; then
     SERVICE_ARN=$(aws ecs list-services $AWS_CLI_PROFILE --region $AWS_REGION --cluster "$CLUSTER_ARN" --query "serviceArns[0]" --output text 2>/dev/null)
     if [ ! -z "$SERVICE_ARN" ] && [ "$SERVICE_ARN" != "None" ]; then
         echo -e "\n📊 Service Details:"
-        aws ecs describe-services $AWS_CLI_PROFILE --region $AWS_REGION --cluster "$CLUSTER_ARN" --services "$SERVICE_ARN" --query "services[0].{ServiceName:serviceName,Status:status,RunningCount:runningCount,DesiredCount:desiredCount,LaunchType:launchType}" --output table 2>/dev/null
+        aws ecs describe-services $AWS_CLI_PROFILE --region $AWS_REGION --cluster "$CLUSTER_ARN" --services "$SERVICE_ARN" --query "services[0].{ServiceName:serviceName,Status:status,RunningCount:runningCount,DesiredCount:desiredCount,LaunchType:launchType}" --output table --no-cli-pager 2>/dev/null
 
         echo -e "\n🔄 Task Status:"
         TASK_ARNS=$(aws ecs list-tasks $AWS_CLI_PROFILE --region $AWS_REGION --cluster "$CLUSTER_ARN" --service-name "$SERVICE_ARN" --query "taskArns" --output text 2>/dev/null)
         if [ ! -z "$TASK_ARNS" ] && [ "$TASK_ARNS" != "None" ]; then
-            aws ecs describe-tasks $AWS_CLI_PROFILE --region $AWS_REGION --cluster "$CLUSTER_ARN" --tasks $TASK_ARNS --query "tasks[*].{TaskArn:taskArn,LastStatus:lastStatus,HealthStatus:healthStatus,CreatedAt:createdAt}" --output table 2>/dev/null
+            aws ecs describe-tasks $AWS_CLI_PROFILE --region $AWS_REGION --cluster "$CLUSTER_ARN" --tasks $TASK_ARNS --query "tasks[*].{TaskArn:taskArn,LastStatus:lastStatus,HealthStatus:healthStatus,CreatedAt:createdAt}" --output table --no-cli-pager 2>/dev/null
         else
             echo "No running tasks found"
         fi
@@ -216,7 +216,8 @@ if [ ! -z "$CLUSTER_ARN" ] && [ "$CLUSTER_ARN" != "None" ]; then
         echo "No services found in cluster"
     fi
 else
-    echo "❌ ECS cluster not found: $CLUSTER_NAME"
+    echo "❌ No ECS cluster found with prefix: $STACK_PREFIX"
+    echo "   Expected cluster pattern: $STACK_PREFIX-AppStack-EcsDefaultCluster..."
 fi
 
 echo -e "\n🏗️ ECR Repository Status"
@@ -232,9 +233,9 @@ if [ $? -eq 0 ]; then
     # Show image count
     IMAGE_COUNT=$(aws ecr list-images $AWS_CLI_PROFILE --region $AWS_REGION --repository-name "$ECR_REPO_NAME" --query "length(imageIds)" --output text 2>/dev/null)
     echo "Image count: $IMAGE_COUNT"
-    # List recent images
+    # List recent images with details
     echo -e "\n📷 Recent Images:"
-    aws ecr list-images $AWS_CLI_PROFILE --region $AWS_REGION --repository-name "$ECR_REPO_NAME" --max-items 10 --query "reverse(sort_by(imageIds[?imageTag!=null], &imageTag))" --output table 2>/dev/null || echo "No tagged images found"
+    aws ecr describe-images $AWS_CLI_PROFILE --region $AWS_REGION --repository-name "$ECR_REPO_NAME" --query "reverse(sort_by(imageDetails, &imagePushedAt))[0:5].{ImageTag:imageTags[0],PushedAt:to_string(imagePushedAt),Digest:imageDigest}" --output table --no-cli-pager 2>/dev/null || echo "No tagged images found"
 else
     echo "❌ ECR repository not found or not accessible: $ECR_REPO_NAME"
 fi
