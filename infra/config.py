@@ -23,6 +23,21 @@ class VpcConfig:
 
 
 @dataclass
+class AppEnvironmentConfig:
+    """Configuration for FastAPI application environment variables."""
+
+    log_level: str = "INFO"
+    echo_message: str = "Hello World"
+
+    def to_environment_dict(self) -> dict[str, str]:
+        """Convert configuration to environment variable dictionary."""
+        return {
+            "LOG_LEVEL": self.log_level,
+            "ECHO_MESSAGE": self.echo_message,
+        }
+
+
+@dataclass
 class AppServiceConfig:
     """Configuration for the App stack (ECS service)."""
 
@@ -30,8 +45,12 @@ class AppServiceConfig:
     memory_limit_mb: int = 512  # 0.5 GB
     desired_count: int = 1
     container_port: int = 8000
-    log_level: str = "INFO"  # Logging level for the application
-    echo_message: str = "Hello World"
+    app_environment: AppEnvironmentConfig = None  # Will be set per environment
+
+    def __post_init__(self):
+        """Set default app environment if not provided."""
+        if self.app_environment is None:
+            self.app_environment = AppEnvironmentConfig()
 
 
 @dataclass
@@ -76,20 +95,46 @@ def get_environment_config(environment: str) -> AppConfig:
         "app_service": AppServiceConfig(),
     }
 
-    # You can introduce environment-specific overrides here if needed
+    # Environment-specific configurations using factory pattern
     if environment == "dev":
-        # Development environment: more verbose logging
-        base_config["app_service"] = AppServiceConfig(log_level="DEBUG")
+        # Development environment: more verbose logging and debugging
+        base_config["app_service"] = AppServiceConfig(
+            app_environment=AppEnvironmentFactory.create_development_config()
+        )
     elif environment == "prod":
-        # Production environment: more robust settings and less verbose logging
+        # Production environment: more robust settings and optimized config
         base_config["app_service"] = AppServiceConfig(
             desired_count=2,
             cpu=1024,  # 1 vCPU
             memory_limit_mb=2048,  # 2 GB
-            log_level="INFO",
+            app_environment=AppEnvironmentFactory.create_production_config(),
         )
         base_config["ecr"].removal_policy = "RETAIN"
     else:
         raise ValueError(f"Invalid environment specified: {environment}")
 
     return AppConfig(**base_config)
+
+
+class AppEnvironmentFactory:
+    """Factory for creating environment-specific app configurations."""
+
+    @staticmethod
+    def create_development_config(**overrides) -> AppEnvironmentConfig:
+        """Create development environment configuration with optional overrides."""
+        defaults = {
+            "log_level": "DEBUG",
+            "echo_message": "Hello from Development!",
+        }
+        defaults.update(overrides)
+        return AppEnvironmentConfig(**defaults)
+
+    @staticmethod
+    def create_production_config(**overrides) -> AppEnvironmentConfig:
+        """Create production environment configuration with optional overrides."""
+        defaults = {
+            "log_level": "INFO",
+            "echo_message": "Hello from Production!",
+        }
+        defaults.update(overrides)
+        return AppEnvironmentConfig(**defaults)

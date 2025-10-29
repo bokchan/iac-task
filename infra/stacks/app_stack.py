@@ -38,8 +38,7 @@ class AppStack(Stack):
                 container_port=config.app_service.container_port,
                 environment={
                     "IMAGE_TAG": image_tag,
-                    "LOG_LEVEL": config.app_service.log_level,
-                    "ECHO_MESSAGE": "Hello World",
+                    **config.app_service.app_environment.to_environment_dict(),
                 },
             ),
             public_load_balancer=True,
