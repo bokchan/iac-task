@@ -4,6 +4,8 @@ import os
 from fastapi import FastAPI
 
 app = FastAPI()
+
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
 
