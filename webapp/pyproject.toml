@@ -9,7 +9,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-test = [
+dev = [
     "pytest>=8.4.2",
     "httpx>=0.25.0",  # Required for FastAPI TestClient
 ]
