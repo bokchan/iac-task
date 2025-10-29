@@ -1,8 +1,10 @@
+import logging
 import os
 
 from fastapi import FastAPI
 
 app = FastAPI()
+logger = logging.getLogger(__name__)
 
 
 @app.get("/echo")
@@ -16,3 +18,11 @@ async def echo():
 async def health_check():
     """Healthcheck"""
     return "OK"
+
+
+@app.get("/version")
+async def version():
+    """Return the deployed version (image tag)"""
+    version = os.environ.get("IMAGE_TAG", "unknown")
+    logger.info(f"Version endpoint called, returning version: {version}")
+    return {"version": version}

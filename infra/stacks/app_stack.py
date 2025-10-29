@@ -36,6 +36,10 @@ class AppStack(Stack):
                     ecr_stack.repository, tag=image_tag
                 ),
                 container_port=config.app_service.container_port,
+                environment={
+                    "IMAGE_TAG": image_tag,
+                    "LOG_LEVEL": config.app_service.log_level,
+                },
             ),
             public_load_balancer=True,
         )

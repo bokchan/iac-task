@@ -16,6 +16,7 @@ services:
       - ECHO_MESSAGE="Music makes the world go round"
       - LOG_LEVEL=debug
       - PYTHONPATH=/app
+      - IMAGE_TAG=1234
     # Add health check override for faster development feedback
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]

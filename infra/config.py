@@ -30,6 +30,7 @@ class AppServiceConfig:
     memory_limit_mb: int = 512  # 0.5 GB
     desired_count: int = 1
     container_port: int = 8000
+    log_level: str = "INFO"  # Logging level for the application
 
 
 @dataclass
@@ -76,12 +77,16 @@ def get_environment_config(environment: str) -> AppConfig:
 
     # You can introduce environment-specific overrides here if needed
     if environment == "dev":
-        pass  # No overrides for dev yet
+        # Development environment: more verbose logging
+        base_config["app_service"] = AppServiceConfig(log_level="DEBUG")
     elif environment == "prod":
-        # Example of overrides for prod: more robust settings
-        base_config["app_service"].desired_count = 2
-        base_config["app_service"].cpu = 1024  # 1 vCPU
-        base_config["app_service"].memory_limit_mb = 2048  # 2 GB
+        # Production environment: more robust settings and less verbose logging
+        base_config["app_service"] = AppServiceConfig(
+            desired_count=2,
+            cpu=1024,  # 1 vCPU
+            memory_limit_mb=2048,  # 2 GB
+            log_level="INFO",
+        )
         base_config["ecr"].removal_policy = "RETAIN"
     else:
         raise ValueError(f"Invalid environment specified: {environment}")
