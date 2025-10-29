@@ -9,8 +9,8 @@ logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
 
-@app.get("/echo")
-async def echo():
+@app.get("/")
+async def root():
     """Return the string configured by the environment variable: ECHO_MESSAGE"""
     msg = os.environ.get("ECHO_MESSAGE", "Hello World")
     return {"message": msg}

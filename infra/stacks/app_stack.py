@@ -39,6 +39,7 @@ class AppStack(Stack):
                 environment={
                     "IMAGE_TAG": image_tag,
                     "LOG_LEVEL": config.app_service.log_level,
+                    "ECHO_MESSAGE": "Hello World",
                 },
             ),
             public_load_balancer=True,

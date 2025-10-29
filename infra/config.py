@@ -31,6 +31,7 @@ class AppServiceConfig:
     desired_count: int = 1
     container_port: int = 8000
     log_level: str = "INFO"  # Logging level for the application
+    echo_message: str = "Hello World"
 
 
 @dataclass
