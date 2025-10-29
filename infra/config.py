@@ -45,7 +45,7 @@ class AppServiceConfig:
     memory_limit_mb: int = 512  # 0.5 GB
     desired_count: int = 1
     container_port: int = 8000
-    app_environment: AppEnvironmentConfig = None  # Will be set per environment
+    app_environment: AppEnvironmentConfig | None = None  # Will be set per environment
 
     def __post_init__(self):
         """Set default app environment if not provided."""
