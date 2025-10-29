@@ -13,7 +13,7 @@ set -e
 IMAGE_TAG=""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Parse command line arguments for --image-tag
+# Parse command line arguments for --image_tag
 ARGS=()
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -77,6 +77,10 @@ fi
 # Check if uv is installed
 if command -v uv &> /dev/null; then
     echo "📦 Installing Python dependencies with uv..."
+    if [ ! -f ./.venv/bin/activate ]; then
+        echo "❌ Virtual environment not found. Please create it with: python3 -m venv .venv"
+        exit 1
+    fi
     source ./.venv/bin/activate
     uv sync --frozen --active || uv pip install -r requirements.txt
 elif command -v pip &> /dev/null; then
@@ -89,7 +93,7 @@ fi
 
 # Build CDK context arguments
 CDK_CONTEXT="-c environment=$ENVIRONMENT"
-if [ ! -z "$IMAGE_TAG" ]; then
+if [[ -n "$IMAGE_TAG" ]]; then
     CDK_CONTEXT="$CDK_CONTEXT -c image_tag=$IMAGE_TAG"
     echo "📦 Using image tag: $IMAGE_TAG"
 fi
@@ -114,7 +118,7 @@ case $ACTION in
     destroy)
         echo "💥 Destroying stacks..."
         echo "⚠️  This will delete all resources in environment: $ENVIRONMENT"
-        if [ ! -z "$IMAGE_TAG" ]; then
+        if [[ -n "$IMAGE_TAG" ]]; then
             echo "   Image tag: $IMAGE_TAG"
         fi
         read -p "Are you sure? (y/N): " -n 1 -r
