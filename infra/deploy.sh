@@ -89,9 +89,8 @@ elif command -v pip &> /dev/null; then
     echo "📦 Installing Python dependencies with pip (uv not found)..."
     pip install -r requirements.txt
 else
-if [[ -n "$IMAGE_TAG" ]]; then
+    echo "❌ Neither 'uv' nor 'pip' is installed. Please install one of them to proceed."
     exit 1
-fi
 
 # Build CDK context arguments
 CDK_CONTEXT="-c environment=$ENVIRONMENT"
