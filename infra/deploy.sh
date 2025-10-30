@@ -91,6 +91,7 @@ elif command -v pip &> /dev/null; then
 else
     echo "❌ Neither 'uv' nor 'pip' is installed. Please install one of them to proceed."
     exit 1
+fi
 
 # Build CDK context arguments
 CDK_CONTEXT="-c environment=$ENVIRONMENT"
