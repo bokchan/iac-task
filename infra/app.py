@@ -4,6 +4,7 @@ import aws_cdk as cdk
 from config import get_environment_config
 from stacks.app_stack import AppStack
 from stacks.ecr_stack import EcrStack
+from stacks.github_oidc_stack import GitHubOidcStack
 from stacks.vpc_stack import VpcStack
 
 app = cdk.App()
@@ -38,6 +39,15 @@ ecr_stack = EcrStack(
     config.get_resource_name("EcrStack"),
     env=aws_env,
     config=config,
+)
+
+# GitHub OIDC Stack for separate IAM roles (least privilege)
+github_oidc_stack = GitHubOidcStack(
+    app,
+    config.get_resource_name("GitHubOidcStack"),
+    env=aws_env,
+    config=config,
+    ecr_repository=ecr_stack.repository,
 )
 
 # Get image tag from context (passed from CI/CD)
