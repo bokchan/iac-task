@@ -57,7 +57,7 @@ class GitHubOidcStack(Stack):
         role = iam.Role(
             self,
             "GitHubEcrRole",
-            assumed_by=principal,
+            assumed_by=principal,  # pyrefly: ignore[bad-argument-type]
             description="Role for GitHub Actions to push/pull ECR images - main branch only",
             max_session_duration=None,  # Default session duration depends on how the role is assumed: 1 hour for AWS Console, or as specified in AssumeRole API call (e.g., sts:AssumeRoleWithWebIdentity)
         )
@@ -97,7 +97,7 @@ class GitHubOidcStack(Stack):
         role = iam.Role(
             self,
             "GitHubDevDeployRole",
-            assumed_by=principal,
+            assumed_by=principal,  # pyrefly: ignore[bad-argument-type]
             description="Role for GitHub Actions to deploy to dev environment - main branch only",
             max_session_duration=None,
         )
@@ -122,13 +122,13 @@ class GitHubOidcStack(Stack):
                         service="iam",
                         resource="role",
                         resource_name=f"cdk-{self.synthesizer.bootstrap_qualifier}-deploy-role-{self.account}-{self.region}",
-                        region=""
+                        region="",
                     ),
                     self.format_arn(
-                        service="iam", 
+                        service="iam",
                         resource="role",
                         resource_name=f"cdk-{self.synthesizer.bootstrap_qualifier}-file-publishing-role-{self.account}-{self.region}",
-                        region=""
+                        region="",
                     ),
                 ],
                 conditions={"StringEquals": {"aws:RequestedRegion": config.aws_region}},
@@ -156,7 +156,7 @@ class GitHubOidcStack(Stack):
         role = iam.Role(
             self,
             "GitHubProdDeployRole",
-            assumed_by=principal,
+            assumed_by=principal,  # pyrefly: ignore[bad-argument-type]
             description="Role for GitHub Actions to deploy to prod environment - main branch only",
             max_session_duration=None,
         )
@@ -169,15 +169,15 @@ class GitHubOidcStack(Stack):
                 resources=[
                     self.format_arn(
                         service="iam",
-                        resource="role", 
+                        resource="role",
                         resource_name=f"cdk-{self.synthesizer.bootstrap_qualifier}-deploy-role-{self.account}-{self.region}",
-                        region=""
+                        region="",
                     ),
                     self.format_arn(
                         service="iam",
                         resource="role",
                         resource_name=f"cdk-{self.synthesizer.bootstrap_qualifier}-file-publishing-role-{self.account}-{self.region}",
-                        region=""
+                        region="",
                     ),
                 ],
                 conditions={
@@ -209,7 +209,7 @@ class GitHubOidcStack(Stack):
         role = iam.Role(
             self,
             "GitHubFeatureBranchRole",
-            assumed_by=principal,
+            assumed_by=principal,  # pyrefly: ignore[bad-argument-type]
             description="Role for GitHub Actions feature branches - read-only validation",
             max_session_duration=None,
         )

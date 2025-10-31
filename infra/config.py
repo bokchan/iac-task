@@ -82,38 +82,38 @@ def get_environment_config(environment: str) -> AppConfig:
     project_name = "Andreas"
 
     # Shared configuration applicable to all environments
-    base_config = {
-        "aws_account": aws_account_id,
-        "aws_region": os.getenv("AWS_REGION", "eu-central-1"),
-        "environment": environment,
-        "project_name": project_name,
-        "github_repo": "bokchan/iac-task",
-        "ecr": EcrConfig(
+    app_config = AppConfig(
+        aws_account=aws_account_id,
+        aws_region=os.getenv("AWS_REGION", "eu-central-1"),
+        environment=environment,
+        project_name=project_name,
+        github_repo="bokchan/iac-task",
+        ecr=EcrConfig(
             repository_name=f"{project_name.lower()}-ecr-repository",
         ),
-        "vpc": VpcConfig(),
-        "app_service": AppServiceConfig(),
-    }
+        vpc=VpcConfig(),
+        app_service=AppServiceConfig(),
+    )
 
     # Environment-specific configurations using factory pattern
     if environment == "dev":
         # Development environment: more verbose logging and debugging
-        base_config["app_service"] = AppServiceConfig(
+        app_config.app_service = AppServiceConfig(
             app_environment=AppEnvironmentFactory.create_development_config()
         )
     elif environment == "prod":
         # Production environment: more robust settings and optimized config
-        base_config["app_service"] = AppServiceConfig(
+        app_config.app_service = AppServiceConfig(
             desired_count=2,
             cpu=1024,  # 1 vCPU
             memory_limit_mb=2048,  # 2 GB
             app_environment=AppEnvironmentFactory.create_production_config(),
         )
-        base_config["ecr"].removal_policy = "RETAIN"
+        app_config.ecr.removal_policy = "RETAIN"
     else:
         raise ValueError(f"Invalid environment specified: {environment}")
 
-    return AppConfig(**base_config)
+    return app_config
 
 
 class AppEnvironmentFactory:
@@ -138,3 +138,12 @@ class AppEnvironmentFactory:
         }
         defaults.update(overrides)
         return AppEnvironmentConfig(**defaults)
+
+
+class AppConfigFactory:
+    """Factory for creating AppConfig instances for different environments."""
+
+    @staticmethod
+    def create_config(environment: str) -> AppConfig:
+        """Create an AppConfig instance for the specified environment."""
+        return get_environment_config(environment)

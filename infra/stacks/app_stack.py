@@ -38,7 +38,7 @@ class AppStack(Stack):
                 container_port=config.app_service.container_port,
                 environment={
                     "IMAGE_TAG": image_tag,
-                    **config.app_service.app_environment.to_environment_dict(),
+                    **config.app_service.app_environment.to_environment_dict(),  # type: ignore[union-attr]
                 },
             ),
             public_load_balancer=True,
