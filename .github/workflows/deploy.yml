@@ -31,12 +31,11 @@ jobs:
         id: get-image-tag
         run: echo "image_tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      # Use ECR-specific role with minimal permissions for image operations only
-      - name: Configure AWS Credentials for ECR
+      # Use dev role for all operations (simplified approach)
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_ECR_ROLE_ARN }}
-          role-session-name: GitHubActions-ECR-${{ github.run_id }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_DEV_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -60,13 +59,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Use dev deployment role with scoped permissions for dev environment only
-      - name: Configure AWS Credentials for Dev Deployment
-        uses: aws-actions/configure-aws-credentials@v5.1.0
-        with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_DEV_DEPLOY_ROLE_ARN }}
-          role-session-name: GitHubActions-DevDeploy-${{ github.run_id }}
-          aws-region: ${{ env.AWS_REGION }}
+      # AWS credentials already configured in build-and-deploy job
 
       - name: Setup Python and Install Dependencies
         uses: actions/setup-python@v5
