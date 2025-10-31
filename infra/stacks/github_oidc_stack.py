@@ -46,6 +46,7 @@ class GitHubOidcStack(Stack):
                 "StringLike": {
                     "token.actions.githubusercontent.com:sub": [
                         f"repo:{config.github_repo}:ref:refs/heads/*",
+                        f"repo:{config.github_repo}:pull_request",
                     ],
                     "token.actions.githubusercontent.com:job_workflow_ref": f"{config.github_repo}/.github/workflows/*deploy*.yml@*",
                 },
