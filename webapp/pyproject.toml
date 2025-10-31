@@ -11,5 +11,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=8.4.2",
-    "httpx>=0.25.0",  # Required for FastAPI TestClient
+    "httpx>=0.25.0",
+    "pyrefly>=0.39.4",
+    "ruff>=0.14.3",
 ]

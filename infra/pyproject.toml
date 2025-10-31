@@ -16,3 +16,6 @@ dev = [
     "pytest>=6.2.5",
     "ruff>=0.14.3",
 ]
+
+[tool.pyrefly]
+project-excludes = ["**/cdk.out/**", "**/__pycache__/**", "**/.venv/**"]
