@@ -59,7 +59,7 @@ class GitHubOidcStack(Stack):
             "GitHubEcrRole",
             assumed_by=principal,
             description="Role for GitHub Actions to push/pull ECR images - main branch only",
-            max_session_duration=None,  # Use default 1 hour
+            max_session_duration=None,  # Default session duration depends on how the role is assumed: 1 hour for AWS Console, or as specified in AssumeRole API call (e.g., sts:AssumeRoleWithWebIdentity)
         )
 
         # ECR permissions - scoped to specific repository
