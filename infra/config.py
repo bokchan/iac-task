@@ -138,12 +138,3 @@ class AppEnvironmentFactory:
         }
         defaults.update(overrides)
         return AppEnvironmentConfig(**defaults)
-
-
-class AppConfigFactory:
-    """Factory for creating AppConfig instances for different environments."""
-
-    @staticmethod
-    def create_config(environment: str) -> AppConfig:
-        """Create an AppConfig instance for the specified environment."""
-        return get_environment_config(environment)
