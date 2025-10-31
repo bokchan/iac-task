@@ -91,7 +91,9 @@ def get_environment_config(environment: str) -> AppConfig:
     if not aws_account_id:
         raise ValueError("AWS_ACCOUNT_ID environment variable must be set.")
 
-    # Get CDK bootstrap qualifier from environment - required, no default
+    # CDK_BOOTSTRAP_QUALIFIER is required for CDK deployments.
+    # Ensure this environment variable is set in your environment or .env file.
+    # If using deployment scripts (e.g., deploy-secure-oidc.sh), update them to export this variable.
     cdk_bootstrap_qualifier = os.getenv("CDK_BOOTSTRAP_QUALIFIER")
     if not cdk_bootstrap_qualifier:
         raise ValueError("CDK_BOOTSTRAP_QUALIFIER environment variable must be set.")
