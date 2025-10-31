@@ -1,5 +1,6 @@
 from aws_cdk import CfnOutput, Stack
 from aws_cdk import aws_iam as iam
+from aws_cdk.aws_ecr import Repository
 from config import AppConfig
 from constructs import Construct
 
@@ -15,7 +16,7 @@ class GitHubOidcStack(Stack):
         scope: Construct,
         construct_id: str,
         config: AppConfig,
-        ecr_repository,
+        ecr_repository: Repository,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -75,7 +76,9 @@ class GitHubOidcStack(Stack):
 
         return role
 
-    def _create_dev_deploy_role(self, config: AppConfig, ecr_repository) -> iam.Role:
+    def _create_dev_deploy_role(
+        self, config: AppConfig, ecr_repository: Repository
+    ) -> iam.Role:
         """Create role specifically for dev environment deployment."""
         # Enhanced conditions for dev deployment
         principal = iam.FederatedPrincipal(
