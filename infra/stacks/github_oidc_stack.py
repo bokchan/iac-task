@@ -43,12 +43,14 @@ class GitHubOidcStack(Stack):
         principal = iam.FederatedPrincipal(
             federated=self.github_provider.open_id_connect_provider_arn,
             conditions={
-                "StringEquals": {
-                    "token.actions.githubusercontent.com:sub": f"repo:{config.github_repo}:ref:refs/heads/main",
-                    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-                },
                 "StringLike": {
-                    "token.actions.githubusercontent.com:job_workflow_ref": f"{config.github_repo}/.github/workflows/*deploy*.yml@*"
+                    "token.actions.githubusercontent.com:sub": [
+                        f"repo:{config.github_repo}:ref:refs/heads/*",
+                    ],
+                    "token.actions.githubusercontent.com:job_workflow_ref": f"{config.github_repo}/.github/workflows/*deploy*.yml@*",
+                },
+                "StringEquals": {
+                    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
                 },
             },
             assume_role_action="sts:AssumeRoleWithWebIdentity",
@@ -82,13 +84,16 @@ class GitHubOidcStack(Stack):
         principal = iam.FederatedPrincipal(
             federated=self.github_provider.open_id_connect_provider_arn,
             conditions={
+                "StringLike": {
+                    "token.actions.githubusercontent.com:sub": [
+                        f"repo:{config.github_repo}:ref:refs/heads/main",
+                        f"repo:{config.github_repo}:ref:refs/heads/apply-granular-permissions-for-oidc",
+                    ],
+                    "token.actions.githubusercontent.com:job_workflow_ref": f"{config.github_repo}/.github/workflows/*deploy*.yml@*",
+                },
                 "StringEquals": {
-                    "token.actions.githubusercontent.com:sub": f"repo:{config.github_repo}:ref:refs/heads/main",
                     "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
                     "token.actions.githubusercontent.com:environment": "development",
-                },
-                "StringLike": {
-                    "token.actions.githubusercontent.com:job_workflow_ref": f"{config.github_repo}/.github/workflows/*deploy*.yml@*"
                 },
             },
             assume_role_action="sts:AssumeRoleWithWebIdentity",
@@ -123,13 +128,16 @@ class GitHubOidcStack(Stack):
         principal = iam.FederatedPrincipal(
             federated=self.github_provider.open_id_connect_provider_arn,
             conditions={
+                "StringLike": {
+                    "token.actions.githubusercontent.com:sub": [
+                        f"repo:{config.github_repo}:ref:refs/heads/main",
+                        f"repo:{config.github_repo}:ref:refs/heads/apply-granular-permissions-for-oidc",
+                    ],
+                    "token.actions.githubusercontent.com:job_workflow_ref": f"{config.github_repo}/.github/workflows/*deploy*.yml@*",
+                },
                 "StringEquals": {
-                    "token.actions.githubusercontent.com:sub": f"repo:{config.github_repo}:ref:refs/heads/main",
                     "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
                     "token.actions.githubusercontent.com:environment": "production",
-                },
-                "StringLike": {
-                    "token.actions.githubusercontent.com:job_workflow_ref": f"{config.github_repo}/.github/workflows/*deploy*.yml@refs/heads/main"
                 },
             },
             assume_role_action="sts:AssumeRoleWithWebIdentity",
