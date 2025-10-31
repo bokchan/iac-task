@@ -1,5 +1,6 @@
 from aws_cdk import CfnOutput, Stack
 from aws_cdk import aws_iam as iam
+from aws_cdk.aws_ecr import Repository
 from config import AppConfig
 from constructs import Construct
 
@@ -15,7 +16,7 @@ class GitHubOidcStack(Stack):
         scope: Construct,
         construct_id: str,
         config: AppConfig,
-        ecr_repository,
+        ecr_repository: Repository,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -30,7 +31,7 @@ class GitHubOidcStack(Stack):
 
         # 2. Create separate roles for different operations
         self.ecr_role = self._create_ecr_role(config, ecr_repository)
-        self.dev_deploy_role = self._create_dev_deploy_role(config)
+        self.dev_deploy_role = self._create_dev_deploy_role(config, ecr_repository)
         self.prod_deploy_role = self._create_prod_deploy_role(config)
         self.feature_branch_role = self._create_feature_branch_role(config)
 
@@ -39,16 +40,15 @@ class GitHubOidcStack(Stack):
 
     def _create_ecr_role(self, config: AppConfig, ecr_repository) -> iam.Role:
         """Create role specifically for ECR operations (image push/pull)."""
-        # Enhanced conditions for ECR role
+        # Simplified conditions - just require the correct repo and audience
         principal = iam.FederatedPrincipal(
             federated=self.github_provider.open_id_connect_provider_arn,
             conditions={
-                "StringEquals": {
-                    "token.actions.githubusercontent.com:sub": f"repo:{config.github_repo}:ref:refs/heads/main",
-                    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-                },
                 "StringLike": {
-                    "token.actions.githubusercontent.com:job_workflow_ref": f"{config.github_repo}/.github/workflows/*deploy*.yml@*"
+                    "token.actions.githubusercontent.com:sub": f"repo:{config.github_repo}:*",
+                },
+                "StringEquals": {
+                    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
                 },
             },
             assume_role_action="sts:AssumeRoleWithWebIdentity",
@@ -76,19 +76,19 @@ class GitHubOidcStack(Stack):
 
         return role
 
-    def _create_dev_deploy_role(self, config: AppConfig) -> iam.Role:
+    def _create_dev_deploy_role(
+        self, config: AppConfig, ecr_repository: Repository
+    ) -> iam.Role:
         """Create role specifically for dev environment deployment."""
         # Enhanced conditions for dev deployment
         principal = iam.FederatedPrincipal(
             federated=self.github_provider.open_id_connect_provider_arn,
             conditions={
-                "StringEquals": {
-                    "token.actions.githubusercontent.com:sub": f"repo:{config.github_repo}:ref:refs/heads/main",
-                    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-                    "token.actions.githubusercontent.com:environment": "development",
-                },
                 "StringLike": {
-                    "token.actions.githubusercontent.com:job_workflow_ref": f"{config.github_repo}/.github/workflows/*deploy*.yml@*"
+                    "token.actions.githubusercontent.com:sub": f"repo:{config.github_repo}:*",
+                },
+                "StringEquals": {
+                    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
                 },
             },
             assume_role_action="sts:AssumeRoleWithWebIdentity",
@@ -102,14 +102,34 @@ class GitHubOidcStack(Stack):
             max_session_duration=None,
         )
 
-        # Only allow assumption of specific CDK bootstrap roles needed for dev deployment
+        # ECR permissions for dev role (so it can handle both ECR and deployment)
+        ecr_repository.grant_pull_push(role)
+        role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["ecr:GetAuthorizationToken"],
+                resources=["*"],
+            )
+        )
+
+        # CDK bootstrap roles for deployment - retrieved dynamically
         role.add_to_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
                 actions=["sts:AssumeRole"],
                 resources=[
-                    config.get_cdk_bootstrap_role_arn("deploy-role"),
-                    config.get_cdk_bootstrap_role_arn("file-publishing-role"),
+                    self.format_arn(
+                        service="iam",
+                        resource="role",
+                        resource_name=f"cdk-{self.synthesizer.bootstrap_qualifier}-deploy-role-{self.account}-{self.region}",
+                        region=""
+                    ),
+                    self.format_arn(
+                        service="iam", 
+                        resource="role",
+                        resource_name=f"cdk-{self.synthesizer.bootstrap_qualifier}-file-publishing-role-{self.account}-{self.region}",
+                        region=""
+                    ),
                 ],
                 conditions={"StringEquals": {"aws:RequestedRegion": config.aws_region}},
             )
@@ -123,13 +143,11 @@ class GitHubOidcStack(Stack):
         principal = iam.FederatedPrincipal(
             federated=self.github_provider.open_id_connect_provider_arn,
             conditions={
-                "StringEquals": {
-                    "token.actions.githubusercontent.com:sub": f"repo:{config.github_repo}:ref:refs/heads/main",
-                    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-                    "token.actions.githubusercontent.com:environment": "production",
-                },
                 "StringLike": {
-                    "token.actions.githubusercontent.com:job_workflow_ref": f"{config.github_repo}/.github/workflows/*deploy*.yml@refs/heads/main"
+                    "token.actions.githubusercontent.com:sub": f"repo:{config.github_repo}:*",
+                },
+                "StringEquals": {
+                    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
                 },
             },
             assume_role_action="sts:AssumeRoleWithWebIdentity",
@@ -149,8 +167,18 @@ class GitHubOidcStack(Stack):
                 effect=iam.Effect.ALLOW,
                 actions=["sts:AssumeRole"],
                 resources=[
-                    config.get_cdk_bootstrap_role_arn("deploy-role"),
-                    config.get_cdk_bootstrap_role_arn("file-publishing-role"),
+                    self.format_arn(
+                        service="iam",
+                        resource="role", 
+                        resource_name=f"cdk-{self.synthesizer.bootstrap_qualifier}-deploy-role-{self.account}-{self.region}",
+                        region=""
+                    ),
+                    self.format_arn(
+                        service="iam",
+                        resource="role",
+                        resource_name=f"cdk-{self.synthesizer.bootstrap_qualifier}-file-publishing-role-{self.account}-{self.region}",
+                        region=""
+                    ),
                 ],
                 conditions={
                     "StringEquals": {
