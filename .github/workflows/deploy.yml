@@ -13,6 +13,7 @@ env:
   ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
+  CDK_BOOTSTRAP_QUALIFIER: ${{ secrets.CDK_BOOTSTRAP_QUALIFIER }}
 
 jobs:
   build-and-deploy:
