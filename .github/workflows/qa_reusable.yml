@@ -1,0 +1,23 @@
+name: "Run Code QA"
+on:
+  workflow_call:
+    inputs:
+      target_directory:
+        description: 'The directory to run QA against'
+        required: true
+        type: string
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Python and Install Dependencies
+        uses: actions/setup-python@v6.0.0
+        with:
+          python-version: "3.14"
+      - run: pip install uv && uv pip compile pyproject.toml -o requirements.txt --no-deps && uv pip install --system -r requirements.txt
+        working-directory: ${{ inputs.target_directory }}
+      - name: Run QA
+        run: ../run_qa.sh .
+        working-directory: ${{ inputs.target_directory }}
