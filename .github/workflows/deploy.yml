@@ -53,6 +53,8 @@ jobs:
     needs: build-and-deploy
     runs-on: ubuntu-latest
     environment: development
+    env:
+      CDK_BOOTSTRAP_QUALIFIER: $CDK_BOOTSTRAP_QUALIFIER
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -91,6 +93,8 @@ jobs:
     environment:
       name: production
       url: ${{ steps.get-alb-url.outputs.url }} # Optional: Display the ALB URL in the approval UI
+    env:
+      CDK_BOOTSTRAP_QUALIFIER: $CDK_BOOTSTRAP_QUALIFIER
     steps:
       # Steps for prod deployment.
       # The manual approval is configured in GitHub repository settings for the 'production' environment.
