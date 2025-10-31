@@ -112,14 +112,24 @@ class GitHubOidcStack(Stack):
             )
         )
 
-        # CDK bootstrap roles for deployment
+        # CDK bootstrap roles for deployment - retrieved dynamically
         role.add_to_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
                 actions=["sts:AssumeRole"],
                 resources=[
-                    f"arn:aws:iam::{config.aws_account}:role/cdk-hnb659fds-deploy-role-{config.aws_account}-{config.aws_region}",
-                    f"arn:aws:iam::{config.aws_account}:role/cdk-hnb659fds-file-publishing-role-{config.aws_account}-{config.aws_region}",
+                    self.format_arn(
+                        service="iam",
+                        resource="role",
+                        resource_name=f"cdk-{self.synthesizer.bootstrap_qualifier}-deploy-role-{self.account}-{self.region}",
+                        region=""
+                    ),
+                    self.format_arn(
+                        service="iam", 
+                        resource="role",
+                        resource_name=f"cdk-{self.synthesizer.bootstrap_qualifier}-file-publishing-role-{self.account}-{self.region}",
+                        region=""
+                    ),
                 ],
                 conditions={"StringEquals": {"aws:RequestedRegion": config.aws_region}},
             )
@@ -157,8 +167,18 @@ class GitHubOidcStack(Stack):
                 effect=iam.Effect.ALLOW,
                 actions=["sts:AssumeRole"],
                 resources=[
-                    f"arn:aws:iam::{config.aws_account}:role/cdk-hnb659fds-deploy-role-{config.aws_account}-{config.aws_region}",
-                    f"arn:aws:iam::{config.aws_account}:role/cdk-hnb659fds-file-publishing-role-{config.aws_account}-{config.aws_region}",
+                    self.format_arn(
+                        service="iam",
+                        resource="role", 
+                        resource_name=f"cdk-{self.synthesizer.bootstrap_qualifier}-deploy-role-{self.account}-{self.region}",
+                        region=""
+                    ),
+                    self.format_arn(
+                        service="iam",
+                        resource="role",
+                        resource_name=f"cdk-{self.synthesizer.bootstrap_qualifier}-file-publishing-role-{self.account}-{self.region}",
+                        region=""
+                    ),
                 ],
                 conditions={
                     "StringEquals": {
