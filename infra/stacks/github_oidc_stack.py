@@ -115,8 +115,8 @@ class GitHubOidcStack(Stack):
                 effect=iam.Effect.ALLOW,
                 actions=["sts:AssumeRole"],
                 resources=[
-                    config.get_cdk_bootstrap_role_arn("deploy-role"),
-                    config.get_cdk_bootstrap_role_arn("file-publishing-role"),
+                    f"arn:aws:iam::{config.aws_account}:role/cdk-hnb659fds-deploy-role-{config.aws_account}-{config.aws_region}",
+                    f"arn:aws:iam::{config.aws_account}:role/cdk-hnb659fds-file-publishing-role-{config.aws_account}-{config.aws_region}",
                 ],
                 conditions={"StringEquals": {"aws:RequestedRegion": config.aws_region}},
             )
@@ -154,8 +154,8 @@ class GitHubOidcStack(Stack):
                 effect=iam.Effect.ALLOW,
                 actions=["sts:AssumeRole"],
                 resources=[
-                    config.get_cdk_bootstrap_role_arn("deploy-role"),
-                    config.get_cdk_bootstrap_role_arn("file-publishing-role"),
+                    f"arn:aws:iam::{config.aws_account}:role/cdk-hnb659fds-deploy-role-{config.aws_account}-{config.aws_region}",
+                    f"arn:aws:iam::{config.aws_account}:role/cdk-hnb659fds-file-publishing-role-{config.aws_account}-{config.aws_region}",
                 ],
                 conditions={
                     "StringEquals": {

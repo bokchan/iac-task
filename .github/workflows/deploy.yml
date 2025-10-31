@@ -13,7 +13,6 @@ env:
   ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
-  CDK_BOOTSTRAP_QUALIFIER: ${{ secrets.CDK_BOOTSTRAP_QUALIFIER }}
 
 jobs:
   build-and-deploy:
@@ -53,8 +52,6 @@ jobs:
     needs: build-and-deploy
     runs-on: ubuntu-latest
     environment: development
-    env:
-      CDK_BOOTSTRAP_QUALIFIER: $CDK_BOOTSTRAP_QUALIFIER
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -80,8 +77,6 @@ jobs:
 
       - name: Deploy to Dev Environment
         working-directory: ./infra
-        env:
-          CDK_BOOTSTRAP_QUALIFIER: ${{ secrets.CDK_BOOTSTRAP_QUALIFIER }}
         run: |
           cdk deploy \
             --require-approval never \
@@ -95,21 +90,13 @@ jobs:
     environment:
       name: production
       url: ${{ steps.get-alb-url.outputs.url }} # Optional: Display the ALB URL in the approval UI
-    env:
-      CDK_BOOTSTRAP_QUALIFIER: $CDK_BOOTSTRAP_QUALIFIER
     steps:
       # Steps for prod deployment.
       # The manual approval is configured in GitHub repository settings for the 'production' environment.
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Use prod deployment role with strict conditions for production environment only
-      - name: Configure AWS Credentials for Prod Deployment
-        uses: aws-actions/configure-aws-credentials@v5.1.0
-        with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_PROD_DEPLOY_ROLE_ARN }}
-          role-session-name: GitHubActions-ProdDeploy-${{ github.run_id }}
-          aws-region: ${{ env.AWS_REGION }}
+      # AWS credentials already configured in build-and-deploy job (using simplified single-role approach)
 
       - name: Setup Python and Install Dependencies
         uses: actions/setup-python@v5
