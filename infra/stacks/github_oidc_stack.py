@@ -86,7 +86,7 @@ class GitHubOidcStack(Stack):
             conditions={
                 "StringLike": {
                     "token.actions.githubusercontent.com:sub": [
-                        f"repo:{config.github_repo}:ref:refs/heads/main",
+                        f"repo:{config.github_repo}:ref:refs/heads/*",
                         f"repo:{config.github_repo}:ref:refs/heads/apply-granular-permissions-for-oidc",
                     ],
                     "token.actions.githubusercontent.com:job_workflow_ref": f"{config.github_repo}/.github/workflows/*deploy*.yml@*",
