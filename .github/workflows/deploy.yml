@@ -31,7 +31,7 @@ jobs:
       - name: Configure AWS Credentials for ECR
         uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
-          role-to-assume: ${{ secrets.GITHUB_ECR_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_ECR_ROLE_ARN }}
           role-session-name: GitHubActions-ECR-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
@@ -60,7 +60,7 @@ jobs:
       - name: Configure AWS Credentials for Dev Deployment
         uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
-          role-to-assume: ${{ secrets.GITHUB_DEV_DEPLOY_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_DEV_DEPLOY_ROLE_ARN }}
           role-session-name: GitHubActions-DevDeploy-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
@@ -106,7 +106,7 @@ jobs:
       - name: Configure AWS Credentials for Prod Deployment
         uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
-          role-to-assume: ${{ secrets.GITHUB_PROD_DEPLOY_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_PROD_DEPLOY_ROLE_ARN }}
           role-session-name: GitHubActions-ProdDeploy-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
