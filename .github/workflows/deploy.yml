@@ -4,6 +4,8 @@ on:
     branches:
       - main
 
+  pull_request:
+    types: [opened, synchronize]
 permissions:
   id-token: write # Required for OIDC authentication with AWS
   contents: read # Required to check out the repository
@@ -32,7 +34,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_DEV_DEPLOY_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_ECR_ROLE_ARN }}
+          role-session-name: GitHubActions-ECR-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -56,7 +59,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Configure AWS Credentials for Dev
       # AWS credentials already configured in build-and-deploy job
+      # Use dev deployment role with scoped permissions for dev environment only
+        uses: aws-actions/configure-aws-credentials@v5.1.0
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_DEV_DEPLOY_ROLE_ARN }}
+          role-session-name: GitHubActions-DevDeploy-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Python and Install Dependencies
         uses: actions/setup-python@v5
@@ -96,7 +106,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # AWS credentials already configured in build-and-deploy job (using simplified single-role approach)
+      # Use prod deployment role with strict conditions for production environment only
+      - name: Configure AWS Credentials for Prod Deployment
+        uses: aws-actions/configure-aws-credentials@v5.1.0
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_PROD_DEPLOY_ROLE_ARN }}
+          role-session-name: GitHubActions-ProdDeploy-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Python and Install Dependencies
         uses: actions/setup-python@v5
