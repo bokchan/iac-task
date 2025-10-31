@@ -1,0 +1,15 @@
+on:
+  pull_request:
+   types:
+     - opened
+     - synchronize
+     - reopened
+
+jobs:
+  infra_qa:
+    name: Infra Code QA
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - id: Infra Code QA
+        uses: ./.github/workflows/qa_composite.yml
