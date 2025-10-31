@@ -62,6 +62,7 @@ class AppConfig:
     environment: str
     project_name: str
     github_repo: str  # Format: "owner/repo"
+    cdk_bootstrap_qualifier: str  # CDK bootstrap qualifier (e.g., 'hnb659fds')
     ecr: EcrConfig
     vpc: VpcConfig
     app_service: AppServiceConfig
@@ -69,6 +70,17 @@ class AppConfig:
     def get_resource_name(self, name: str) -> str:
         """Generates a consistent resource name with a prefix."""
         return f"{self.project_name}-{self.environment}-{name}"
+
+    def get_cdk_bootstrap_role_arn(self, role_type: str) -> str:
+        """Generate CDK bootstrap role ARN dynamically.
+
+        Args:
+            role_type: Either 'deploy-role' or 'file-publishing-role'
+
+        Returns:
+            Full ARN for the CDK bootstrap role
+        """
+        return f"arn:aws:iam::{self.aws_account}:role/cdk-{self.cdk_bootstrap_qualifier}-{role_type}-{self.aws_account}-{self.aws_region}"
 
 
 def get_environment_config(environment: str) -> AppConfig:
@@ -79,6 +91,11 @@ def get_environment_config(environment: str) -> AppConfig:
     if not aws_account_id:
         raise ValueError("AWS_ACCOUNT_ID environment variable must be set.")
 
+    # Get CDK bootstrap qualifier from environment - required, no default
+    cdk_bootstrap_qualifier = os.getenv("CDK_BOOTSTRAP_QUALIFIER")
+    if not cdk_bootstrap_qualifier:
+        raise ValueError("CDK_BOOTSTRAP_QUALIFIER environment variable must be set.")
+
     project_name = "Andreas"
 
     # Shared configuration applicable to all environments
@@ -88,6 +105,7 @@ def get_environment_config(environment: str) -> AppConfig:
         "environment": environment,
         "project_name": project_name,
         "github_repo": "bokchan/iac-task",
+        "cdk_bootstrap_qualifier": cdk_bootstrap_qualifier,
         "ecr": EcrConfig(
             repository_name=f"{project_name.lower()}-ecr-repository",
         ),
