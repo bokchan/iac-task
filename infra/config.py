@@ -46,6 +46,7 @@ class AppServiceConfig:
     memory_limit_mb: int = 1024  # 1 GB
     desired_count: int = 1
     container_port: int = 8000
+    log_group_prefix: str = "andreas-applogs"  # CloudWatch log group prefix
     app_environment: AppEnvironmentConfig | None = None  # Will be set per environment
 
     def __post_init__(self):
@@ -70,6 +71,10 @@ class AppConfig:
     def get_resource_name(self, name: str) -> str:
         """Generates a consistent resource name with a prefix."""
         return f"{self.project_name}-{self.environment}-{name}"
+
+    def get_log_group_name(self) -> str:
+        """Generates the CloudWatch log group name with required prefix."""
+        return f"{self.app_service.log_group_prefix}-{self.environment}"
 
 
 def get_environment_config(environment: str) -> AppConfig:

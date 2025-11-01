@@ -1,6 +1,7 @@
-from aws_cdk import CfnOutput, Duration, Stack
+from aws_cdk import CfnOutput, Duration, RemovalPolicy, Stack
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_ecs_patterns as ecs_patterns
+from aws_cdk import aws_logs as logs
 from config import AppConfig
 from constructs import Construct
 
@@ -23,6 +24,17 @@ class AppStack(Stack):
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        # Create CloudWatch log group with required naming convention
+        log_group = logs.LogGroup(
+            self,
+            "AppLogGroup",
+            log_group_name=config.get_log_group_name(),
+            retention=logs.RetentionDays.ONE_MONTH,
+            removal_policy=RemovalPolicy.DESTROY
+            if config.environment == "dev"
+            else RemovalPolicy.RETAIN,
+        )
+
         # Use the high-level ApplicationLoadBalancedFargateService construct
         fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
             self,
@@ -40,6 +52,10 @@ class AppStack(Stack):
                     "IMAGE_TAG": image_tag,
                     **config.app_service.app_environment.to_environment_dict(),  # type: ignore[union-attr]
                 },
+                log_driver=ecs.LogDriver.aws_logs(
+                    stream_prefix="ecs",
+                    log_group=log_group,
+                ),
             ),
             public_load_balancer=True,
         )
@@ -55,4 +71,12 @@ class AppStack(Stack):
             "LoadBalancerDNS",
             value=fargate_service.load_balancer.load_balancer_dns_name,
             description="The DNS name of the application load balancer",
+        )
+
+        # Output the log group name for easy reference
+        CfnOutput(
+            self,
+            "LogGroupName",
+            value=log_group.log_group_name,
+            description="CloudWatch log group name for application logs",
         )
