@@ -19,6 +19,7 @@ class EcrConfig:
 class VpcConfig:
     """Configuration for the VPC stack."""
 
+    # Maximum number of availability zones to use
     max_azs: int = 2
 
 

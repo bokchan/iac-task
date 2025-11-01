@@ -42,11 +42,21 @@ class AppStack(Stack):
                 },
             ),
             public_load_balancer=True,
+            # Add deployment configuration for better stability
+            deployment_configuration=ecs.DeploymentConfiguration(
+                maximum_percent=200,        # Allow double capacity during deployment
+                minimum_healthy_percent=50, # Keep at least 50% capacity during deployment
+            ),
         )
 
-        # Configure health checks
+        # Configure health checks with proper timeouts and intervals
         fargate_service.target_group.configure_health_check(
-            path="/health", interval=Duration.seconds(60)
+            path="/health",
+            interval=Duration.seconds(30),  # Reduced from 60s
+            timeout=Duration.seconds(5),    # Explicit timeout
+            healthy_threshold_count=2,      # Number of consecutive successful checks
+            unhealthy_threshold_count=5,    # Number of consecutive failed checks
+            grace_period=Duration.seconds(60),  # Grace period for initial startup
         )
 
         # Output the URL of the load balancer
