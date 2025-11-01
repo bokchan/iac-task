@@ -42,8 +42,6 @@ class AppStack(Stack):
                 },
             ),
             public_load_balancer=True,
-            min_healthy_percent=50,
-            max_healthy_percent=200,
         )
 
         # Configure health checks with proper timeouts and intervals
