@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
+# Configure logging, setting with the loglevel set by the environment variable LOG_LEVEL
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO").upper())
 logger = logging.getLogger(__name__)
 
