@@ -42,9 +42,9 @@ class AppEnvironmentConfig:
 class AppServiceConfig:
     """Configuration for the App stack (ECS service)."""
 
-    cpu: int = 512  # 0.25 vCPU
-    memory_limit_mb: int = 1024  # 0.5 GB
-    desired_count: int = 2
+    cpu: int = 512  # 0.5 vCPU
+    memory_limit_mb: int = 1024  # 1 GB
+    desired_count: int = 1
     container_port: int = 8000
     app_environment: AppEnvironmentConfig | None = None  # Will be set per environment
 
