@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - main
+  # TODO: remove before merging
+  pull_request:
+    types: [opened, synchronize, reopened]
 permissions:
   id-token: write # Required for OIDC authentication with AWS
   contents: read # Required to check out the repository
@@ -27,12 +30,11 @@ jobs:
         id: get-image-tag
         run: echo "image_tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      # Use dev role for all operations (simplified approach)
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_ECR_ROLE_ARN }}
-          role-session-name: GitHubActions-ECR-${{ github.run_id }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_ROLE_ARN }}
+          role-session-name: GitHubActions-Build-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -56,12 +58,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials for Dev
-      # AWS credentials already configured in build-and-deploy job
-      # Use dev deployment role with scoped permissions for dev environment only
+      - name: Configure AWS Credentials for Dev Deployment
         uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_DEV_DEPLOY_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_ROLE_ARN }}
           role-session-name: GitHubActions-DevDeploy-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
@@ -98,16 +98,15 @@ jobs:
       name: production
       url: ${{ steps.get-alb-url.outputs.url }} # Optional: Display the ALB URL in the approval UI
     steps:
-      # Steps for prod deployment.
-      # The manual approval is configured in GitHub repository settings for the 'production' environment.
+      # Production deployment with unified role
+      # Security: Manual approval configured in GitHub repository settings for 'production' environment
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Use prod deployment role with strict conditions for production environment only
       - name: Configure AWS Credentials for Prod Deployment
         uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_PROD_DEPLOY_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_ROLE_ARN }}
           role-session-name: GitHubActions-ProdDeploy-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
