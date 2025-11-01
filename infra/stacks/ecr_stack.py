@@ -1,6 +1,6 @@
 from aws_cdk import CfnOutput, RemovalPolicy, Stack
 from aws_cdk import aws_ecr as ecr
-from config import AppConfig
+from config import InfrastructureConfig
 from constructs import Construct
 
 
@@ -11,7 +11,7 @@ class EcrStack(Stack):
         self,
         scope: Construct,
         construct_id: str,
-        config: AppConfig,
+        config: InfrastructureConfig,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)

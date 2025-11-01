@@ -1,6 +1,6 @@
 from aws_cdk import Stack
 from aws_cdk import aws_ec2 as ec2
-from config import AppConfig
+from config import InfrastructureConfig
 from constructs import Construct
 
 
@@ -11,7 +11,7 @@ class VpcStack(Stack):
         self,
         scope: Construct,
         construct_id: str,
-        config: AppConfig,
+        config: InfrastructureConfig,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)

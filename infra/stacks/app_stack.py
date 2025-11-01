@@ -2,7 +2,7 @@ from aws_cdk import CfnOutput, Duration, RemovalPolicy, Stack
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_ecs_patterns as ecs_patterns
 from aws_cdk import aws_logs as logs
-from config import AppConfig
+from config import InfrastructureConfig
 from constructs import Construct
 
 from stacks.ecr_stack import EcrStack
@@ -16,7 +16,7 @@ class AppStack(Stack):
         self,
         scope: Construct,
         construct_id: str,
-        config: AppConfig,
+        config: InfrastructureConfig,
         vpc_stack: VpcStack,
         ecr_stack: EcrStack,
         image_tag: str,
@@ -40,17 +40,17 @@ class AppStack(Stack):
             self,
             "FargateService",
             vpc=vpc_stack.vpc,
-            cpu=config.app_service.cpu,
-            memory_limit_mib=config.app_service.memory_limit_mb,
-            desired_count=config.app_service.desired_count,
+            cpu=config.ecs_service.cpu,
+            memory_limit_mib=config.ecs_service.memory_limit_mb,
+            desired_count=config.ecs_service.desired_count,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
                 image=ecs.ContainerImage.from_ecr_repository(
                     ecr_stack.repository, tag=image_tag
                 ),
-                container_port=config.app_service.container_port,
+                container_port=config.ecs_service.container_port,
                 environment={
                     "IMAGE_TAG": image_tag,
-                    **config.app_service.app_environment.to_environment_dict(),  # type: ignore[union-attr]
+                    **config.ecs_service.application_settings.to_environment_dict(),  # type: ignore[union-attr]
                 },
                 log_driver=ecs.LogDriver.aws_logs(
                     stream_prefix="ecs",
