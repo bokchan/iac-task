@@ -64,4 +64,4 @@ EXPOSE 8000
 
 # Use uvicorn to run the FastAPI application in production
 # Note: LOG_LEVEL environment variable will be used if set, otherwise defaults to "info"
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1 --access-log --log-level ${LOG_LEVEL:-info}"]
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port 8000"]
