@@ -19,13 +19,16 @@ class VpcStack(Stack):
         self.vpc = ec2.Vpc(
             self,
             "Vpc",
+            vpc_name=config.get_resource_name("vpc"),
             max_azs=config.vpc.max_azs,
             subnet_configuration=[
                 ec2.SubnetConfiguration(
-                    name="Public", subnet_type=ec2.SubnetType.PUBLIC, cidr_mask=24
+                    name=config.get_resource_name("public"),
+                    subnet_type=ec2.SubnetType.PUBLIC,
+                    cidr_mask=24,
                 ),
                 ec2.SubnetConfiguration(
-                    name="Private",
+                    name=config.get_resource_name("private"),
                     subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS,
                     cidr_mask=24,
                 ),

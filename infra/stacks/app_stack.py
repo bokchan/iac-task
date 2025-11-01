@@ -39,11 +39,13 @@ class AppStack(Stack):
         fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
             self,
             "FargateService",
+            service_name=config.get_resource_name("service"),
             vpc=vpc_stack.vpc,
             cpu=config.ecs_service.cpu,
             memory_limit_mib=config.ecs_service.memory_limit_mb,
             desired_count=config.ecs_service.desired_count,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
+                family=config.get_resource_name("task"),
                 image=ecs.ContainerImage.from_ecr_repository(
                     ecr_stack.repository, tag=image_tag
                 ),

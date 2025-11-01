@@ -66,13 +66,14 @@ class InfrastructureConfig:
     environment: str
     project_name: str
     github_repo: str  # Format: "owner/repo"
+    creator: str
     ecr: EcrConfig
     vpc: VpcConfig
     ecs_service: EcsServiceConfig
 
     def get_resource_name(self, name: str) -> str:
-        """Generates a consistent resource name with a prefix."""
-        return f"{self.project_name}-{self.environment}-{name}"
+        """Generates a consistent resource name with project, environment, and resource type."""
+        return f"{self.project_name.lower()}-{self.environment}-{name}"
 
     def get_log_group_name(self) -> str:
         """Generates the CloudWatch log group name with required prefix."""
@@ -87,7 +88,7 @@ def get_environment_config(environment: str) -> InfrastructureConfig:
     if not aws_account_id:
         raise ValueError("AWS_ACCOUNT_ID environment variable must be set.")
 
-    project_name = "Andreas"
+    project_name = "iac-task"
 
     # Shared configuration applicable to all environments
     infra_config = InfrastructureConfig(
@@ -96,12 +97,16 @@ def get_environment_config(environment: str) -> InfrastructureConfig:
         environment=environment,
         project_name=project_name,
         github_repo="bokchan/iac-task",
+        creator="andreas",
         ecr=EcrConfig(
             repository_name=f"{project_name.lower()}-ecr-repository",
         ),
         vpc=VpcConfig(),
         ecs_service=EcsServiceConfig(),
     )
+
+    # Update ECR repository name using the config method
+    infra_config.ecr.repository_name = infra_config.get_resource_name("ecr-repository")
 
     # Environment-specific configurations using factory pattern
     if environment == "dev":
