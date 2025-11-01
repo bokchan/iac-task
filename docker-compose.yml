@@ -59,8 +59,3 @@ networks:
   app-network:
     driver: bridge
     name: webapp-dev-network
-
-# Define volumes for potential data persistence (if needed later)
-volumes:
-  app-data:
-    name: webapp-dev-data
