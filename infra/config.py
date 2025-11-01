@@ -44,7 +44,7 @@ class AppServiceConfig:
 
     cpu: int = 512  # 0.5 vCPU
     memory_limit_mb: int = 1024  # 1 GB
-    desired_count: int = 1
+    desired_count: int = 1  # Number of Fargate tasks
     container_port: int = 8000
     log_group_prefix: str = "andreas-applogs"  # CloudWatch log group prefix
     app_environment: AppEnvironmentConfig | None = None  # Will be set per environment
