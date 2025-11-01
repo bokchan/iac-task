@@ -33,7 +33,6 @@ class GitHubOidcStack(Stack):
         self.ecr_role = self._create_ecr_role(config, ecr_repository)
         self.dev_deploy_role = self._create_dev_deploy_role(config, ecr_repository)
         self.prod_deploy_role = self._create_prod_deploy_role(config)
-        self.feature_branch_role = self._create_feature_branch_role(config)
 
         # 3. Output role ARNs
         self._create_outputs()
@@ -190,48 +189,6 @@ class GitHubOidcStack(Stack):
 
         return role
 
-    def _create_feature_branch_role(self, config: AppConfig) -> iam.Role:
-        """Create role for feature branches with read-only permissions."""
-        # Allow access from feature branches and pull requests
-        principal = iam.FederatedPrincipal(
-            federated=self.github_provider.open_id_connect_provider_arn,
-            conditions={
-                "StringLike": {
-                    "token.actions.githubusercontent.com:sub": [
-                        f"repo:{config.github_repo}:ref:refs/heads/feature/*",
-                        f"repo:{config.github_repo}:pull_request",
-                    ]
-                }
-            },
-            assume_role_action="sts:AssumeRoleWithWebIdentity",
-        )
-
-        role = iam.Role(
-            self,
-            "GitHubFeatureBranchRole",
-            assumed_by=principal,  # pyrefly: ignore[bad-argument-type]
-            description="Role for GitHub Actions feature branches - read-only validation",
-            max_session_duration=None,
-        )
-
-        # Only read permissions for validation/testing
-        role.add_to_policy(
-            iam.PolicyStatement(
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    "sts:GetCallerIdentity",
-                    "cloudformation:Describe*",
-                    "cloudformation:List*",
-                    "cloudformation:Get*",
-                    "ecr:Describe*",
-                    "ecr:List*",
-                ],
-                resources=["*"],
-            )
-        )
-
-        return role
-
     def _create_outputs(self):
         """Create CloudFormation outputs for the role ARNs."""
         CfnOutput(
@@ -253,13 +210,6 @@ class GitHubOidcStack(Stack):
             "GitHubProdDeployRoleArn",
             value=self.prod_deploy_role.role_arn,
             description="ARN of the GitHub Actions prod deployment role",
-        )
-
-        CfnOutput(
-            self,
-            "GitHubFeatureBranchRoleArn",
-            value=self.feature_branch_role.role_arn,
-            description="ARN of the GitHub Actions feature branch role",
         )
 
         CfnOutput(
