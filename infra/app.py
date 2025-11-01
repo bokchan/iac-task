@@ -41,7 +41,7 @@ ecr_stack = EcrStack(
     config=config,
 )
 
-# GitHub OIDC Stack for separate IAM roles (least privilege)
+# GitHub OIDC Stack for separate IAM roles
 github_oidc_stack = GitHubOidcStack(
     app,
     config.get_resource_name("GitHubOidcStack"),
@@ -50,7 +50,7 @@ github_oidc_stack = GitHubOidcStack(
     ecr_repository=ecr_stack.repository,
 )
 
-# Get image tag from context (passed from CI/CD)
+# Get image tag from context (passed from CI/CD, or with the --image_tag option)
 image_tag = app.node.try_get_context("image_tag")
 if not image_tag:
     # Default to 'latest' for local development
