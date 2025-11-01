@@ -36,7 +36,7 @@ class GitHubOidcStack(Stack):
         self._create_outputs()
 
     def _create_github_role(
-        self, config: AppConfig, ecr_repository: Repository
+        self, config: InfrastructureConfig, ecr_repository: Repository
     ) -> iam.Role:
         """Create unified role for all GitHub Actions operations (ECR + deployment)."""
         # OIDC conditions - restrict to specific repository
