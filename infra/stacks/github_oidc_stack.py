@@ -23,6 +23,7 @@ class GitHubOidcStack(Stack):
 
         # 1. Create or reference the OIDC provider for GitHub Actions
         # Note: Only create if this is the first environment (dev), otherwise reference existing
+        # Requires that the dev environment is deployed first
         if config.environment == "dev":
             self.github_provider = iam.OpenIdConnectProvider(
                 self,

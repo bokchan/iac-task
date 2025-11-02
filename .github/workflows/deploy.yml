@@ -51,7 +51,9 @@ jobs:
 
           PROD_IMAGE_URI=$ECR_REGISTRY/$ECR_PROD_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
           DEV_IMAGE_URI=$ECR_REGISTRY/$ECR_DEV_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
+
           # Tag image for prod and dev
+          # TODO: check if a shared ECR can be used for both environments
           docker tag iac-task $PROD_IMAGE_URI
           docker tag iac-task $DEV_IMAGE_URI
 
