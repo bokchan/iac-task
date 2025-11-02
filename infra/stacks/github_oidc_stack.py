@@ -21,13 +21,22 @@ class GitHubOidcStack(Stack):
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # 1. Create the OIDC provider for GitHub Actions
-        self.github_provider = iam.OpenIdConnectProvider(
-            self,
-            "GitHubOidcProvider",
-            url="https://token.actions.githubusercontent.com",
-            client_ids=["sts.amazonaws.com"],
-        )
+        # 1. Create or reference the OIDC provider for GitHub Actions
+        # Note: Only create if this is the first environment (dev), otherwise reference existing
+        if config.environment == "dev":
+            self.github_provider = iam.OpenIdConnectProvider(
+                self,
+                "GitHubOidcProvider",
+                url="https://token.actions.githubusercontent.com",
+                client_ids=["sts.amazonaws.com"],
+            )
+        else:
+            # Reference existing OIDC provider from dev environment
+            self.github_provider = iam.OpenIdConnectProvider.from_open_id_connect_provider_arn(
+                self,
+                "GitHubOidcProvider",
+                open_id_connect_provider_arn=f"arn:aws:iam::{self.account}:oidc-provider/token.actions.githubusercontent.com",
+            )
 
         # 2. Create unified role for all GitHub Actions operations
         self.github_role = self._create_github_role(config, ecr_repository)
