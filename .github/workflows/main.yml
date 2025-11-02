@@ -23,12 +23,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Run QA for ${{ matrix.target }}
         uses: ./.github/actions/run-qa
         with:
           target_directory: ${{ matrix.target }}
 
+  # Build and push image for development environment
   build-and-deploy:
     needs: qa-checks
     runs-on: ubuntu-latest
@@ -56,6 +57,7 @@ jobs:
           ecr_repository: ${{ vars.AWS_ECR_REPOSITORY_DEV }}
           image_tag: ${{ steps.get-image-tag.outputs.image_tag }}
 
+  # Deploy to development environment
   deploy-dev:
     needs: build-and-deploy
     runs-on: ubuntu-latest
@@ -77,6 +79,7 @@ jobs:
           environment: dev
           image_tag: ${{ needs.build-and-deploy.outputs.image_tag }}
 
+  # Build image for production and deploy to production environment
   deploy-prod:
     needs: build-and-deploy
     runs-on: ubuntu-latest
