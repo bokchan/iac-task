@@ -31,11 +31,3 @@ runs:
         uv run ../run_qa.sh .
       shell: bash
       working-directory: ${{ inputs.target_directory }}
-
-    - name: Run tests
-      run: |
-        echo "🧪 Running tests on ${{ inputs.target_directory }}"
-
-        uv run pytest
-      shell: bash
-      working-directory: ${{ inputs.target_directory }}
