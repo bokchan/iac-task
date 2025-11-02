@@ -1,0 +1,44 @@
+name: 'Deploy CDK Infrastructure'
+description: 'Set up CDK environment and deploy AWS infrastructure'
+inputs:
+  environment:
+    description: 'Target environment (dev/prod)'
+    required: true
+  image_tag:
+    description: 'Docker image tag to deploy'
+    required: true
+  python_version:
+    description: 'Python version to use for CDK'
+    default: '3.14'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Python and Install Dependencies
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python_version }}
+
+    - name: Install Python Dependencies
+      run: pip install uv && uv pip compile pyproject.toml -o requirements.txt --no-deps && uv pip install --system -r requirements.txt
+      shell: bash
+      working-directory: ./infra
+
+    - name: Cache CDK
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-global-cdk-v2
+
+    - name: Install AWS CDK
+      run: npm install -g aws-cdk
+      shell: bash
+
+    - name: Deploy CDK Stacks
+      run: |
+        cdk deploy --all \
+          --require-approval never \
+          -c environment=${{ inputs.environment }} \
+          -c image_tag=${{ inputs.image_tag }}
+      shell: bash
+      working-directory: ./infra

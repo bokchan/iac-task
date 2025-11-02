@@ -25,27 +25,18 @@ jobs:
         id: get-image-tag
         run: echo "image_tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v5.1.0
+      - name: Setup AWS Environment
+        uses: ./.github/actions/setup-environment
         with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_ROLE_ARN_DEV }}
-          role-session-name: GitHubActions-Build-${{ github.run_id }}
-          aws-region: ${{ env.AWS_REGION }}
+          role_arn: ${{ secrets.AWS_GITHUB_ACTION_ROLE_ARN_DEV }}
+          session_name: GitHubActions-Build-${{ github.run_id }}
+          aws_region: ${{ env.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ vars.AWS_ECR_REPOSITORY_DEV }}
-        working-directory: ./webapp
-        run: |
-          # Build and tag image.
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }} .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
+      - name: Build and Push Image
+        uses: ./.github/actions/build-push-image
+        with:
+          ecr_repository: ${{ vars.AWS_ECR_REPOSITORY_DEV }}
+          image_tag: ${{ steps.get-image-tag.outputs.image_tag }}
 
   deploy-dev:
     needs: build-and-deploy
@@ -55,38 +46,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials for Dev Deployment
-        uses: aws-actions/configure-aws-credentials@v5.1.0
+      - name: Setup AWS Environment
+        uses: ./.github/actions/setup-environment
         with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_ROLE_ARN }}
-          role-session-name: GitHubActions-DevDeploy-${{ github.run_id }}
-          aws-region: ${{ env.AWS_REGION }}
+          role_arn: ${{ secrets.AWS_GITHUB_ACTION_ROLE_ARN }}
+          session_name: GitHubActions-DevDeploy-${{ github.run_id }}
+          aws_region: ${{ env.AWS_REGION }}
 
-      - name: Setup Python and Install Dependencies
-        uses: actions/setup-python@v5
+      - name: Deploy CDK Infrastructure
+        uses: ./.github/actions/deploy-cdk
         with:
-          python-version: "3.14"
-      - run: pip install uv && uv pip compile pyproject.toml -o requirements.txt --no-deps && uv pip install --system -r requirements.txt
-        working-directory: ./infra
-
-      - name: Cache CDK
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-npm-global-cdk-v2
-
-      - name: Install AWS CDK
-        run: npm install -g aws-cdk
-        working-directory: ./infra
-
-      - name: Deploy to Dev Environment
-        working-directory: ./infra
-        run: |
-          cdk deploy \
-            --require-approval never \
-            --all \
-            -c environment=dev \
-            -c image_tag=${{ needs.build-and-deploy.outputs.image_tag }}
+          environment: dev
+          image_tag: ${{ needs.build-and-deploy.outputs.image_tag }}
 
   deploy-prod:
     needs: build-and-deploy
@@ -99,49 +70,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials for Prod Deployment
-        uses: aws-actions/configure-aws-credentials@v5.1.0
+      - name: Setup AWS Environment
+        uses: ./.github/actions/setup-environment
         with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_ROLE_ARN_PROD }}
-          role-session-name: GitHubActions-ProdDeploy-${{ github.run_id }}
-          aws-region: ${{ env.AWS_REGION }}
+          role_arn: ${{ secrets.AWS_GITHUB_ACTION_ROLE_ARN_PROD }}
+          session_name: GitHubActions-ProdDeploy-${{ github.run_id }}
+          aws_region: ${{ env.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ vars.AWS_ECR_REPOSITORY_PROD }}
-        working-directory: ./webapp
-        run: |
-          # Build and tag image.
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ needs.build-and-deploy.outputs.image_tag }} .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ needs.build-and-deploy.outputs.image_tag }}
-
-      - name: Setup Python and Install Dependencies
-        uses: actions/setup-python@v5
+      - name: Build and Push Image
+        uses: ./.github/actions/build-push-image
         with:
-          python-version: "3.14"
-      - run: pip install uv && uv pip compile pyproject.toml -o requirements.txt --no-deps && uv pip install --system -r requirements.txt
-        working-directory: ./infra
+          ecr_repository: ${{ vars.AWS_ECR_REPOSITORY_PROD }}
+          image_tag: ${{ needs.build-and-deploy.outputs.image_tag }}
 
-      - name: Cache CDK
-        uses: actions/cache@v4
+      - name: Deploy CDK Infrastructure
+        uses: ./.github/actions/deploy-cdk
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-npm-global-cdk-v2
-
-      - name: Install AWS CDK
-        run: npm install -g aws-cdk
-        working-directory: ./infra
-
-      - name: Deploy to Prod Environment
-        working-directory: ./infra
-        run: |
-          cdk deploy --all \
-            --require-approval never \
-            -c environment=prod \
-            -c image_tag=${{ needs.build-and-deploy.outputs.image_tag }}
+          environment: prod
+          image_tag: ${{ needs.build-and-deploy.outputs.image_tag }}

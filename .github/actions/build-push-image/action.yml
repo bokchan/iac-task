@@ -1,0 +1,30 @@
+name: 'Build and Push Docker Image'
+description: 'Build Docker image and push to Amazon ECR'
+inputs:
+  ecr_repository:
+    description: 'ECR repository name'
+    required: true
+  image_tag:
+    description: 'Docker image tag to use'
+    required: true
+  working_directory:
+    description: 'Directory containing the Dockerfile'
+    default: './webapp'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, tag, and push Docker image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        # Build and tag image
+        docker build -t $ECR_REGISTRY/${{ inputs.ecr_repository }}:${{ inputs.image_tag }} .
+        # Push image to ECR
+        docker push $ECR_REGISTRY/${{ inputs.ecr_repository }}:${{ inputs.image_tag }}
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
