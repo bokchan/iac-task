@@ -13,7 +13,24 @@ env:
   AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
 
 jobs:
+  # Run QA checks before any deployment
+  qa-checks:
+    name: Quality Assurance
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [infra, webapp]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Run QA for ${{ matrix.target }}
+        uses: ./.github/actions/run-qa
+        with:
+          target_directory: ${{ matrix.target }}
+
   build-and-deploy:
+    needs: qa-checks
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.get-image-tag.outputs.image_tag }}

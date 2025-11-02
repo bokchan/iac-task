@@ -27,7 +27,7 @@ runs:
         echo "🔍 Running quality assurance on ${{ inputs.target_directory }}"
 
         # Make QA script executable and run it
-        chmod +x ../run_qa.sh
-        ../run_qa.sh .
+        chmod +x  ../run_qa.sh
+        uv run ../run_qa.sh .
       shell: bash
       working-directory: ${{ inputs.target_directory }}
