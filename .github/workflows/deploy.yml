@@ -9,8 +9,6 @@ permissions:
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
-  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
-  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
 
 jobs:
@@ -42,7 +40,7 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ vars.ECR_DEV_REPOSITORY }}
+          ECR_REPOSITORY: ${{ vars.AWS_ECR_REPOSITORY_DEV }}
         working-directory: ./webapp
         run: |
           # Build and tag image.
@@ -116,7 +114,7 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ vars.ECR_PROD_REPOSITORY }}
+          ECR_REPOSITORY: ${{ vars.AWS_ECR_REPOSITORY_PROD }}
         working-directory: ./webapp
         run: |
           # Build and tag image.
