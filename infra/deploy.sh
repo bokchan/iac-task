@@ -2,24 +2,79 @@
 
 # Comprehensive deployment script for different environments
 # Usage: ./deploy.sh [environment] [action] [--image_tag <tag>] [additional-args]
-# Actions: synth, deploy, destroy, diff
-# Examples:
-#   ./deploy.sh dev deploy
-#   ./deploy.sh prod synth --image_tag abc1234
-#   ./deploy.sh dev diff --image_tag 047f583
 
 set -e
 
 IMAGE_TAG=""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Parse command line arguments for --image_tag
+# Parse command line arguments for --image_tag and help
 ARGS=()
 while [[ $# -gt 0 ]]; do
     case $1 in
         --image_tag)
             IMAGE_TAG="$2"
             shift 2
+            ;;
+        -h|--help)
+            cat << 'EOF'
+Usage: ./deploy.sh [ENVIRONMENT] [ACTION] [OPTIONS]
+
+DESCRIPTION:
+    Comprehensive deployment script for CDK infrastructure management.
+    Supports multiple environments and deployment actions with optional image tagging.
+
+ARGUMENTS:
+    ENVIRONMENT     Target environment (default: dev)
+                   Valid values: dev, prod
+
+    ACTION         Deployment action to perform (default: deploy)
+                   Valid values:
+                     synth   - Synthesize CloudFormation templates
+                     deploy  - Deploy infrastructure to AWS
+                     destroy - Destroy infrastructure (requires confirmation)
+                     diff    - Show differences between current and deployed
+                     list    - List all stacks for the environment
+
+OPTIONS:
+    --image_tag TAG    Use specific Docker image tag for deployment
+    -h, --help         Show this help message and exit
+
+EXAMPLES:
+    # Deploy development environment with default settings
+    ./deploy.sh dev deploy
+
+    # Deploy production with specific image tag
+    ./deploy.sh prod deploy --image_tag v1.2.3
+
+    # Show differences for development environment
+    ./deploy.sh dev diff
+
+    # Synthesize templates for production with image tag
+    ./deploy.sh prod synth --image_tag abc1234
+
+    # List all stacks in production environment
+    ./deploy.sh prod list
+
+    # Destroy development environment (with confirmation prompt)
+    ./deploy.sh dev destroy
+
+PREREQUISITES:
+    - AWS CLI configured with appropriate credentials
+    - AWS CDK CLI installed (npm install -g aws-cdk)
+    - Python environment with uv or pip available
+    - Virtual environment created (.venv directory)
+
+ENVIRONMENT VARIABLES:
+    The script will load additional environment variables from .env file if present.
+    Set ENVIRONMENT variable for the target deployment environment.
+
+EXIT CODES:
+    0  - Success
+    1  - Error (invalid arguments, missing dependencies, deployment failure)
+
+EOF
+            exit 0
             ;;
         *)
             ARGS+=("$1")
