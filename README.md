@@ -106,10 +106,3 @@ cd infra
 - **Monitoring**: Health endpoints, CloudWatch logs, deployment verification
 - **Details**: See [Infrastructure Security](infra/README.md#security-features) and [Application Monitoring](webapp/README.md#monitoring-and-observability)
 
----
-
-**🚀 Next Steps:**
-- **New to the project?** Start with [local development](#getting-started)
-- **Ready for AWS?** Follow the [infrastructure guide](infra/README.md#setup-and-deployment-instructions)
-- **API development?** Check the [webapp documentation](webapp/README.md)
-- **Need help?** Review [component documentation](#-component-documentation)
