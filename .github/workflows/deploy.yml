@@ -120,8 +120,8 @@ jobs:
         working-directory: ./webapp
         run: |
           # Build and tag image.
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }} .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ needs.build-and-deploy.outputs.image_tag }} .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ needs.build-and-deploy.outputs.image_tag }}
 
       - name: Setup Python and Install Dependencies
         uses: actions/setup-python@v5
