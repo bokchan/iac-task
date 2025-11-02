@@ -57,17 +57,6 @@ The project uses **GitHub Actions** for automated continuous integration and dep
 - **Environment Isolation**: Separate AWS resources per environment
 - **Approval Gates**: Production requires manual approval
 
-### Environment Variables and Secrets
-
-| Type     | Name                              | Purpose                          | Scope      |
-| -------- | --------------------------------- | -------------------------------- | ---------- |
-| Secret   | `AWS_ACCOUNT_ID`                  | AWS account id                   | Repository |
-| Secret   | `AWS_GITHUB_ACTION_ROLE_ARN_DEV`  | IAM role for OIDC authentication | Repository |
-| Secret   | `AWS_GITHUB_ACTION_ROLE_ARN_PROD` | IAM role for OIDC authentication | Repository |
-| Variable | `AWS_REGION`                      | Deployment region                | Repository |
-| Variable | `AWS_ECR_REPOSITORY_DEV`          | Container registry name          | Repository |
-| Variable | `AWS_ECR_REPOSITORY_PROD`         | Container registry name          | Repository |
-
 ## 🚀 Setup and Deployment Instructions
 
 ### Prerequisites
