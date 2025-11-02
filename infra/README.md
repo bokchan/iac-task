@@ -164,10 +164,11 @@ After deployment, configure GitHub repository for automated deployments:
 
 #### 3. Configure GitHub Variables
 
-| Variable Name    | Value                           | Description            |
-| ---------------- | ------------------------------- | ---------------------- |
-| `AWS_REGION`     | `eu-central-1`                  | Your deployment region |
-| `ECR_REPOSITORY` | `iac-task-{env}-ecr-repository` | ECR repository name    |
+| Variable Name         | Value                          | Description            |
+| --------------------- | ------------------------------ | ---------------------- |
+| `AWS_REGION`          | `eu-central-1`                 | Your deployment region |
+| `ECR_DEV_REPOSITORY`  | `iac-task-dev-ecr-repository`  | ECR repository name    |
+| `ECR_PROD_REPOSITORY` | `iac-task-prod-ecr-repository` | ECR repository name    |
 
 #### 4. Set Up GitHub Environment Protection
 
@@ -178,47 +179,19 @@ After deployment, configure GitHub repository for automated deployments:
 
 ### Deployment Verification
 
-1. **Check Stack Status**
+Use the script `check-deployment.sh` to verify the deployment.
+The profile must be granted at least the following permissions:
 
-   ```bash
-   # List all stacks (from the infra directory)
-   cd infra
-   cdk list -c environment=dev
-   # Expected output: iac-task-dev-VpcStack, iac-task-dev-EcrStack, etc.
+  - cloudformation:DescribeStacks
+  - ecs:ListClusters, ecs:ListServices, ecs:DescribeServices
+  - ecr:ListImages, ecr:DescribeImages
+  - sts:GetCallerIdentity
 
-   # Check specific stack deployment status
-   aws cloudformation describe-stacks \
-     --stack-name iac-task-dev-AppStack \
-     --query 'Stacks[0].StackStatus' \
-     --output text
-   ```
-
-2. **Verify Application**
-
-   ```bash
-   # Get load balancer URL from CloudFormation outputs
-   aws cloudformation describe-stacks \
-     --stack-name iac-task-dev-AppStack \
-     --query 'Stacks[0].Outputs[?OutputKey==`LoadBalancerDNS`].OutputValue' \
-     --output text
-
-   # Store the URL in a variable for easier use
-   export ALB_URL=$(aws cloudformation describe-stacks \
-     --stack-name iac-task-dev-AppStack \
-     --query 'Stacks[0].Outputs[?OutputKey==`LoadBalancerDNS`].OutputValue' \
-     --output text)
-
-   # Test application endpoints (see webapp/README.md for endpoint details)
-   curl http://$ALB_URL/health    # Health check endpoint
-   curl http://$ALB_URL/version   # Version tracking endpoint
-   curl http://$ALB_URL/          # Main application endpoint
-   ```
-
-**Automated Verification Script**:
 ```bash
 # cd into the infra directory
-./check-deployment.sh dev
+./check-deployment.sh dev --profile <aws_profile>
 ```
+
 > **Script Details**: The deployment checker validates all infrastructure components and tests [application endpoints](../webapp/README.md#api-endpoints)
 
 3. **Monitor Logs**

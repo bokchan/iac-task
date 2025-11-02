@@ -11,7 +11,7 @@ The core FastAPI web service for the IaC Task project. This lightweight applicat
 - **Version Tracking**: Dynamic version endpoint that displays the deployed image tag
 - **Environment Configuration**: Configurable message and logging via environment variables
 - **Production Ready**: Multi-stage Docker build with security best practices
-- **Testing**: Comprehensive test suite with pytest and test client
+- **Testing**: Test suite with pytest and test client
 
 ## 📋 API Endpoints
 
@@ -173,18 +173,6 @@ The Dockerfile uses a **multi-stage build** approach for optimal security and pe
 - 📦 Multi-stage build reduces image size
 - 🔐 Security-focused base images
 
-## 🌐 Cloud Integration
-
-This application follows cloud-native patterns:
-
-- **Container Ready**: Multi-stage Docker build with security best practices
-- **Health Monitoring**: `/health` endpoint for load balancer integration
-- **Version Tracking**: `/version` endpoint displays deployment information
-- **12-Factor App**: Environment-based configuration
-- **Structured Logging**: Compatible with centralized logging systems
-
-> **Cloud Deployment**: For AWS deployment instructions, see [Infrastructure Documentation](../infra/README.md)
-
 ## 🔍 Application Monitoring
 
 | Endpoint | Purpose | Usage |
@@ -207,19 +195,3 @@ Once the application is running, access the interactive API documentation:
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
 - **OpenAPI Schema**: http://localhost:8000/openapi.json
-
-## 🤝 Development Practices
-
-This application follows modern Python development standards:
-
-- **FastAPI**: High-performance async web framework with automatic OpenAPI documentation
-- **UV**: Fast Python package manager for dependency management
-- **Pytest**: Comprehensive testing framework with fixtures and mocking
-- **Type Hints**: Full type annotation support for better IDE integration
-- **Docker**: Multi-stage containerized builds for production deployment
-- **12-Factor App**: Environment-based configuration and stateless design
-
-### Integration with Infrastructure
-- **Container Registry**: Images pushed to AWS ECR via [CI/CD pipeline](../infra/README.md#ci-cd-pipeline-overview)
-- **Cloud Deployment**: Deployed to ECS Fargate via [infrastructure automation](../infra/README.md#deployment-process)
-- **Environment Variables**: Configured through [infrastructure configuration](../infra/README.md#environment-differences)
