@@ -42,13 +42,22 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_DEV_REPOSITORY: ${{ vars.ECR_DEV_REPOSITORY }}
+          ECR_PROD_REPOSITORY: ${{ vars.ECR_PROD_REPOSITORY }}
         working-directory: ./webapp
         run: |
-          # Build and tag image
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }} .
+          # Build and tag image.
+          docker build -t iac-task .
 
-          # Push with commit SHA tag (used by both environments)
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
+          PROD_IMAGE_URI=$ECR_REGISTRY/$ECR_PROD_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
+          DEV_IMAGE_URI=$ECR_REGISTRY/$ECR_DEV_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
+          # Tag image for prod and dev
+          docker tag iac-task $PROD_IMAGE_URI
+          docker tag iac-task $DEV_IMAGE_URI
+
+          # Push to dev and prod ECR repositories
+          docker push $PROD_IMAGE_URI
+          docker push $DEV_IMAGE_URI
 
   deploy-dev:
     needs: build-and-deploy
