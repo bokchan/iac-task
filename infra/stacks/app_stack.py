@@ -1,7 +1,8 @@
-from aws_cdk import CfnOutput, Duration, Stack
+from aws_cdk import CfnOutput, Duration, RemovalPolicy, Stack
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_ecs_patterns as ecs_patterns
-from config import AppConfig
+from aws_cdk import aws_logs as logs
+from config import InfrastructureConfig
 from constructs import Construct
 
 from stacks.ecr_stack import EcrStack
@@ -15,7 +16,7 @@ class AppStack(Stack):
         self,
         scope: Construct,
         construct_id: str,
-        config: AppConfig,
+        config: InfrastructureConfig,
         vpc_stack: VpcStack,
         ecr_stack: EcrStack,
         image_tag: str,
@@ -23,28 +24,45 @@ class AppStack(Stack):
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        # Create CloudWatch log group with required naming convention
+        log_group = logs.LogGroup(
+            self,
+            "AppLogGroup",
+            log_group_name=config.get_log_group_name(),
+            retention=logs.RetentionDays.ONE_MONTH,
+            removal_policy=RemovalPolicy.DESTROY
+            if config.environment == "dev"
+            else RemovalPolicy.RETAIN,
+        )
+
         # Use the high-level ApplicationLoadBalancedFargateService construct
         fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
             self,
             "FargateService",
+            service_name=config.get_resource_name("service"),
             vpc=vpc_stack.vpc,
-            cpu=config.app_service.cpu,
-            memory_limit_mib=config.app_service.memory_limit_mb,
-            desired_count=config.app_service.desired_count,
+            cpu=config.ecs_service.cpu,
+            memory_limit_mib=config.ecs_service.memory_limit_mb,
+            desired_count=config.ecs_service.desired_count,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
+                family=config.get_resource_name("task"),
                 image=ecs.ContainerImage.from_ecr_repository(
                     ecr_stack.repository, tag=image_tag
                 ),
-                container_port=config.app_service.container_port,
+                container_port=config.ecs_service.container_port,
                 environment={
                     "IMAGE_TAG": image_tag,
-                    **config.app_service.app_environment.to_environment_dict(),  # type: ignore[union-attr]
+                    **config.ecs_service.application_settings.to_environment_dict(),  # type: ignore[union-attr]
                 },
+                log_driver=ecs.LogDriver.aws_logs(
+                    stream_prefix="ecs",
+                    log_group=log_group,
+                ),
             ),
             public_load_balancer=True,
         )
 
-        # Configure health checks
+        # Configure health checks with proper timeouts and intervals
         fargate_service.target_group.configure_health_check(
             path="/health", interval=Duration.seconds(60)
         )
@@ -55,4 +73,12 @@ class AppStack(Stack):
             "LoadBalancerDNS",
             value=fargate_service.load_balancer.load_balancer_dns_name,
             description="The DNS name of the application load balancer",
+        )
+
+        # Output the log group name for easy reference
+        CfnOutput(
+            self,
+            "LogGroupName",
+            value=log_group.log_group_name,
+            description="CloudWatch log group name for application logs",
         )
