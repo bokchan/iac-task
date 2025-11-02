@@ -99,14 +99,11 @@ def get_environment_config(environment: str) -> InfrastructureConfig:
         github_repo="bokchan/iac-task",
         creator="andreas",
         ecr=EcrConfig(
-            repository_name=f"{project_name.lower()}-ecr-repository",
+            repository_name=f"{project_name.lower()}-{environment}-ecr-repository",
         ),
         vpc=VpcConfig(),
         ecs_service=EcsServiceConfig(),
     )
-
-    # Update ECR repository name using the config method
-    infra_config.ecr.repository_name = infra_config.get_resource_name("ecr-repository")
 
     # Environment-specific configurations using factory pattern
     if environment == "dev":

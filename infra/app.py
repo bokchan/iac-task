@@ -33,7 +33,7 @@ vpc_stack = VpcStack(
     config=config,
 )
 
-# ECR Stack for container images
+# ECR Stack - Environment-specific repositories
 ecr_stack = EcrStack(
     app,
     config.get_resource_name("EcrStack"),
@@ -41,7 +41,7 @@ ecr_stack = EcrStack(
     config=config,
 )
 
-# GitHub OIDC Stack for separate IAM roles
+# GitHub OIDC Stack for IAM roles
 github_oidc_stack = GitHubOidcStack(
     app,
     config.get_resource_name("GitHubOidcStack"),

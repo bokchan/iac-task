@@ -42,10 +42,24 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_DEV_REPOSITORY: ${{ vars.ECR_DEV_REPOSITORY }}
+          ECR_PROD_REPOSITORY: ${{ vars.ECR_PROD_REPOSITORY }}
         working-directory: ./webapp
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }} .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
+          # Build and tag image.
+          docker build -t iac-task .
+
+          PROD_IMAGE_URI=$ECR_REGISTRY/$ECR_PROD_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
+          DEV_IMAGE_URI=$ECR_REGISTRY/$ECR_DEV_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
+
+          # Tag image for prod and dev
+          # TODO: check if a shared ECR can be used for both environments
+          docker tag iac-task $PROD_IMAGE_URI
+          docker tag iac-task $DEV_IMAGE_URI
+
+          # Push to dev and prod ECR repositories
+          docker push $PROD_IMAGE_URI
+          docker push $DEV_IMAGE_URI
 
   deploy-dev:
     needs: build-and-deploy
@@ -93,7 +107,6 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: ${{ steps.get-alb-url.outputs.url }} # Optional: Display the ALB URL in the approval UI
     steps:
       # Production deployment with unified role
       # Security: Manual approval configured in GitHub repository settings for 'production' environment
@@ -111,7 +124,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.14"
-      - run: pip install uv && uv sync --all-packages
+      - run: pip install uv && uv pip compile pyproject.toml -o requirements.txt --no-deps && uv pip install --system -r requirements.txt
         working-directory: ./infra
 
       - name: Cache CDK
