@@ -1,6 +1,8 @@
 # FastAPI Web Application
 
-A lightweight FastAPI web application designed for cloud deployment with comprehensive health monitoring and version tracking capabilities.
+The core FastAPI web service for the IaC Task project. This lightweight application provides REST API endpoints with health monitoring, version tracking, and cloud-ready configuration.
+
+> **Note**: This README focuses on the FastAPI application. For infrastructure deployment and project overview, see the [project root README](../README.md) and [infrastructure documentation](../infra/README.md).
 
 ## 🚀 Features
 
@@ -68,39 +70,15 @@ The application is configured via environment variables:
 
 #### Using Docker Compose (Recommended)
 
-The project includes a `docker-compose.yml` file in the root directory for easy development:
+The project root includes `docker-compose.yml` for integrated development:
 
-1. **Run with Docker Compose**:
+```bash
+# From the project root directory
+docker compose up --build
+# → Starts webapp with hot reload and health checks
+```
 
-   ```bash
-   # From the project root directory
-   docker compose up --build
-   ```
-
-2. **Run in development mode with hot reload**:
-
-   ```bash
-   # Enable file watching for automatic updates
-   docker compose up --build --watch
-   ```
-
-3. **Run in detached mode**:
-
-   ```bash
-   docker compose up -d --build
-   ```
-
-4. **Stop the services**:
-   ```bash
-   docker compose down
-   ```
-
-The Docker Compose setup includes:
-
-- **Hot reload**: File watching for automatic updates during development
-- **Health checks**: Built-in container health monitoring
-- **Custom network**: Isolated container networking
-- **Pre-configured environment**: Ready-to-use development settings
+> **Full Docker Compose details**: See [project root README](../README.md#getting-started)
 
 #### Manual Docker Commands
 
@@ -195,22 +173,32 @@ The Dockerfile uses a **multi-stage build** approach for optimal security and pe
 - 📦 Multi-stage build reduces image size
 - 🔐 Security-focused base images
 
-## 🌐 Cloud Deployment
+## 🌐 Cloud Integration
 
-This application is designed for cloud deployment with:
+This application follows cloud-native patterns:
 
-- **Container Orchestration**: Ready for Kubernetes, ECS, or similar platforms
-- **Health Checks**: `/health` endpoint for load balancer health checks
-- **Version Tracking**: `/version` endpoint for deployment monitoring
-- **Environment Configuration**: 12-factor app compliance via environment variables
-- **Logging**: Structured logging compatible with cloud logging services
+- **Container Ready**: Multi-stage Docker build with security best practices
+- **Health Monitoring**: `/health` endpoint for load balancer integration
+- **Version Tracking**: `/version` endpoint displays deployment information
+- **12-Factor App**: Environment-based configuration
+- **Structured Logging**: Compatible with centralized logging systems
 
-## 🔍 Monitoring and Observability
+> **Cloud Deployment**: For AWS deployment instructions, see [Infrastructure Documentation](../infra/README.md)
 
-- **Health Monitoring**: Use `/health` endpoint for uptime monitoring
-- **Version Tracking**: Use `/version` endpoint to verify deployments
-- **Logging**: Configurable log levels for debugging and monitoring
-- **Metrics**: FastAPI provides built-in metrics via `/metrics` (if enabled)
+## 🔍 Application Monitoring
+
+| Endpoint | Purpose | Usage |
+|----------|---------|-------|
+| `/health` | Load balancer checks | Returns `"OK"` for uptime monitoring |
+| `/version` | Deployment tracking | Returns `{"version": "<image-tag>"}` |
+| `/docs` | API documentation | Interactive Swagger UI |
+
+**Logging Configuration**:
+```bash
+# Set log level via environment variable
+export LOG_LEVEL="DEBUG"  # DEBUG, INFO, WARNING, ERROR
+uv run uvicorn main:app --reload
+```
 
 ## 📚 API Documentation
 
@@ -220,13 +208,18 @@ Once the application is running, access the interactive API documentation:
 - **ReDoc**: http://localhost:8000/redoc
 - **OpenAPI Schema**: http://localhost:8000/openapi.json
 
-## 🤝 Development
+## 🤝 Development Practices
 
-This application follows modern Python development practices:
+This application follows modern Python development standards:
 
-- **FastAPI**: High-performance web framework
-- **UV**: Fast Python package manager
-- **Pytest**: Comprehensive testing framework
-- **Type Hints**: Full type annotation support
-- **Docker**: Containerized deployment
-- **Multi-stage Builds**: Optimized container images
+- **FastAPI**: High-performance async web framework with automatic OpenAPI documentation
+- **UV**: Fast Python package manager for dependency management
+- **Pytest**: Comprehensive testing framework with fixtures and mocking
+- **Type Hints**: Full type annotation support for better IDE integration
+- **Docker**: Multi-stage containerized builds for production deployment
+- **12-Factor App**: Environment-based configuration and stateless design
+
+### Integration with Infrastructure
+- **Container Registry**: Images pushed to AWS ECR via [CI/CD pipeline](../infra/README.md#ci-cd-pipeline-overview)
+- **Cloud Deployment**: Deployed to ECS Fargate via [infrastructure automation](../infra/README.md#deployment-process)
+- **Environment Variables**: Configured through [infrastructure configuration](../infra/README.md#environment-differences)

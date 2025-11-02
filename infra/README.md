@@ -1,58 +1,328 @@
+# AWS Infrastructure - CDK Configuration
 
-# Welcome to your CDK Python project!
+AWS CDK infrastructure code for deploying the [FastAPI application](../webapp/) to AWS cloud. Provides production-ready ECS Fargate deployment with load balancer, container registry, and automated CI/CD pipeline.
 
-This is a blank project for CDK development with Python.
+> **Prerequisites**: Complete [local development setup](../README.md#getting-started) and review [application documentation](../webapp/README.md) before cloud deployment.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+## 🏗️ AWS Infrastructure Components
 
-This project is set up like a standard Python project.  The initialization
-process also creates a virtualenv within this project, stored under the `.venv`
-directory.  To create the virtualenv it assumes that there is a `python3`
-(or `python` for Windows) executable in your path with access to the `venv`
-package. If for any reason the automatic creation of the virtualenv fails,
-you can create the virtualenv manually.
+> **System Overview**: See [project architecture diagram](../README.md#system-architecture) for complete system context.
 
-To manually create a virtualenv on MacOS and Linux:
+#### 1. **Networking Stack** (`VpcStack`)
+
+- **VPC**: Isolated network environment (`iac-task-{env}-vpc`)
+- **Public Subnets**: Internet-facing resources, ALB deployment
+- **Private Subnets**: ECS tasks with outbound internet via NAT Gateway
+- **Availability Zones**: Multi-AZ deployment for high availability
+
+#### 2. **Container Registry** (`EcrStack`)
+
+- **ECR Repository**: Container image storage (`iac-task-{env}-ecr-repository`)
+- **Image Scanning**: Automated security vulnerability scanning
+- **Lifecycle Policy**: Automatic cleanup of old images
+
+#### 3. **Application Stack** (`AppStack`)
+
+- **ECS Fargate Service**: Serverless container hosting (`iac-task-{env}-service`)
+- **Application Load Balancer**: Public endpoint with health checks
+- **Auto Scaling**: Automatic scaling based on demand
+- **CloudWatch Logs**: Centralized logging (`andreas-applogs-{env}`)
+
+#### 4. **CI/CD & Security** (`GitHubOidcStack`)
+
+- **OIDC Provider**: Secure, keyless authentication from GitHub Actions
+- **IAM Role**: Unified permissions for ECR and deployment operations
+- **Least Privilege**: Repository-scoped access with environment protection
+
+## CI/CD Pipeline Overview
+
+The project uses **GitHub Actions** for automated continuous integration and deployment with a secure, keyless authentication approach via OpenID Connect (OIDC).
+
+### Pipeline Architecture
 
 ```
-$ python3 -m venv .venv
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   GitHub Push   │────│   Build & Test   │────│   Deploy Multi  │
+│   (main branch) │    │                  │    │   Environment   │
+│                 │    │ • Build Docker   │    │                 │
+│ • Code Changes  │    │ • Push to ECR    │    │ • Dev (Auto)    │
+│ • Infrastructure│    │ • Generate Tag   │    │ • Prod (Manual) │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
 
-After the init process completes and the virtualenv is created, you can use the following
-step to activate your virtualenv.
+### Security Features
 
+- **OIDC Authentication**: No long-lived AWS access keys stored in GitHub
+- **Least Privilege IAM**: Single unified role with minimal required permissions
+- **Environment Isolation**: Separate AWS resources per environment
+- **Approval Gates**: Production requires manual approval
+- **Audit Trail**: All deployments logged in GitHub Actions and CloudTrail
+
+### Environment Variables and Secrets
+
+| Type     | Name                         | Purpose                          | Scope      |
+| -------- | ---------------------------- | -------------------------------- | ---------- |
+| Secret   | `AWS_ACCOUNT_ID`             | AWS account identifier           | Repository |
+| Secret   | `AWS_GITHUB_ACTION_ROLE_ARN` | IAM role for OIDC authentication | Repository |
+| Variable | `AWS_REGION`                 | Deployment region                | Repository |
+| Variable | `ECR_REPOSITORY`             | Container registry name          | Repository |
+
+## 🚀 Setup and Deployment Instructions
+
+### Prerequisites
+
+- **AWS Account**: With administrative access
+- **AWS CLI**: Configured with appropriate credentials
+- **Node.js**: Version 18+ for AWS CDK CLI
+- **Python**: Version 3.11+ for CDK development
+- **Docker**: For local container testing (optional)
+
+### Initial Setup
+
+1. **Install AWS CDK CLI**
+
+   ```bash
+   npm install -g aws-cdk
+   ```
+
+2. **Bootstrap CDK** (one-time per account/region)
+
+   ```bash
+   cd infra
+   cdk bootstrap
+   ```
+
+3. **Install Python Dependencies**
+
+   ```bash
+   pip install uv
+   uv sync
+   ```
+
+4. **Configure Environment Variables**
+   ```bash
+   # Required environment variables
+   export AWS_ACCOUNT_ID="123456789012"
+   export AWS_REGION="eu-central-1"
+   ```
+
+### Deployment Process
+
+#### 1. Deploy Infrastructure Stacks
+
+```bash
+# Deploy development environment
+cdk deploy --all -c environment=dev --image_tag=<tag_of_image_in_ecr>
+
+# Deploy production environment
+cdk deploy --all -c environment=prod --image_tag=<tag_of_image_in_ecr>
 ```
-$ source .venv/bin/activate
+
+#### 2. Using the Deploy Script (Recommended)
+
+The `deploy.sh` script provides a convenient wrapper around CDK commands with enhanced functionality:
+
+```bash
+# Basic deployment to development
+./deploy.sh dev deploy
+
+# Deploy with specific image tag
+./deploy.sh prod deploy --image_tag abc1234
+
+# Show differences before deployment
+./deploy.sh dev diff --image_tag 047f583
+
+# Synthesize templates without deploying
+./deploy.sh prod synth
+
+# List all stacks
+./deploy.sh dev list
+
+# Destroy environment (with confirmation)
+./deploy.sh dev destroy
 ```
 
-If you are a Windows platform, you would activate the virtualenv like this:
+**Script Features:**
 
+- **Environment Validation**: Ensures only `dev` or `prod` environments
+- **Prerequisites Check**: Validates CDK installation and AWS credentials
+- **Dependency Management**: Automatically installs Python dependencies using `uv` or `pip`
+- **Flexible Image Tags**: Supports custom image tags for specific deployments
+- **Safety Checks**: Requires confirmation for destructive operations
+- **Environment Variables**: Loads `.env` file if present for configuration
+
+#### 3. Configure GitHub Secrets
+
+After deployment, configure GitHub repository for automated deployments:
+
+| Secret Name                  | Value                                                               | Description                 |
+| ---------------------------- | ------------------------------------------------------------------- | --------------------------- |
+| `AWS_ACCOUNT_ID`             | `123456789012`                                                      | Your AWS account ID         |
+| `AWS_GITHUB_ACTION_ROLE_ARN` | `arn:aws:iam::123456789012:role/iac-task-{env}-github-actions-role` | From CloudFormation outputs |
+
+> **Application Integration**: The CI/CD pipeline automatically builds and deploys the [FastAPI application](../webapp/README.md) from the `/webapp` directory.
+
+#### 3. Configure GitHub Variables
+
+| Variable Name    | Value                           | Description            |
+| ---------------- | ------------------------------- | ---------------------- |
+| `AWS_REGION`     | `eu-central-1`                  | Your deployment region |
+| `ECR_REPOSITORY` | `iac-task-{env}-ecr-repository` | ECR repository name    |
+
+#### 4. Set Up GitHub Environment Protection
+
+1. Navigate to **Settings** → **Environments** in your GitHub repository
+2. Create `development` environment
+3. Create `production` environment
+4. Enable **Required reviewers** for `production` deployments to require manual approval in CI/CD
+
+### Deployment Verification
+
+1. **Check Stack Status**
+
+   ```bash
+   # List all stacks (from the infra directory)
+   cd infra
+   cdk list -c environment=dev
+   # Expected output: iac-task-dev-VpcStack, iac-task-dev-EcrStack, etc.
+
+   # Check specific stack deployment status
+   aws cloudformation describe-stacks \
+     --stack-name iac-task-dev-AppStack \
+     --query 'Stacks[0].StackStatus' \
+     --output text
+   ```
+
+2. **Verify Application**
+
+   ```bash
+   # Get load balancer URL from CloudFormation outputs
+   aws cloudformation describe-stacks \
+     --stack-name iac-task-dev-AppStack \
+     --query 'Stacks[0].Outputs[?OutputKey==`LoadBalancerDNS`].OutputValue' \
+     --output text
+
+   # Store the URL in a variable for easier use
+   export ALB_URL=$(aws cloudformation describe-stacks \
+     --stack-name iac-task-dev-AppStack \
+     --query 'Stacks[0].Outputs[?OutputKey==`LoadBalancerDNS`].OutputValue' \
+     --output text)
+
+   # Test application endpoints (see webapp/README.md for endpoint details)
+   curl http://$ALB_URL/health    # Health check endpoint
+   curl http://$ALB_URL/version   # Version tracking endpoint
+   curl http://$ALB_URL/          # Main application endpoint
+   ```
+
+**Automated Verification Script**:
+```bash
+# cd into the infra directory
+./check-deployment.sh dev
 ```
-% .venv\Scripts\activate.bat
+> **Script Details**: The deployment checker validates all infrastructure components and tests [application endpoints](../webapp/README.md#api-endpoints)
+
+3. **Monitor Logs**
+
+   ```bash
+   # Get log group name from CloudFormation
+   export LOG_GROUP=$(aws cloudformation describe-stacks \
+     --stack-name iac-task-dev-AppStack \
+     --query 'Stacks[0].Outputs[?OutputKey==`LogGroupName`].OutputValue' \
+     --output text)
+
+   # View application logs
+   aws logs tail $LOG_GROUP --follow
+
+   # Or use the log group name directly (if you know it)
+   aws logs tail andreas-applogs-dev --follow
+   ```
+
+## 🧹 Cleanup Steps
+
+### Complete Environment Cleanup
+
+```bash
+# Destroy all stacks (WARNING: This deletes everything)
+cdk destroy --all -c environment=dev
+cdk destroy --all -c environment=prod
 ```
 
-Once the virtualenv is activated, you can install the required dependencies.
+### Selective Cleanup
 
-```
-$ pip install -r requirements.txt
-```
-
-At this point you can now synthesize the CloudFormation template for this code.
-
-```
-$ cdk synth
+```bash
+# Destroy specific stacks (order matters due to dependencies)
+cdk destroy iac-task-dev-AppStack -c environment=dev
+cdk destroy iac-task-dev-EcrStack -c environment=dev
+cdk destroy iac-task-dev-GitHubOidcStack -c environment=dev
+cdk destroy iac-task-dev-VpcStack -c environment=dev
 ```
 
-To add additional dependencies, for example other CDK libraries, just add
-them to your `setup.py` file and rerun the `pip install -r requirements.txt`
-command.
+### Manual Cleanup Required
 
-## Useful commands
+Some resources may require manual deletion:
 
- * `cdk ls`          list all stacks in the app
- * `cdk synth`       emits the synthesized CloudFormation template
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk docs`        open CDK documentation
+1. **ECR Images**: Delete manually if repository removal fails
 
-Enjoy!
+   ```bash
+   # List images
+   aws ecr list-images --repository-name iac-task-dev-ecr-repository
+
+   # Delete all images
+   aws ecr batch-delete-image \
+     --repository-name iac-task-dev-ecr-repository \
+     --image-ids imageTag=untagged
+   ```
+
+2. **CloudWatch Log Groups**: Retained in production by design
+   ```bash
+   # Delete log groups if needed
+   aws logs delete-log-group --log-group-name andreas-applogs-prod
+   ```
+
+## ⚠️ Assumptions and Limitations
+
+### Assumptions
+
+- **Single Region Deployment**: Architecture assumes single AWS region
+- **GitHub Repository**: CI/CD is designed specifically for GitHub Actions
+- **Container Workload**: Application must be containerizable (see [webapp Docker configuration](../webapp/README.md#docker-image-details))
+- **HTTP/HTTPS Traffic**: Load balancer configured for web traffic only
+- **Shared ECR Repository**: Images are shared between environments (per repository naming)
+
+### Current Limitations
+
+#### Scale & Performance
+
+- **ECS Service Limits**: Default configuration supports moderate traffic
+- **Single Region**: No cross-region failover capability
+- **Caching**: No Redis/ElastiCache integration
+
+#### Security
+
+- **Public Load Balancer**: ALB is internet-facing (private ALB requires VPN/bastion)
+- **Container Security**: No runtime security scanning beyond ECR image scans
+- **Secrets Management**: Basic environment variables (consider AWS Secrets Manager for sensitive data)
+
+#### Operations
+
+- **Backup Strategy**: No automated backup system for stateful components
+- **Monitoring**: Basic CloudWatch integration (consider adding X-Ray, custom metrics)
+- **SSL/TLS**: No automatic certificate management (add ACM integration for production domains)
+
+#### Cost Optimization
+
+- **NAT Gateway**: Always running (consider NAT instances for dev environments)
+- **ECS Tasks**: Minimum task count may run even with no traffic
+- **Load Balancer**: Always provisioned (consider using Function URLs for dev)
+
+### Environment Differences
+
+| Feature               | Development               | Production               |
+| --------------------- | ------------------------- | ------------------------ |
+| **ECS Tasks**         | 1 task, 0.5 vCPU, 1GB RAM | 2 tasks, 1 vCPU, 2GB RAM |
+| **Log Retention**     | 1 month                   | 1 month (configurable)   |
+| **Resource Removal**  | DESTROY on stack deletion | RETAIN ECR repository    |
+| **GitHub Protection** | Direct deployment         | Manual approval required |
+| **Application Logs**  | DEBUG level               | INFO level               |
+
+For production workloads, review and adjust these configurations based on your specific requirements.
