@@ -3,8 +3,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    types: [opened, synchronize, reopened]
 permissions:
   id-token: write # Required for OIDC authentication with AWS
   contents: read # Required to check out the repository
@@ -53,7 +51,6 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
 
   deploy-dev:
-    if: github.ref == 'false'
     needs: build-and-deploy
     runs-on: ubuntu-latest
     environment: development
