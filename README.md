@@ -100,8 +100,3 @@ cd infra
 | **Verify Deployment** | `cd infra && ./check-deployment.sh dev` | [infra/README.md](infra/README.md#deployment-verification) |
 | **View API Docs** | http://localhost:8000/docs | [webapp/README.md](webapp/README.md#api-documentation) |
 
-## 🛡️ Security & Monitoring Overview
-
-- **Security**: OIDC authentication, environment isolation, container hardening
-- **Monitoring**: Health endpoints, CloudWatch logs, deployment verification
-- **Details**: See [Infrastructure Security](infra/README.md#security-features) and [Application Monitoring](webapp/README.md#monitoring-and-observability)

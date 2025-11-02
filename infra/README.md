@@ -251,41 +251,34 @@ Some resources may require manual deletion:
    aws logs delete-log-group --log-group-name andreas-applogs-prod
    ```
 
-## ⚠️ Assumptions and Limitations
+## 🏗️ Architectural Considerations and Design Decisions
 
-### Assumptions
+### Infrastructure Design Philosophy
 
-- **Single Region Deployment**: Architecture assumes single AWS region
-- **GitHub Repository**: CI/CD is designed specifically for GitHub Actions
-- **Container Workload**: Application must be containerizable (see [webapp Docker configuration](../webapp/README.md#docker-image-details))
-- **HTTP/HTTPS Traffic**: Load balancer configured for web traffic only
-- **Environment-Specific ECR**: Each environment has its own ECR repository
+This infrastructure follows a **modular, environment-isolated approach** that prioritizes maintainability and independence over resource optimization. Key design decisions reflect lessons learned from real-world deployments and operational challenges.
 
-### Current Limitations
+#### Technology and Configuration Choices
 
-#### Scale & Performance
+**Decision**: Python CDK with programmatic configuration management
+- **Rationale**: I chose Python over TypeScript for CDK development due to familiarity and existing Python ecosystem knowledge
+- **Configuration Strategy**: As a consequence of using Python, defining configuration context programmatically (via `config.py`) made more sense than using `cdk.context.json`
 
-- **ECS Service Limits**: Default configuration supports moderate traffic
-- **Single Region**: No cross-region failover capability
-- **Caching**: No Redis/ElastiCache integration
+#### ECR Repository Strategy
 
-#### Security
+**Decision**: Environment-specific ECR repositories (`devops-project-{env}-ecr-repository`)
+- **Rationale**: Maintains clean separation between environments and keeps infrastructure generic
+- **Trade-off**: Requires image promotion/copying between environments vs. shared repository approach
+- **Consideration**: During development, I explored shared ECR repositories but reverted to environment-specific ones to maintain Infrastructure as Code principles and avoid coupling between environments
+- **Alternative**: Shared ECR approach reduces costs but makes infrastructure less portable and increases coupling
 
-- **Public Load Balancer**: ALB is internet-facing (private ALB requires VPN/bastion)
-- **Container Security**: No runtime security scanning beyond ECR image scans
-- **Secrets Management**: Basic environment variables (consider AWS Secrets Manager for sensitive data)
+#### Deployment and CI/CD Strategy
 
-#### Operations
+**Decision**: GitHub Actions with OIDC authentication and environment-specific deployments
+- **Rationale**: Eliminates long-lived credentials while providing fine-grained access control
+- **Trade-off**: Requires careful GitHub secrets/variables management vs. simpler credential approaches
+- **Consideration**: The `image_tag` parameter is required for deployments to ensure explicit version control and prevent accidental deployments with undefined versions
+- **OIDC Evolution**: Initially considered per-environment OIDC providers, but settled on shared provider with environment-specific roles to avoid CloudFormation conflicts
 
-- **Backup Strategy**: No automated backup system for stateful components
-- **Monitoring**: Basic CloudWatch integration (consider adding X-Ray, custom metrics)
-- **SSL/TLS**: No automatic certificate management (add ACM integration for production domains)
-
-#### Cost Optimization
-
-- **NAT Gateway**: Always running (consider NAT instances for dev environments)
-- **ECS Tasks**: Minimum task count may run even with no traffic
-- **Load Balancer**: Always provisioned (consider using Function URLs for dev)
 
 ### Environment Differences
 
