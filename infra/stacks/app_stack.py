@@ -64,7 +64,7 @@ class AppStack(Stack):
 
         # Configure health checks with proper timeouts and intervals
         fargate_service.target_group.configure_health_check(
-            path="/health", interval=Duration.seconds(30)
+            path="/health", interval=Duration.seconds(60)
         )
 
         # Output the URL of the load balancer
