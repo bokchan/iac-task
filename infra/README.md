@@ -61,6 +61,7 @@ The project uses **GitHub Actions** for automated continuous integration and dep
 
 | Type     | Name                              | Purpose                          | Scope      |
 | -------- | --------------------------------- | -------------------------------- | ---------- |
+| Secret   | `AWS_ACCOUNT_ID`                  | AWS account id                   | Repository |
 | Secret   | `AWS_GITHUB_ACTION_ROLE_ARN_DEV`  | IAM role for OIDC authentication | Repository |
 | Secret   | `AWS_GITHUB_ACTION_ROLE_ARN_PROD` | IAM role for OIDC authentication | Repository |
 | Variable | `AWS_REGION`                      | Deployment region                | Repository |
@@ -156,6 +157,7 @@ After deployment, configure GitHub repository for automated deployments:
 
 | Secret Name                       | Value                                                              | Description                 |
 | --------------------------------- | ------------------------------------------------------------------ | --------------------------- |
+| `AWS_ACCOUNT_ID`                  | `123456789012`                                                     |                             |
 | `AWS_GITHUB_ACTION_ROLE_ARN_DEV`  | `arn:aws:iam::123456789012:role/iac-task-dev-github-actions-role`  | From CloudFormation outputs |
 | `AWS_GITHUB_ACTION_ROLE_ARN_PROD` | `arn:aws:iam::123456789012:role/iac-task-prod-github-actions-role` | From CloudFormation outputs |
 
@@ -260,12 +262,14 @@ This infrastructure follows a **modular, environment-isolated approach** that pr
 #### Technology and Configuration Choices
 
 **Decision**: Python CDK with programmatic configuration management
+
 - **Rationale**: I chose Python over TypeScript for CDK development due to familiarity and existing Python ecosystem knowledge
 - **Configuration Strategy**: As a consequence of using Python, defining configuration context programmatically (via `config.py`) made more sense than using `cdk.context.json`
 
 #### ECR Repository Strategy
 
 **Decision**: Environment-specific ECR repositories (`devops-project-{env}-ecr-repository`)
+
 - **Rationale**: Maintains clean separation between environments and keeps infrastructure generic
 - **Trade-off**: Requires image promotion/copying between environments vs. shared repository approach
 - **Consideration**: During development, I explored shared ECR repositories but reverted to environment-specific ones to maintain Infrastructure as Code principles and avoid coupling between environments
@@ -274,11 +278,11 @@ This infrastructure follows a **modular, environment-isolated approach** that pr
 #### Deployment and CI/CD Strategy
 
 **Decision**: GitHub Actions with OIDC authentication and environment-specific deployments
+
 - **Rationale**: Eliminates long-lived credentials while providing fine-grained access control
 - **Trade-off**: Requires careful GitHub secrets/variables management vs. simpler credential approaches
 - **Consideration**: The `image_tag` parameter is required for deployments to ensure explicit version control and prevent accidental deployments with undefined versions
 - **OIDC Evolution**: Initially considered per-environment OIDC providers, but settled on shared provider with environment-specific roles to avoid CloudFormation conflicts
-
 
 ### Environment Differences
 
