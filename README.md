@@ -22,7 +22,7 @@ This project demonstrates a complete cloud-native application lifecycle:
 | **[Infrastructure](infra/READ)**        | Cloud resources  | AWS CDK, ECS Fargate, ALB |
 | **CI/CD Pipeline**                      | Automation       | GitHub Actions, OIDC      |
 
-> **Quick Navigation**: Start with [local development](#-getting-started) or jump to [AWS deployment](infra/#setup-and-deployment-instructions)
+> **Quick Navigation**: Start with [local development](#🚀-getting-started) or jump to [AWS deployment](infra/README.md#setup-and-deployment-instructions)
 
 ## 📁 Project Structure
 
@@ -45,7 +45,7 @@ iac-task/
 ## 🚀 Getting Started
 
 ### Prerequisites
-- **Docker** (recommended) or **Python 3.11+**
+- **Docker** (recommended) or **>=Python 3.14**
 - **AWS Account** (for cloud deployment)
 
 ### 1. Run Locally
@@ -61,11 +61,11 @@ docker compose up --build
 cd webapp && pip install uv && uv sync && uv run uvicorn main:app --reload
 ```
 
-### 2. Deploy to AWS
+### 2. Deploy to AWS from host
 ```bash
 cd infra
 # Full deployment instructions in infra/README.md
-./deploy.sh dev deploy
+./deploy.sh dev deploy --image_tag <existing_image_tag>
 ```
 
 ### 3. Explore the Application
