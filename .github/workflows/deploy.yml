@@ -30,7 +30,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_ROLE_ARN_DEV }}
           role-session-name: GitHubActions-Build-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
@@ -42,24 +42,12 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_DEV_REPOSITORY: ${{ vars.ECR_DEV_REPOSITORY }}
-          ECR_PROD_REPOSITORY: ${{ vars.ECR_PROD_REPOSITORY }}
+          ECR_REPOSITORY: ${{ vars.ECR_DEV_REPOSITORY }}
         working-directory: ./webapp
         run: |
           # Build and tag image.
-          docker build -t iac-task .
-
-          PROD_IMAGE_URI=$ECR_REGISTRY/$ECR_PROD_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
-          DEV_IMAGE_URI=$ECR_REGISTRY/$ECR_DEV_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
-
-          # Tag image for prod and dev
-          # TODO: check if a shared ECR can be used for both environments
-          docker tag iac-task $PROD_IMAGE_URI
-          docker tag iac-task $DEV_IMAGE_URI
-
-          # Push to dev and prod ECR repositories
-          docker push $PROD_IMAGE_URI
-          docker push $DEV_IMAGE_URI
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }} .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
 
   deploy-dev:
     needs: build-and-deploy
@@ -116,9 +104,24 @@ jobs:
       - name: Configure AWS Credentials for Prod Deployment
         uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTION_ROLE_ARN_PROD }}
           role-session-name: GitHubActions-ProdDeploy-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ vars.ECR_PROD_REPOSITORY }}
+        working-directory: ./webapp
+        run: |
+          # Build and tag image.
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }} .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
 
       - name: Setup Python and Install Dependencies
         uses: actions/setup-python@v5
