@@ -53,19 +53,19 @@ The project uses **GitHub Actions** for automated continuous integration and dep
 ### Security Features
 
 - **OIDC Authentication**: No long-lived AWS access keys stored in GitHub
-- **Least Privilege IAM**: Single unified role with minimal required permissions
+- **Least Privilege IAM**: One role per environment to handle ECR and deployment operations
 - **Environment Isolation**: Separate AWS resources per environment
 - **Approval Gates**: Production requires manual approval
-- **Audit Trail**: All deployments logged in GitHub Actions and CloudTrail
 
 ### Environment Variables and Secrets
 
-| Type     | Name                         | Purpose                          | Scope      |
-| -------- | ---------------------------- | -------------------------------- | ---------- |
-| Secret   | `AWS_ACCOUNT_ID`             | AWS account identifier           | Repository |
-| Secret   | `AWS_GITHUB_ACTION_ROLE_ARN` | IAM role for OIDC authentication | Repository |
-| Variable | `AWS_REGION`                 | Deployment region                | Repository |
-| Variable | `ECR_REPOSITORY`             | Container registry name          | Repository |
+| Type     | Name                              | Purpose                          | Scope      |
+| -------- | --------------------------------- | -------------------------------- | ---------- |
+| Secret   | `AWS_GITHUB_ACTION_ROLE_ARN_DEV`  | IAM role for OIDC authentication | Repository |
+| Secret   | `AWS_GITHUB_ACTION_ROLE_ARN_PROD` | IAM role for OIDC authentication | Repository |
+| Variable | `AWS_REGION`                      | Deployment region                | Repository |
+| Variable | `AWS_ECR_REPOSITORY_DEV`          | Container registry name          | Repository |
+| Variable | `AWS_ECR_REPOSITORY_PROD`         | Container registry name          | Repository |
 
 ## 🚀 Setup and Deployment Instructions
 
@@ -182,10 +182,10 @@ After deployment, configure GitHub repository for automated deployments:
 Use the script `check-deployment.sh` to verify the deployment.
 The profile must be granted at least the following permissions:
 
-  - cloudformation:DescribeStacks
-  - ecs:ListClusters, ecs:ListServices, ecs:DescribeServices
-  - ecr:ListImages, ecr:DescribeImages
-  - sts:GetCallerIdentity
+- cloudformation:DescribeStacks
+- ecs:ListClusters, ecs:ListServices, ecs:DescribeServices
+- ecr:ListImages, ecr:DescribeImages
+- sts:GetCallerIdentity
 
 ```bash
 # cd into the infra directory

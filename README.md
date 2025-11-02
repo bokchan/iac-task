@@ -105,4 +105,3 @@ cd infra
 - **Security**: OIDC authentication, environment isolation, container hardening
 - **Monitoring**: Health endpoints, CloudWatch logs, deployment verification
 - **Details**: See [Infrastructure Security](infra/README.md#security-features) and [Application Monitoring](webapp/README.md#monitoring-and-observability)
-
