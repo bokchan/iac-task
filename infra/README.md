@@ -99,10 +99,9 @@ The project uses **GitHub Actions** for automated continuous integration and dep
    uv sync
    ```
 
-4. **Configure Environment Variables**
+4. **Configure Environment Variables** (Optional)
    ```bash
-   # Required environment variables
-   export AWS_ACCOUNT_ID="123456789012"
+   # Optional: Set default region if not using AWS profile
    export AWS_REGION="eu-central-1"
    ```
 
@@ -112,10 +111,10 @@ The project uses **GitHub Actions** for automated continuous integration and dep
 
 ```bash
 # Deploy development environment
-cdk deploy --all -c environment=dev --image_tag=<tag_of_image_in_ecr>
+cdk deploy --all -c environment=dev -c image_tag=<tag_of_image_in_ecr>
 
 # Deploy production environment
-cdk deploy --all -c environment=prod --image_tag=<tag_of_image_in_ecr>
+cdk deploy --all -c environment=prod -c image_tag=<tag_of_image_in_ecr>
 ```
 
 #### 2. Using the Deploy Script (Recommended)
@@ -123,17 +122,17 @@ cdk deploy --all -c environment=prod --image_tag=<tag_of_image_in_ecr>
 The `deploy.sh` script provides a convenient wrapper around CDK commands with enhanced functionality:
 
 ```bash
-# Basic deployment to development
-./deploy.sh dev deploy
+# Deploy development environment with image tag
+./deploy.sh dev deploy --image_tag abc1234
 
-# Deploy with specific image tag
+# Deploy production with specific image tag
 ./deploy.sh prod deploy --image_tag abc1234
 
 # Show differences before deployment
 ./deploy.sh dev diff --image_tag 047f583
 
 # Synthesize templates without deploying
-./deploy.sh prod synth
+./deploy.sh prod synth --image_tag abc1234
 
 # List all stacks
 ./deploy.sh dev list
@@ -155,20 +154,20 @@ The `deploy.sh` script provides a convenient wrapper around CDK commands with en
 
 After deployment, configure GitHub repository for automated deployments:
 
-| Secret Name                  | Value                                                               | Description                 |
-| ---------------------------- | ------------------------------------------------------------------- | --------------------------- |
-| `AWS_ACCOUNT_ID`             | `123456789012`                                                      | Your AWS account ID         |
-| `AWS_GITHUB_ACTION_ROLE_ARN` | `arn:aws:iam::123456789012:role/iac-task-{env}-github-actions-role` | From CloudFormation outputs |
+| Secret Name                       | Value                                                              | Description                 |
+| --------------------------------- | ------------------------------------------------------------------ | --------------------------- |
+| `AWS_GITHUB_ACTION_ROLE_ARN_DEV`  | `arn:aws:iam::123456789012:role/iac-task-dev-github-actions-role`  | From CloudFormation outputs |
+| `AWS_GITHUB_ACTION_ROLE_ARN_PROD` | `arn:aws:iam::123456789012:role/iac-task-prod-github-actions-role` | From CloudFormation outputs |
 
 > **Application Integration**: The CI/CD pipeline automatically builds and deploys the [FastAPI application](../webapp/README.md) from the `/webapp` directory.
 
 #### 3. Configure GitHub Variables
 
-| Variable Name         | Value                          | Description            |
-| --------------------- | ------------------------------ | ---------------------- |
-| `AWS_REGION`          | `eu-central-1`                 | Your deployment region |
-| `ECR_DEV_REPOSITORY`  | `iac-task-dev-ecr-repository`  | ECR repository name    |
-| `ECR_PROD_REPOSITORY` | `iac-task-prod-ecr-repository` | ECR repository name    |
+| Variable Name             | Value                          | Description            |
+| ------------------------- | ------------------------------ | ---------------------- |
+| `AWS_REGION`              | `eu-central-1`                 | Your deployment region |
+| `AWS_ECR_REPOSITORY_DEV`  | `iac-task-dev-ecr-repository`  | ECR repository name    |
+| `AWS_ECR_REPOSITORY_PROD` | `iac-task-prod-ecr-repository` | ECR repository name    |
 
 #### 4. Set Up GitHub Environment Protection
 
@@ -260,7 +259,7 @@ Some resources may require manual deletion:
 - **GitHub Repository**: CI/CD is designed specifically for GitHub Actions
 - **Container Workload**: Application must be containerizable (see [webapp Docker configuration](../webapp/README.md#docker-image-details))
 - **HTTP/HTTPS Traffic**: Load balancer configured for web traffic only
-- **Shared ECR Repository**: Images are shared between environments (per repository naming)
+- **Environment-Specific ECR**: Each environment has its own ECR repository
 
 ### Current Limitations
 
@@ -290,12 +289,13 @@ Some resources may require manual deletion:
 
 ### Environment Differences
 
-| Feature               | Development               | Production               |
-| --------------------- | ------------------------- | ------------------------ |
-| **ECS Tasks**         | 1 task, 0.5 vCPU, 1GB RAM | 2 tasks, 1 vCPU, 2GB RAM |
-| **Log Retention**     | 1 month                   | 1 month (configurable)   |
-| **Resource Removal**  | DESTROY on stack deletion | RETAIN ECR repository    |
-| **GitHub Protection** | Direct deployment         | Manual approval required |
-| **Application Logs**  | DEBUG level               | INFO level               |
+| Feature                 | Development               | Production               |
+| ----------------------- | ------------------------- | ------------------------ |
+| **ECS Tasks**           | 1 task, 0.5 vCPU, 1GB RAM | 2 tasks, 1 vCPU, 2GB RAM |
+| **Log Retention**       | 1 month                   | 1 month (configurable)   |
+| **Resource Removal**    | DESTROY on stack deletion | RETAIN ECR repository    |
+| **GitHub Protection**   | Direct deployment         | Manual approval required |
+| **Application Logs**    | DEBUG level               | INFO level               |
+| **Application Message** | "Hello from Development!" | "Hello from Production!" |
 
 For production workloads, review and adjust these configurations based on your specific requirements.

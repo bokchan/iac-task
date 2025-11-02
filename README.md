@@ -19,7 +19,7 @@ This project demonstrates a complete cloud-native application lifecycle:
 | Component                               | Purpose          | Technology Stack          |
 | --------------------------------------- | ---------------- | ------------------------- |
 | **[Web Application](webapp/README.md)** | REST API service | FastAPI, Python, Docker   |
-| **[Infrastructure](infra/READ)**        | Cloud resources  | AWS CDK, ECS Fargate, ALB |
+| **[Infrastructure](infra/README.md)**        | Cloud resources  | AWS CDK, ECS Fargate, ALB |
 | **CI/CD Pipeline**                      | Automation       | GitHub Actions, OIDC      |
 
 > **Quick Navigation**: Start with [local development](#🚀-getting-started) or jump to [AWS deployment](infra/README.md#setup-and-deployment-instructions)
@@ -96,7 +96,7 @@ cd infra
 |------|---------|---------------|
 | **Local Development** | `docker compose up --build` | [webapp/README.md](webapp/README.md#running-the-application) |
 | **Run Tests** | `cd webapp && uv run pytest` | [webapp/README.md](webapp/README.md#testing) |
-| **Deploy to AWS** | `cd infra && ./deploy.sh dev deploy` | [infra/README.md](infra/README.md#deployment-process) |
+| **Deploy to AWS** | `cd infra && ./deploy.sh dev deploy --image_tag <tag>` | [infra/README.md](infra/README.md#deployment-process) |
 | **Verify Deployment** | `cd infra && ./check-deployment.sh dev` | [infra/README.md](infra/README.md#deployment-verification) |
 | **View API Docs** | http://localhost:8000/docs | [webapp/README.md](webapp/README.md#api-documentation) |
 
