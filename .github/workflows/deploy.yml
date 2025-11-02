@@ -10,6 +10,7 @@ permissions:
   contents: read # Required to check out the repository
 
 env:
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_REGION: ${{ vars.AWS_REGION }}
   AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
 
