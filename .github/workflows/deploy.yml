@@ -52,10 +52,6 @@ jobs:
           # Push with commit SHA tag (used by both environments)
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }}
 
-          # Also tag and push with 'latest' for convenience
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:${{ steps.get-image-tag.outputs.image_tag }} $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
   deploy-dev:
     if: github.ref == 'false'
     needs: build-and-deploy
