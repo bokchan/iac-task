@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import aws_cdk as cdk
-from aws_cdk import aws_ecr as ecr
 from config import get_environment_config
 from stacks.app_stack import AppStack
 from stacks.ecr_stack import EcrStack

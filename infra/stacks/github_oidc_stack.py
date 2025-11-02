@@ -32,7 +32,7 @@ class GitHubOidcStack(Stack):
             )
         else:
             # Reference existing OIDC provider from dev environment
-            self.github_provider = iam.OpenIdConnectProvider.from_open_id_connect_provider_arn(
+            self.github_provider = iam.OpenIdConnectProvider.from_open_id_connect_provider_arn(  # type: ignore[bad-argument-type]
                 self,
                 "GitHubOidcProvider",
                 open_id_connect_provider_arn=f"arn:aws:iam::{self.account}:oidc-provider/token.actions.githubusercontent.com",
