@@ -1,11 +1,11 @@
 from aws_cdk import CfnOutput, Duration, RemovalPolicy, Stack
+from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_ecs_patterns as ecs_patterns
 from aws_cdk import aws_logs as logs
 from config import InfrastructureConfig
 from constructs import Construct
 
-from stacks.ecr_stack import EcrStack
 from stacks.vpc_stack import VpcStack
 
 
@@ -18,7 +18,7 @@ class AppStack(Stack):
         construct_id: str,
         config: InfrastructureConfig,
         vpc_stack: VpcStack,
-        ecr_stack: EcrStack,
+        ecr_stack,
         image_tag: str,
         **kwargs,
     ) -> None:

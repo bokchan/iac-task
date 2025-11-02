@@ -1,6 +1,6 @@
 from aws_cdk import CfnOutput, Stack
+from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_iam as iam
-from aws_cdk.aws_ecr import Repository
 from config import InfrastructureConfig
 from constructs import Construct
 
@@ -16,7 +16,7 @@ class GitHubOidcStack(Stack):
         scope: Construct,
         construct_id: str,
         config: InfrastructureConfig,
-        ecr_repository: Repository,
+        ecr_repository: ecr.Repository,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -45,7 +45,7 @@ class GitHubOidcStack(Stack):
         self._create_outputs()
 
     def _create_github_role(
-        self, config: InfrastructureConfig, ecr_repository: Repository
+        self, config: InfrastructureConfig, ecr_repository: ecr.Repository
     ) -> iam.Role:
         """Create unified role for all GitHub Actions operations (ECR + deployment)."""
         # OIDC conditions - restrict to specific repository
