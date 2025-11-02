@@ -1,0 +1,33 @@
+name: 'Run Quality Assurance'
+description: 'Run code quality checks using ruff and pyrefly'
+inputs:
+  target_directory:
+    description: 'Directory to run QA checks on'
+    required: true
+  python_version:
+    description: 'Python version to use for QA tools'
+    default: '3.14'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python_version }}
+
+    - name: Install QA Dependencies
+      run: |
+        pip install uv && uv pip compile pyproject.toml -o requirements.txt --no-deps && uv pip install --system -r requirements.txt
+      shell: bash
+      working-directory: ${{ inputs.target_directory }}
+
+    - name: Run QA Checks
+      run: |
+        echo "🔍 Running quality assurance on ${{ inputs.target_directory }}"
+
+        # Make QA script executable and run it
+        chmod +x  ../run_qa.sh
+        uv run ../run_qa.sh .
+      shell: bash
+      working-directory: ${{ inputs.target_directory }}

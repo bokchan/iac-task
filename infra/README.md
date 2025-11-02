@@ -57,17 +57,6 @@ The project uses **GitHub Actions** for automated continuous integration and dep
 - **Environment Isolation**: Separate AWS resources per environment
 - **Approval Gates**: Production requires manual approval
 
-### Environment Variables and Secrets
-
-| Type     | Name                              | Purpose                          | Scope      |
-| -------- | --------------------------------- | -------------------------------- | ---------- |
-| Secret   | `AWS_ACCOUNT_ID`                  | AWS account id                   | Repository |
-| Secret   | `AWS_GITHUB_ACTION_ROLE_ARN_DEV`  | IAM role for OIDC authentication | Repository |
-| Secret   | `AWS_GITHUB_ACTION_ROLE_ARN_PROD` | IAM role for OIDC authentication | Repository |
-| Variable | `AWS_REGION`                      | Deployment region                | Repository |
-| Variable | `AWS_ECR_REPOSITORY_DEV`          | Container registry name          | Repository |
-| Variable | `AWS_ECR_REPOSITORY_PROD`         | Container registry name          | Repository |
-
 ## 🚀 Setup and Deployment Instructions
 
 ### Prerequisites
@@ -283,6 +272,8 @@ This infrastructure follows a **modular, environment-isolated approach** that pr
 - **Trade-off**: Requires careful GitHub secrets/variables management vs. simpler credential approaches
 - **Consideration**: The `image_tag` parameter is required for deployments to ensure explicit version control and prevent accidental deployments with undefined versions
 - **OIDC Evolution**: Initially considered per-environment OIDC providers, but settled on shared provider with environment-specific roles to avoid CloudFormation conflicts
+- **Branching Assumption**: Uses trunk-based development with `main` branch as primary deployment source, simplifying CI/CD pipeline and encouraging continuous integration practices vs. Git Flow approach
+- **Docker Layer Caching**: Implements GitHub Actions cache (`type=gha`) for 50-80% faster rebuilds by reusing unchanged Docker layers
 
 ### Environment Differences
 
