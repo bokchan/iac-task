@@ -273,6 +273,7 @@ This infrastructure follows a **modular, environment-isolated approach** that pr
 - **Consideration**: The `image_tag` parameter is required for deployments to ensure explicit version control and prevent accidental deployments with undefined versions
 - **OIDC Evolution**: Initially considered per-environment OIDC providers, but settled on shared provider with environment-specific roles to avoid CloudFormation conflicts
 - **Branching Assumption**: Uses trunk-based development with `main` branch as primary deployment source, simplifying CI/CD pipeline and encouraging continuous integration practices vs. Git Flow approach
+- **Docker Layer Caching**: Implements GitHub Actions cache (`type=gha`) for 50-80% faster rebuilds by reusing unchanged Docker layers
 
 ### Environment Differences
 
