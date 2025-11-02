@@ -1,0 +1,32 @@
+name: 'Run Quality Assurance'
+description: 'Run code quality checks using ruff and pyrefly'
+inputs:
+  target_directory:
+    description: 'Directory to run QA checks on'
+    required: true
+  python_version:
+    description: 'Python version to use for QA tools'
+    default: '3.14'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python_version }}
+
+    - name: Install QA Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install ruff pyrefly
+      shell: bash
+
+    - name: Run QA Checks
+      run: |
+        echo "🔍 Running quality assurance on ${{ inputs.target_directory }}"
+
+        # Make QA script executable and run it
+        chmod +x ./run_qa.sh
+        ./run_qa.sh ${{ inputs.target_directory }}
+      shell: bash

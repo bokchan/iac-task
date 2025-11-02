@@ -1,0 +1,34 @@
+name: Code Quality Assurance
+on:
+  pull_request:
+   types:
+     - opened
+     - synchronize
+     - reopened
+  # Allow manual triggering for testing
+  workflow_dispatch:
+
+jobs:
+  qa-infra:
+    name: QA - Infrastructure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Infrastructure QA
+        uses: ./.github/actions/run-qa
+        with:
+          target_directory: infra
+
+  qa-webapp:
+    name: QA - Web Application
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Web Application QA
+        uses: ./.github/actions/run-qa
+        with:
+          target_directory: webapp
