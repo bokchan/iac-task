@@ -17,9 +17,10 @@ This architecture addresses common challenges in bioinformatics core facilities 
 **Solution**:
 
 - Standardized REST API ensures consistent job submission format across labs
-- Background processing handles long-running GATK/FreeBayes/DeepVariant workflows
+- Research group tagging enables job tracking and organization
+- Background processing handles long-running GATK workflows
 - Real-time job status provides transparency across research groups
-- Job parameters validation ensures data quality (reference genome versions, quality thresholds)
+- Pydantic validation ensures data quality (reference genome versions, quality thresholds)
 
 **Example Job Submission**:
 
@@ -29,26 +30,28 @@ This architecture addresses common challenges in bioinformatics core facilities 
   "parameters": {
     "sample_id": "WGS_001",
     "reference_genome": "hg38",
-    "bam_file": "s3://input-data/WGS_001.bam",
+    "fastq_r1": "s3://input-data/WGS_001_R1.fastq.gz",
+    "fastq_r2": "s3://input-data/WGS_001_R2.fastq.gz",
+    "caller": "HaplotypeCaller",
     "quality_threshold": 30,
-    "caller": "HaplotypeCaller"
+    "depth_threshold": 10
   },
   "research_group": "cancer_genomics_lab",
   "description": "Variant calling for tumor sample WGS_001"
 }
 ```
 
-#### Use Case 2: RNA-Seq Analysis Queue Management
+#### Use Case 2: RNA-Seq Analysis Job Tracking
 
-**Challenge**: Research groups submit RNA-seq samples with varying experimental designs, requiring resource coordination and preventing computational bottlenecks.
+**Challenge**: Research groups submit RNA-seq samples requiring standardized processing and status visibility.
 
 **Solution**:
 
-- Queue management prevents resource contention on shared HPC clusters
-- Job prioritization based on research group quotas and deadlines
-- Status tracking shows pipeline progress (QC → Alignment → Quantification → DE Analysis)
-- Automatic notifications when analysis completes
-- Integration with downstream visualization tools (IGV, R/Bioconductor)
+- REST API provides consistent interface for RNA-seq job submission
+- Background processing handles analysis workflows
+- Status tracking shows job lifecycle (PENDING → RUNNING → COMPLETED/FAILED)
+- Research group tagging enables job organization
+- Pydantic validation ensures correct parameters and file paths
 
 **Example Job Submission**:
 
@@ -56,36 +59,25 @@ This architecture addresses common challenges in bioinformatics core facilities 
 {
   "pipeline_name": "rnaseq_deseq2",
   "parameters": {
-    "sample_ids": ["CTRL_1", "CTRL_2", "TREAT_1", "TREAT_2"],
-    "reference_genome": "hg38",
-    "annotation": "gencode_v38",
-    "contrasts": ["TREAT_vs_CTRL"],
-    "normalization": "rlog"
+    "sample_id": "RNA_001",
+    "reference": "gencode_v38",
+    "fastq_files": ["s3://data/RNA_001.fastq.gz"],
+    "adapter_sequence": "AGATCGGAAGAGC",
+    "min_quality": 20,
+    "quantification_method": "salmon"
   },
   "research_group": "systems_biology_lab",
-  "description": "Differential expression analysis - drug treatment study"
+  "description": "RNA-seq analysis for sample RNA_001"
 }
 ```
 
-#### Use Case 3: Cross-Lab Data Integration and ETL
+**Benefits of Current Implementation**:
 
-**Challenge**: Consolidating sequencing data from multiple research groups with different LIMS systems and data formats.
-
-**Solution**:
-
-- Standardized job metadata enables data consolidation across diverse sources
-- Research group tracking for compliance, billing, and audit trails
-- API-first design integrates with existing LIMS systems (Benchling, LabKey, OpenSpecimen)
-- Pydantic validation ensures data quality and schema consistency
-- Job history provides reproducibility and provenance tracking
-
-**Benefits for Core Facilities**:
-
-- **Transparency**: Research groups see pipeline status in real-time
-- **Accountability**: Track resource usage per lab for billing/chargeback
-- **Reproducibility**: Complete job parameters logged for publication/validation
-- **Integration**: REST API connects to sequencers, LIMS, analysis platforms
-- **Scalability**: Queue management handles burst workloads during grant deadlines
+- **Transparency**: Research groups can track job status in real-time via API
+- **Standardization**: Consistent REST API for all pipeline submissions
+- **Validation**: Pydantic models ensure parameter correctness and data quality
+- **Reproducibility**: Complete job parameters logged with timestamps
+- **Flexibility**: Easy integration with external tools via REST API
 
 ### Pipeline Integration
 
@@ -160,8 +152,6 @@ webapp/
 ├── validators.py             # Pipeline registry and utility functions
 ├── storage.py                # Thread-safe in-memory storage
 ├── orchestrator.py           # Orchestration abstraction layer
-├── prefect_integration.py    # Example Prefect workflows
-├── pipeline.py               # Mock pipeline execution logic
 ├── run.py                    # Application entry point
 ├── pyproject.toml            # Dependencies and configuration
 ├── Dockerfile                # Container image definition
