@@ -48,7 +48,7 @@ def get_pipeline_info(
             raise HTTPException(
                 status_code=404, detail=f"Pipeline '{pipeline_name}' not found"
             )
-        config = PIPELINE_REGISTRY[pipeline_name]
+        config = PIPELINE_REGISTRY[pipeline_name]  # pyrefly: ignore[bad-index]
         model_class = config["model"]
         schema = model_class.model_json_schema()
         # Extract example from json_schema_extra in model_config
@@ -95,4 +95,4 @@ def sanitize_parameters(
         return parameters.model_dump(exclude_none=True)
 
     # Legacy dict handling
-    return parameters
+    return parameters  # pyrefly: ignore[bad-return]
