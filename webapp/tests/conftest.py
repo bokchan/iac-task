@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 from webapp.main import app
 from webapp.pipeline import execute_mock_pipeline
 
-
 # Mock pipeline duration for fast tests (globally applied)
 MOCK_MIN_DURATION = 0.1
 MOCK_MAX_DURATION = 0.5
@@ -44,6 +43,8 @@ def fast_pipeline_execution(monkeypatch):
             success_rate=success_rate,
         )
 
-    monkeypatch.setattr("webapp.orchestrator.submit_to_mock_orchestrator",
-                        lambda *args, **kwargs: fast_execute(args[0], args[1], args[2]))
+    monkeypatch.setattr(
+        "webapp.orchestrator.submit_to_mock_orchestrator",
+        lambda *args, **kwargs: fast_execute(args[0], args[1], args[2]),
+    )
     monkeypatch.setattr("webapp.pipeline.execute_mock_pipeline", fast_execute)

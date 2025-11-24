@@ -48,17 +48,19 @@ class QuantificationMethod(str, Enum):
 class GATKVariantCallingParams(BaseModel):
     """Parameters for GATK variant calling pipeline."""
 
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "sample_id": "WGS_001",
-            "reference_genome": "hg38",
-            "fastq_r1": "/data/samples/WGS_001_R1.fastq.gz",
-            "fastq_r2": "/data/samples/WGS_001_R2.fastq.gz",
-            "variant_caller": "HaplotypeCaller",
-            "quality_threshold": 30,
-            "read_filters": ["MappingQualityReadFilter", "GoodCigarReadFilter"],
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "sample_id": "WGS_001",
+                "reference_genome": "hg38",
+                "fastq_r1": "/data/samples/WGS_001_R1.fastq.gz",
+                "fastq_r2": "/data/samples/WGS_001_R2.fastq.gz",
+                "variant_caller": "HaplotypeCaller",
+                "quality_threshold": 30,
+                "read_filters": ["MappingQualityReadFilter", "GoodCigarReadFilter"],
+            }
         }
-    })
+    )
 
     sample_id: str = Field(..., description="Sample identifier", examples=["WGS_001"])
     reference_genome: ReferenceGenome = Field(
@@ -116,16 +118,18 @@ class GATKVariantCallingParams(BaseModel):
 class RNASeqDESeq2Params(BaseModel):
     """Parameters for RNA-seq differential expression analysis."""
 
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "sample_id": "RNA_001",
-            "reference": "gencode_v38",
-            "fastq_files": ["s3://data/RNA_001.fastq.gz"],
-            "adapter_sequence": "AGATCGGAAGAGC",
-            "min_quality": 20,
-            "quantification_method": "salmon",
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "sample_id": "RNA_001",
+                "reference": "gencode_v38",
+                "fastq_files": ["s3://data/RNA_001.fastq.gz"],
+                "adapter_sequence": "AGATCGGAAGAGC",
+                "min_quality": 20,
+                "quantification_method": "salmon",
+            }
         }
-    })
+    )
 
     sample_id: str = Field(..., description="Sample identifier", examples=["RNA_001"])
     reference: ReferenceTranscriptome = Field(
@@ -167,4 +171,3 @@ PIPELINE_MODELS = {
     "gatk_variant_calling": GATKVariantCallingParams,
     "rnaseq_deseq2": RNASeqDESeq2Params,
 }
-

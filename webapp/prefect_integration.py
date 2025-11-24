@@ -30,7 +30,6 @@ import httpx
 from prefect import flow, task
 from prefect.tasks import task_input_hash
 
-
 # Configuration
 API_BASE_URL = "http://localhost:8000"  # Change to your deployed URL
 

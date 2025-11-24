@@ -9,7 +9,6 @@ import logging
 from typing import Dict, Optional
 from uuid import UUID
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -149,8 +148,9 @@ async def submit_to_mock_orchestrator(
 
     This is what currently runs - the mock pipeline execution.
     """
-    from webapp.pipeline import execute_mock_pipeline
     import asyncio
+
+    from webapp.pipeline import execute_mock_pipeline
 
     logger.info(f"[Mock] Submitting job {job_id} for pipeline {pipeline_name}")
 

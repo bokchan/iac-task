@@ -16,7 +16,6 @@ from .pipeline_models import (
     RNASeqDESeq2Params,
 )
 
-
 # Pipeline descriptions for API documentation
 PIPELINE_REGISTRY = {
     "gatk_variant_calling": {
@@ -27,7 +26,6 @@ PIPELINE_REGISTRY = {
         "description": "RNA-seq differential expression analysis with DESeq2",
         "model": RNASeqDESeq2Params,
     },
-
 }
 
 
@@ -109,7 +107,9 @@ def get_pipeline_info(pipeline_name: Optional[str] = None) -> Dict[str, Any]:
         model_class = config["model"]
         schema = model_class.model_json_schema()
         # Extract example from json_schema_extra in model_config
-        example = model_class.model_config.get("json_schema_extra", {}).get("example", {})
+        example = model_class.model_config.get("json_schema_extra", {}).get(
+            "example", {}
+        )
         return {
             "pipeline_name": pipeline_name,
             "description": config["description"],
@@ -134,7 +134,7 @@ def sanitize_parameters(
         GATKVariantCallingParams,
         RNASeqDESeq2Params,
         Dict[str, Any],
-    ]
+    ],
 ) -> Dict[str, Any]:
     """
     Convert validated Pydantic model to dictionary for storage.
