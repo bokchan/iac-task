@@ -257,10 +257,12 @@ async def batch_rnaseq_workflow(
             },
             research_group=research_group,
         )
-        results.append({
-            "sample_id": sample["sample_id"],
-            "job_id": job_id,
-        })
+        results.append(
+            {
+                "sample_id": sample["sample_id"],
+                "job_id": job_id,
+            }
+        )
         print(f"✓ Submitted {sample['sample_id']}: {job_id}")
 
     # Wait for all jobs to complete

@@ -5,7 +5,7 @@ This module demonstrates FastAPI's value as an abstraction layer by implementing
 domain-specific validation and business rules before submitting to Prefect.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from fastapi import HTTPException
 
 
@@ -13,13 +13,25 @@ from fastapi import HTTPException
 PIPELINE_REGISTRY = {
     "gatk_variant_calling": {
         "required_params": ["sample_id", "reference_genome"],
-        "optional_params": ["fastq_r1", "fastq_r2", "bam_file", "caller", "quality_threshold", "depth_threshold"],
+        "optional_params": [
+            "fastq_r1",
+            "fastq_r2",
+            "bam_file",
+            "caller",
+            "quality_threshold",
+            "depth_threshold",
+        ],
         "valid_references": ["hg19", "hg38", "GRCh37", "GRCh38"],
         "description": "GATK variant calling pipeline for WGS/WES data",
     },
     "rnaseq_deseq2": {
         "required_params": ["sample_id", "reference"],
-        "optional_params": ["fastq_files", "adapter_sequence", "min_quality", "quantification_method"],
+        "optional_params": [
+            "fastq_files",
+            "adapter_sequence",
+            "min_quality",
+            "quantification_method",
+        ],
         "valid_references": ["gencode_v38", "gencode_v44", "ensembl_110"],
         "description": "RNA-seq differential expression analysis with DESeq2",
     },
@@ -61,7 +73,7 @@ def validate_pipeline_exists(pipeline_name: str) -> None:
         available = list(PIPELINE_REGISTRY.keys())
         raise HTTPException(
             status_code=400,
-            detail=f"Unknown pipeline '{pipeline_name}'. Available: {available}"
+            detail=f"Unknown pipeline '{pipeline_name}'. Available: {available}",
         )
 
 
@@ -84,7 +96,7 @@ def validate_pipeline_parameters(pipeline_name: str, parameters: Dict) -> None:
     if missing:
         raise HTTPException(
             status_code=400,
-            detail=f"Missing required parameters for '{pipeline_name}': {missing}"
+            detail=f"Missing required parameters for '{pipeline_name}': {missing}",
         )
 
     # Validate reference genome if applicable
@@ -93,7 +105,7 @@ def validate_pipeline_parameters(pipeline_name: str, parameters: Dict) -> None:
         if valid_refs and parameters["reference_genome"] not in valid_refs:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid reference_genome. Valid options for {pipeline_name}: {valid_refs}"
+                detail=f"Invalid reference_genome. Valid options for {pipeline_name}: {valid_refs}",
             )
 
     # Validate reference transcriptome if applicable
@@ -102,7 +114,7 @@ def validate_pipeline_parameters(pipeline_name: str, parameters: Dict) -> None:
         if valid_refs and parameters["reference"] not in valid_refs:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid reference. Valid options for {pipeline_name}: {valid_refs}"
+                detail=f"Invalid reference. Valid options for {pipeline_name}: {valid_refs}",
             )
 
 
@@ -128,7 +140,7 @@ def check_research_group_quota(research_group: Optional[str], job_count: int) ->
     if job_count >= quota:
         raise HTTPException(
             status_code=429,
-            detail=f"Research group '{research_group}' has exceeded daily quota of {quota} jobs"
+            detail=f"Research group '{research_group}' has exceeded daily quota of {quota} jobs",
         )
 
 
@@ -148,7 +160,11 @@ def validate_file_paths(parameters: Dict) -> None:
         if param not in parameters:
             continue
 
-        paths = parameters[param] if isinstance(parameters[param], list) else [parameters[param]]
+        paths = (
+            parameters[param]
+            if isinstance(parameters[param], list)
+            else [parameters[param]]
+        )
 
         for path in paths:
             if not isinstance(path, str):
@@ -159,7 +175,7 @@ def validate_file_paths(parameters: Dict) -> None:
             if not any(path.startswith(prefix) for prefix in valid_prefixes):
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Invalid file path '{path}'. Must start with: {valid_prefixes}"
+                    detail=f"Invalid file path '{path}'. Must start with: {valid_prefixes}",
                 )
 
 
@@ -176,13 +192,9 @@ def get_pipeline_info(pipeline_name: Optional[str] = None) -> Dict:
     if pipeline_name:
         if pipeline_name not in PIPELINE_REGISTRY:
             raise HTTPException(
-                status_code=404,
-                detail=f"Pipeline '{pipeline_name}' not found"
+                status_code=404, detail=f"Pipeline '{pipeline_name}' not found"
             )
-        return {
-            "pipeline_name": pipeline_name,
-            **PIPELINE_REGISTRY[pipeline_name]
-        }
+        return {"pipeline_name": pipeline_name, **PIPELINE_REGISTRY[pipeline_name]}
 
     return {
         "available_pipelines": [

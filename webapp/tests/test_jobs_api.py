@@ -27,7 +27,7 @@ class TestJobSubmission:
             "parameters": {
                 "sample_id": "WGS_001",
                 "reference_genome": "hg38",
-                "quality_threshold": 30
+                "quality_threshold": 30,
             },
             "description": "GATK variant calling for sample WGS_001",
             "research_group": "genomics_lab",
@@ -90,9 +90,19 @@ class TestJobSubmission:
     def test_submit_multiple_jobs(self, client: TestClient):
         """Test submitting multiple jobs."""
         pipelines = [
-            ("gatk_variant_calling", {"sample_id": "WGS_001", "reference_genome": "hg38"}),
+            (
+                "gatk_variant_calling",
+                {"sample_id": "WGS_001", "reference_genome": "hg38"},
+            ),
             ("rnaseq_deseq2", {"sample_id": "RNA_001", "reference": "gencode_v38"}),
-            ("chip_seq_macs2", {"sample_id": "ChIP_001", "reference_genome": "hg38", "antibody": "H3K27ac"}),
+            (
+                "chip_seq_macs2",
+                {
+                    "sample_id": "ChIP_001",
+                    "reference_genome": "hg38",
+                    "antibody": "H3K27ac",
+                },
+            ),
         ]
 
         for pipeline_name, params in pipelines:
@@ -167,9 +177,19 @@ class TestListJobs:
         # Create several jobs
         job_ids = []
         pipelines = [
-            ("gatk_variant_calling", {"sample_id": "WGS_001", "reference_genome": "hg38"}),
+            (
+                "gatk_variant_calling",
+                {"sample_id": "WGS_001", "reference_genome": "hg38"},
+            ),
             ("rnaseq_deseq2", {"sample_id": "RNA_001", "reference": "gencode_v38"}),
-            ("chip_seq_macs2", {"sample_id": "ChIP_001", "reference_genome": "hg38", "antibody": "H3K27ac"}),
+            (
+                "chip_seq_macs2",
+                {
+                    "sample_id": "ChIP_001",
+                    "reference_genome": "hg38",
+                    "antibody": "H3K27ac",
+                },
+            ),
         ]
 
         for pipeline_name, params in pipelines:
@@ -257,7 +277,11 @@ class TestJobStorageIntegration:
             elif pipeline == "rnaseq_deseq2":
                 params = {"sample_id": f"RNA_{index:03d}", "reference": "gencode_v38"}
             else:
-                params = {"sample_id": f"ChIP_{index:03d}", "reference_genome": "hg38", "antibody": "H3K27ac"}
+                params = {
+                    "sample_id": f"ChIP_{index:03d}",
+                    "reference_genome": "hg38",
+                    "antibody": "H3K27ac",
+                }
 
             payload = {
                 "pipeline_name": pipeline,

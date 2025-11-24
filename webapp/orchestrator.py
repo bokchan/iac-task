@@ -6,12 +6,9 @@ allowing you to swap Prefect for another system without changing the REST API.
 """
 
 import logging
-from datetime import datetime, timezone
 from typing import Dict, Optional
 from uuid import UUID
 
-from webapp.models import JobStatus
-from webapp.storage import job_store
 
 logger = logging.getLogger(__name__)
 
@@ -42,11 +39,17 @@ async def submit_to_orchestrator(
         Orchestrator-specific run ID
     """
     if ORCHESTRATOR_BACKEND == "prefect":
-        return await submit_to_prefect(job_id, pipeline_name, parameters, research_group)
+        return await submit_to_prefect(
+            job_id, pipeline_name, parameters, research_group
+        )
     elif ORCHESTRATOR_BACKEND == "dagster":
-        return await submit_to_dagster(job_id, pipeline_name, parameters, research_group)
+        return await submit_to_dagster(
+            job_id, pipeline_name, parameters, research_group
+        )
     elif ORCHESTRATOR_BACKEND == "airflow":
-        return await submit_to_airflow(job_id, pipeline_name, parameters, research_group)
+        return await submit_to_airflow(
+            job_id, pipeline_name, parameters, research_group
+        )
     else:
         # Mock backend for demonstration
         return await submit_to_mock_orchestrator(job_id, pipeline_name, parameters)
@@ -177,7 +180,7 @@ async def cancel_job_in_orchestrator(job_id: UUID, orchestrator_run_id: str) -> 
         # In production: call Dagster's terminate mutation
         return True
     else:
-        logger.info(f"[Mock] Cancellation not implemented for mock orchestrator")
+        logger.info("[Mock] Cancellation not implemented for mock orchestrator")
         return False
 
 

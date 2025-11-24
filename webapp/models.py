@@ -40,7 +40,7 @@ class JobSubmission(BaseModel):
                     "reference_genome": "hg38",
                     "bam_file": "s3://input-data/WGS_001.bam",
                     "quality_threshold": 30,
-                    "caller": "HaplotypeCaller"
+                    "caller": "HaplotypeCaller",
                 },
                 "description": "GATK variant calling for tumor sample WGS_001",
                 "research_group": "cancer_genomics_lab",
@@ -80,7 +80,7 @@ class JobResponse(BaseModel):
                     "reference_genome": "hg38",
                     "bam_file": "s3://input-data/WGS_001.bam",
                     "quality_threshold": 30,
-                    "caller": "HaplotypeCaller"
+                    "caller": "HaplotypeCaller",
                 },
                 "description": "GATK variant calling for tumor sample WGS_001",
                 "research_group": "cancer_genomics_lab",
@@ -109,7 +109,7 @@ class JobList(BaseModel):
                         "pipeline_name": "gatk_variant_calling",
                         "parameters": {
                             "sample_id": "WGS_001",
-                            "reference_genome": "hg38"
+                            "reference_genome": "hg38",
                         },
                         "research_group": "cancer_genomics_lab",
                         "created_at": "2025-11-24T10:00:00Z",

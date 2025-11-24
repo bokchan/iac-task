@@ -92,9 +92,19 @@ class TestBackgroundTaskIntegration:
 
         # Submit multiple jobs
         pipelines = [
-            ("gatk_variant_calling", {"sample_id": "WGS_001", "reference_genome": "hg38"}),
+            (
+                "gatk_variant_calling",
+                {"sample_id": "WGS_001", "reference_genome": "hg38"},
+            ),
             ("rnaseq_deseq2", {"sample_id": "RNA_001", "reference": "gencode_v38"}),
-            ("chip_seq_macs2", {"sample_id": "ChIP_001", "reference_genome": "hg38", "antibody": "H3K27ac"}),
+            (
+                "chip_seq_macs2",
+                {
+                    "sample_id": "ChIP_001",
+                    "reference_genome": "hg38",
+                    "antibody": "H3K27ac",
+                },
+            ),
         ]
 
         for pipeline_name, params in pipelines:
@@ -112,7 +122,9 @@ class TestBackgroundTaskIntegration:
         time.sleep(2.0)
 
         # Check that jobs have been processed
-        statuses = [job_store.get(uuid.UUID(jid)).status for jid in job_ids]  # pyrefly: ignore
+        statuses = [
+            job_store.get(uuid.UUID(jid)).status for jid in job_ids
+        ]  # pyrefly: ignore
 
         # All jobs should have completed (COMPLETED or FAILED)
         assert all(

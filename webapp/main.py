@@ -7,7 +7,6 @@ from uuid import UUID, uuid4
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 
 from webapp.models import JobList, JobResponse, JobStatus, JobSubmission
-from .pipeline import execute_mock_pipeline
 from .storage import job_store
 from .validators import (
     validate_pipeline_exists,
@@ -120,17 +119,22 @@ async def submit_job(
     """
     # Business Logic Layer: Validate pipeline and parameters
     validate_pipeline_exists(job_submission.pipeline_name)
-    validate_pipeline_parameters(job_submission.pipeline_name, job_submission.parameters)
+    validate_pipeline_parameters(
+        job_submission.pipeline_name, job_submission.parameters
+    )
     validate_file_paths(job_submission.parameters)
 
     # Business Logic Layer: Check research group quota
     if job_submission.research_group:
         # Count jobs submitted today by this research group
-        today_jobs = len([
-            j for j in job_store.list_all()
-            if j.research_group == job_submission.research_group
-            and j.created_at.date() == datetime.now(tz=timezone.utc).date()
-        ])
+        today_jobs = len(
+            [
+                j
+                for j in job_store.list_all()
+                if j.research_group == job_submission.research_group
+                and j.created_at.date() == datetime.now(tz=timezone.utc).date()
+            ]
+        )
         check_research_group_quota(job_submission.research_group, today_jobs)
 
     # Business Logic Layer: Sanitize and normalize parameters
@@ -224,7 +228,6 @@ async def list_jobs(
 
     total = len(jobs)
     logger.info(
-        f"Listed {total} jobs "
-        f"(research_group={research_group}, status={status})"
+        f"Listed {total} jobs (research_group={research_group}, status={status})"
     )
     return JobList(jobs=jobs, total=total)
