@@ -39,7 +39,7 @@ class JobSubmission(BaseModel):
         ..., description="Name of the bioinformatics pipeline to execute"
     )
     parameters: dict = Field(
-        default_factory=dict, description="Pipeline parameters and configuration"
+        default_factory=dict, description="Pipeline parameters and configuration",
     )
     description: Optional[str] = Field(None, description="Optional job description")
     research_group: Optional[str] = Field(

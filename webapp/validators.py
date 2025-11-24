@@ -14,8 +14,6 @@ from .pipeline_models import (
     PIPELINE_MODELS,
     GATKVariantCallingParams,
     RNASeqDESeq2Params,
-    CrossLabETLParams,
-    ChIPSeqMACS2Params,
 )
 
 
@@ -29,14 +27,7 @@ PIPELINE_REGISTRY = {
         "description": "RNA-seq differential expression analysis with DESeq2",
         "model": RNASeqDESeq2Params,
     },
-    "cross_lab_etl": {
-        "description": "Cross-laboratory data integration and ETL",
-        "model": CrossLabETLParams,
-    },
-    "chip_seq_macs2": {
-        "description": "ChIP-seq peak calling with MACS2",
-        "model": ChIPSeqMACS2Params,
-    },
+
 }
 
 
@@ -60,9 +51,7 @@ def validate_pipeline_exists(pipeline_name: str) -> None:
 
 def validate_pipeline_parameters(
     pipeline_name: str, parameters: Dict[str, Any]
-) -> Union[
-    GATKVariantCallingParams, RNASeqDESeq2Params, CrossLabETLParams, ChIPSeqMACS2Params
-]:
+) -> Union[GATKVariantCallingParams, RNASeqDESeq2Params]:
     """
     Validate pipeline parameters using Pydantic models.
 
@@ -144,8 +133,6 @@ def sanitize_parameters(
     parameters: Union[
         GATKVariantCallingParams,
         RNASeqDESeq2Params,
-        CrossLabETLParams,
-        ChIPSeqMACS2Params,
         Dict[str, Any],
     ]
 ) -> Dict[str, Any]:

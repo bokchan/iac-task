@@ -95,14 +95,6 @@ class TestJobSubmission:
                 {"sample_id": "WGS_001", "reference_genome": "hg38"},
             ),
             ("rnaseq_deseq2", {"sample_id": "RNA_001", "reference": "gencode_v38"}),
-            (
-                "chip_seq_macs2",
-                {
-                    "sample_id": "ChIP_001",
-                    "reference_genome": "hg38",
-                    "antibody": "H3K27ac",
-                },
-            ),
         ]
 
         for pipeline_name, params in pipelines:
@@ -114,7 +106,7 @@ class TestJobSubmission:
             assert response.status_code == 201
 
         # Verify all jobs stored
-        assert job_store.count() == 3
+        assert job_store.count() == 2
 
 
 class TestGetJob:
@@ -182,14 +174,6 @@ class TestListJobs:
                 {"sample_id": "WGS_001", "reference_genome": "hg38"},
             ),
             ("rnaseq_deseq2", {"sample_id": "RNA_001", "reference": "gencode_v38"}),
-            (
-                "chip_seq_macs2",
-                {
-                    "sample_id": "ChIP_001",
-                    "reference_genome": "hg38",
-                    "antibody": "H3K27ac",
-                },
-            ),
         ]
 
         for pipeline_name, params in pipelines:
@@ -205,8 +189,8 @@ class TestListJobs:
 
         assert response.status_code == 200
         data = response.json()
-        assert len(data["jobs"]) == 3
-        assert data["total"] == 3
+        assert len(data["jobs"]) == 2
+        assert data["total"] == 2
 
         # Verify jobs are sorted by created_at (newest first)
         job_ids_in_response = [job["id"] for job in data["jobs"]]
@@ -267,21 +251,14 @@ class TestJobStorageIntegration:
         pipelines = [
             "gatk_variant_calling",
             "rnaseq_deseq2",
-            "chip_seq_macs2",
         ]
 
         def submit_job(index: int):
             pipeline = pipelines[index % len(pipelines)]
             if pipeline == "gatk_variant_calling":
                 params = {"sample_id": f"WGS_{index:03d}", "reference_genome": "hg38"}
-            elif pipeline == "rnaseq_deseq2":
+            else:  # rnaseq_deseq2
                 params = {"sample_id": f"RNA_{index:03d}", "reference": "gencode_v38"}
-            else:
-                params = {
-                    "sample_id": f"ChIP_{index:03d}",
-                    "reference_genome": "hg38",
-                    "antibody": "H3K27ac",
-                }
 
             payload = {
                 "pipeline_name": pipeline,

@@ -6,7 +6,7 @@ for each bioinformatics pipeline supported by the orchestration service.
 """
 
 from enum import Enum
-from typing import List, Literal, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -18,14 +18,6 @@ class ReferenceGenome(str, Enum):
     HG38 = "hg38"
     GRCH37 = "GRCh37"
     GRCH38 = "GRCh38"
-
-
-class MouseReferenceGenome(str, Enum):
-    """Valid mouse reference genome versions."""
-
-    HG38 = "hg38"  # Also used for some human ChIP-seq
-    MM10 = "mm10"
-    MM39 = "mm39"
 
 
 class ReferenceTranscriptome(str, Enum):
@@ -51,22 +43,6 @@ class QuantificationMethod(str, Enum):
     KALLISTO = "kallisto"
     RSEM = "rsem"
     FEATURECOUNTS = "featureCounts"
-
-
-class PeakType(str, Enum):
-    """ChIP-seq peak types."""
-
-    NARROW = "narrow"
-    BROAD = "broad"
-    VERY_BROAD = "very-broad"
-
-
-class ValidationLevel(str, Enum):
-    """ETL data validation levels."""
-
-    STRICT = "strict"
-    MODERATE = "moderate"
-    PERMISSIVE = "permissive"
 
 
 class GATKVariantCallingParams(BaseModel):
@@ -186,90 +162,9 @@ class RNASeqDESeq2Params(BaseModel):
         return v
 
 
-class CrossLabETLParams(BaseModel):
-    """Parameters for cross-laboratory data integration."""
-
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "source_group": "genomics_lab",
-            "target_group": "clinical_research",
-            "data_types": ["vcf", "phenotype_data"],
-            "validation_level": "strict",
-            "anonymize": True,
-        }
-    })
-
-    source_group: str = Field(
-        ..., description="Source research group", examples=["genomics_lab"]
-    )
-    target_group: str = Field(
-        ..., description="Target research group", examples=["clinical_research"]
-    )
-    data_types: List[str] = Field(
-        ...,
-        description="Types of data to transfer",
-        examples=[["vcf", "bam", "phenotype_data"]],
-    )
-    validation_level: Optional[ValidationLevel] = Field(
-        ValidationLevel.STRICT, description="Data validation strictness"
-    )
-    anonymize: Optional[bool] = Field(
-        False, description="Whether to anonymize patient data"
-    )
-
-
-class ChIPSeqMACS2Params(BaseModel):
-    """Parameters for ChIP-seq peak calling with MACS2."""
-
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "sample_id": "ChIP_001",
-            "reference_genome": "hg38",
-            "antibody": "H3K27ac",
-            "input_control": "s3://data/input.bam",
-            "peak_type": "narrow",
-            "fdr_threshold": 0.05,
-        }
-    })
-
-    sample_id: str = Field(
-        ..., description="Sample identifier", examples=["ChIP_001"]
-    )
-    reference_genome: MouseReferenceGenome = Field(
-        ..., description="Reference genome version", examples=["hg38"]
-    )
-    antibody: str = Field(
-        ..., description="Antibody target", examples=["H3K27ac", "H3K4me3"]
-    )
-    input_control: Optional[str] = Field(
-        None,
-        description="Path to input control BAM file",
-        examples=["s3://data/input_control.bam"],
-    )
-    peak_type: Optional[PeakType] = Field(
-        PeakType.NARROW, description="Peak calling mode"
-    )
-    fdr_threshold: Optional[float] = Field(
-        0.05, ge=0.0, le=1.0, description="False discovery rate threshold"
-    )
-
-    @field_validator("input_control")
-    @classmethod
-    def validate_file_path(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return v
-        valid_prefixes = ["s3://", "/data/", "/mnt/", "gs://", "https://"]
-        if not any(v.startswith(prefix) for prefix in valid_prefixes):
-            raise ValueError(
-                f"File path must start with one of: {', '.join(valid_prefixes)}"
-            )
-        return v
-
-
 # Pipeline registry mapping pipeline names to their parameter models
 PIPELINE_MODELS = {
     "gatk_variant_calling": GATKVariantCallingParams,
     "rnaseq_deseq2": RNASeqDESeq2Params,
-    "cross_lab_etl": CrossLabETLParams,
-    "chip_seq_macs2": ChIPSeqMACS2Params,
 }
+
