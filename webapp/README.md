@@ -97,6 +97,9 @@ curl "http://localhost:8000/jobs?research_group=genomics_lab"
 | `/` | Echo message (configurable via `ECHO_MESSAGE`) |
 | `/health` | Health check for load balancers |
 | `/version` | Application version (from `IMAGE_TAG`) |
+| `/pipelines` | List available pipelines with schemas |
+| `/pipelines/{name}` | Get specific pipeline information |
+| `/orchestrator/status` | Orchestration backend status |
 | `/docs` | Interactive API documentation (Swagger UI) |
 | `/redoc` | Alternative API documentation |
 
@@ -326,12 +329,13 @@ See [infrastructure documentation](../infra/README.md) for details.
 POST /jobs
 
 {
-  "pipeline_name": "variant_calling",
+  "pipeline_name": "gatk_variant_calling",
   "parameters": {
-    "sample_id": "S001",
-    "genome": "hg38"
+    "sample_id": "WGS_001",
+    "reference_genome": "hg38",
+    "fastq_r1": "s3://data/WGS_001_R1.fastq.gz"
   },
-  "description": "Run variant calling on sample S001"
+  "description": "Run variant calling on sample WGS_001"
 }
 ```
 
@@ -341,12 +345,20 @@ POST /jobs
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "status": "pending",
-  "pipeline_name": "variant_calling",
+  "pipeline_name": "gatk_variant_calling",
   "parameters": {
-    "sample_id": "S001",
-    "genome": "hg38"
+    "name": "gatk_variant_calling",
+    "sample_id": "WGS_001",
+    "reference_genome": "hg38",
+    "fastq_r1": "s3://data/WGS_001_R1.fastq.gz",
+    "fastq_r2": null,
+    "bam_file": null,
+    "caller": "HaplotypeCaller",
+    "quality_threshold": 30,
+    "depth_threshold": 10
   },
-  "description": "Run variant calling on sample S001",
+  "description": "Run variant calling on sample WGS_001",
+  "research_group": null,
   "created_at": "2025-11-24T10:00:00Z",
   "updated_at": "2025-11-24T10:00:00Z",
   "started_at": null,
@@ -361,10 +373,16 @@ POST /jobs
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "status": "completed",
-  "pipeline_name": "variant_calling",
+  "pipeline_name": "gatk_variant_calling",
+  "parameters": {
+    "name": "gatk_variant_calling",
+    "sample_id": "WGS_001",
+    "reference_genome": "hg38"
+  },
   "started_at": "2025-11-24T10:00:05Z",
   "completed_at": "2025-11-24T10:00:25Z",
-  ...
+  "created_at": "2025-11-24T10:00:00Z",
+  "updated_at": "2025-11-24T10:00:25Z"
 }
 ```
 
@@ -376,8 +394,19 @@ POST /jobs
     {
       "id": "550e8400-e29b-41d4-a716-446655440000",
       "status": "completed",
-      "pipeline_name": "variant_calling",
-      ...
+      "pipeline_name": "gatk_variant_calling",
+      "parameters": {
+        "name": "gatk_variant_calling",
+        "sample_id": "WGS_001",
+        "reference_genome": "hg38"
+      },
+      "description": "Test job",
+      "research_group": "genomics_lab",
+      "created_at": "2025-11-24T10:00:00Z",
+      "updated_at": "2025-11-24T10:00:25Z",
+      "started_at": "2025-11-24T10:00:05Z",
+      "completed_at": "2025-11-24T10:00:25Z",
+      "error_message": null
     }
   ],
   "total": 1

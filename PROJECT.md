@@ -578,6 +578,6 @@ Access application at http://localhost:8000
 ## Additional Resources
 
 For project information, infrastructure details, and deployment instructions, see:
-- [Root README](../README.md) - Project overview
-- [Infrastructure README](../infra/README.md) - AWS deployment guide
+- [Root README](README.md) - Project overview
+- [Infrastructure README](infra/README.md) - AWS deployment guide
 - [Web App README](webapp/README.md) - Detailed application documentation
