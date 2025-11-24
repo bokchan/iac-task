@@ -2,7 +2,103 @@
 
 ## Overview
 
-A FastAPI-based REST API service for submitting and tracking Snakemake pipeline jobs. This proof-of-concept implementation demonstrates a lightweight job orchestration system with in-memory storage and background task processing.
+A FastAPI-based REST API service for submitting and tracking bioinformatics pipeline jobs. This proof-of-concept implementation demonstrates a lightweight job orchestration system with in-memory storage and background task processing, designed for multi-research-group computational biology environments.
+
+## Bioinformatics Applications
+
+### Multi-Research-Group Data Processing
+
+This architecture addresses common challenges in bioinformatics core facilities and computational biology departments:
+
+#### Use Case 1: Variant Calling Pipeline Coordination
+
+**Challenge**: Multiple research groups submit WGS/WES samples for variant calling, requiring standardized processing and transparent status tracking.
+
+**Solution**:
+- Standardized REST API ensures consistent job submission format across labs
+- Research group tracking enables quota management and billing allocation
+- Background processing handles long-running GATK/FreeBayes/DeepVariant workflows
+- Real-time job status provides transparency across research groups
+- Job parameters validation ensures data quality (reference genome versions, quality thresholds)
+
+**Example Job Submission**:
+```json
+{
+  "pipeline_name": "gatk_variant_calling",
+  "parameters": {
+    "sample_id": "WGS_001",
+    "reference_genome": "hg38",
+    "bam_file": "s3://input-data/WGS_001.bam",
+    "quality_threshold": 30,
+    "caller": "HaplotypeCaller"
+  },
+  "research_group": "cancer_genomics_lab",
+  "description": "Variant calling for tumor sample WGS_001"
+}
+```
+
+#### Use Case 2: RNA-Seq Analysis Queue Management
+
+**Challenge**: Research groups submit RNA-seq samples with varying experimental designs, requiring resource coordination and preventing computational bottlenecks.
+
+**Solution**:
+- Queue management prevents resource contention on shared HPC clusters
+- Job prioritization based on research group quotas and deadlines
+- Status tracking shows pipeline progress (QC → Alignment → Quantification → DE Analysis)
+- Automatic notifications when analysis completes
+- Integration with downstream visualization tools (IGV, R/Bioconductor)
+
+**Example Job Submission**:
+```json
+{
+  "pipeline_name": "rnaseq_deseq2",
+  "parameters": {
+    "sample_ids": ["CTRL_1", "CTRL_2", "TREAT_1", "TREAT_2"],
+    "reference_genome": "hg38",
+    "annotation": "gencode_v38",
+    "contrasts": ["TREAT_vs_CTRL"],
+    "normalization": "rlog"
+  },
+  "research_group": "systems_biology_lab",
+  "description": "Differential expression analysis - drug treatment study"
+}
+```
+
+#### Use Case 3: Cross-Lab Data Integration and ETL
+
+**Challenge**: Consolidating sequencing data from multiple research groups with different LIMS systems and data formats.
+
+**Solution**:
+- Standardized job metadata enables data consolidation across diverse sources
+- Research group tracking for compliance, billing, and audit trails
+- API-first design integrates with existing LIMS systems (Benchling, LabKey, OpenSpecimen)
+- Pydantic validation ensures data quality and schema consistency
+- Job history provides reproducibility and provenance tracking
+
+**Benefits for Core Facilities**:
+- **Transparency**: Research groups see pipeline status in real-time
+- **Accountability**: Track resource usage per lab for billing/chargeback
+- **Reproducibility**: Complete job parameters logged for publication/validation
+- **Integration**: REST API connects to sequencers, LIMS, analysis platforms
+- **Scalability**: Queue management handles burst workloads during grant deadlines
+
+### Pipeline Integration
+
+Compatible with standard bioinformatics workflow engines:
+
+| Workflow Engine | Integration Method | Use Case |
+|----------------|-------------------|----------|
+| **Snakemake** | Direct execution via subprocess | Python-based workflows, conda environments |
+| **Nextflow** | REST API to Seqera Platform | Production genomics pipelines (nf-core) |
+| **Prefect** | Native Python orchestration | Complex ETL, data validation, notifications |
+| **CWL** | cwltool execution | Portable, standardized workflows |
+
+**Recommended Architecture**:
+```
+Research Groups → FastAPI (this service) → Prefect → Snakemake/Nextflow → Results
+                      ↓                        ↓
+                  Job Tracking           Workflow DAG Management
+```
 
 ## Features
 
@@ -134,7 +230,7 @@ class JobStore:
     def __init__(self):
         self._jobs: dict[UUID, JobResponse] = {}
         self._lock = threading.Lock()
-    
+
     def create(self, job: JobResponse) -> JobResponse
     def get(self, job_id: UUID) -> Optional[JobResponse]
     def update(self, job_id: UUID, **kwargs) -> Optional[JobResponse]
@@ -267,7 +363,7 @@ success_rate: float = 0.8     # Success probability (0.0-1.0)
 
 Multi-stage build for optimal security and size:
 
-**Build stage**: Installs dependencies using UV package manager  
+**Build stage**: Installs dependencies using UV package manager
 **Runtime stage**: Minimal Python 3.14 slim image with non-root user
 
 ```bash

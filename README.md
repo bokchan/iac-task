@@ -1,6 +1,6 @@
 # IaC Task - FastAPI Cloud Infrastructure
 
-A production-ready FastAPI application deployed on AWS using Infrastructure as Code (CDK) with automated CI/CD pipeline via GitHub Actions.
+A production-ready FastAPI application deployed on AWS using Infrastructure as Code (CDK) with automated CI/CD pipeline via GitHub Actions. Designed for pipeline orchestration in **multi-research-group computational biology environments** with support for variant calling, RNA-seq analysis, and cross-lab data integration workflows.
 
 ## 🏗️ System Architecture
 
