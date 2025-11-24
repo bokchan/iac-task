@@ -6,7 +6,13 @@ set -e
 directory=${1:-.}
 
 echo "🔍 Running ruff linter..."
-ruff check $directory
+# formatting
+ruff format $directory
+# isort
+ruff check --select I --fix $directory
+# style checks
+ruff check $directory --fix
+
 
 echo
 
