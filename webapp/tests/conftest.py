@@ -20,9 +20,20 @@ def client() -> Iterator[TestClient]:
 @pytest.fixture(autouse=True)
 def fast_pipeline_execution(monkeypatch):
     """Automatically mock pipeline execution to use fast durations for all tests."""
-    original_execute = execute_mock_pipeline.__wrapped__ if hasattr(execute_mock_pipeline, '__wrapped__') else execute_mock_pipeline
+    original_execute = (
+        execute_mock_pipeline.__wrapped__
+        if hasattr(execute_mock_pipeline, "__wrapped__")
+        else execute_mock_pipeline
+    )
 
-    async def fast_execute(job_id, pipeline_name, parameters, min_duration=None, max_duration=None, success_rate=0.8):
+    async def fast_execute(
+        job_id,
+        pipeline_name,
+        parameters,
+        min_duration=None,
+        max_duration=None,
+        success_rate=0.8,
+    ):
         # Override durations with fast values
         return await original_execute(
             job_id=job_id,
@@ -33,6 +44,5 @@ def fast_pipeline_execution(monkeypatch):
             success_rate=success_rate,
         )
 
-    monkeypatch.setattr('webapp.main.execute_mock_pipeline', fast_execute)
-    monkeypatch.setattr('webapp.pipeline.execute_mock_pipeline', fast_execute)
-
+    monkeypatch.setattr("webapp.main.execute_mock_pipeline", fast_execute)
+    monkeypatch.setattr("webapp.pipeline.execute_mock_pipeline", fast_execute)

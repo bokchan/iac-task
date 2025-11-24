@@ -2,7 +2,6 @@
 
 import time
 import uuid
-from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -28,9 +27,20 @@ MOCK_MAX_DURATION = 0.5
 @pytest.fixture
 def mock_pipeline_durations(monkeypatch):
     """Mock pipeline execution to use fast durations for testing."""
-    original_execute = execute_mock_pipeline.__wrapped__ if hasattr(execute_mock_pipeline, '__wrapped__') else execute_mock_pipeline
+    original_execute = (
+        execute_mock_pipeline.__wrapped__
+        if hasattr(execute_mock_pipeline, "__wrapped__")
+        else execute_mock_pipeline
+    )
 
-    async def fast_execute(job_id, pipeline_name, parameters, min_duration=None, max_duration=None, success_rate=0.8):
+    async def fast_execute(
+        job_id,
+        pipeline_name,
+        parameters,
+        min_duration=None,
+        max_duration=None,
+        success_rate=0.8,
+    ):
         # Override durations with fast values
         return await original_execute(
             job_id=job_id,
@@ -41,8 +51,8 @@ def mock_pipeline_durations(monkeypatch):
             success_rate=success_rate,
         )
 
-    monkeypatch.setattr('webapp.main.execute_mock_pipeline', fast_execute)
-    monkeypatch.setattr('webapp.pipeline.execute_mock_pipeline', fast_execute)
+    monkeypatch.setattr("webapp.main.execute_mock_pipeline", fast_execute)
+    monkeypatch.setattr("webapp.pipeline.execute_mock_pipeline", fast_execute)
     return fast_execute
 
 
@@ -96,7 +106,9 @@ class TestBackgroundTaskIntegration:
         statuses = [job_store.get(uuid.UUID(jid)).status for jid in job_ids]
 
         # All jobs should have completed (COMPLETED or FAILED)
-        assert all(status in [JobStatus.COMPLETED, JobStatus.FAILED] for status in statuses)
+        assert all(
+            status in [JobStatus.COMPLETED, JobStatus.FAILED] for status in statuses
+        )
 
     def test_job_lifecycle_through_api(self, client: TestClient):
         """Test complete job lifecycle through API endpoints with fast execution."""

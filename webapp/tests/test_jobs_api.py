@@ -1,7 +1,6 @@
 """Unit tests for job management API endpoints."""
 
 import uuid
-from datetime import datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -112,7 +111,12 @@ class TestGetJob:
         assert data["id"] == job_id
         assert data["pipeline_name"] == "test_pipeline"
         # With fast execution, job may already be completed
-        assert data["status"] in [JobStatus.PENDING.value, JobStatus.RUNNING.value, JobStatus.COMPLETED.value, JobStatus.FAILED.value]
+        assert data["status"] in [
+            JobStatus.PENDING.value,
+            JobStatus.RUNNING.value,
+            JobStatus.COMPLETED.value,
+            JobStatus.FAILED.value,
+        ]
 
     def test_get_job_not_found(self, client: TestClient):
         """Test getting a non-existent job returns 404."""
@@ -206,7 +210,12 @@ class TestJobStorageIntegration:
         assert stored_job is not None
         assert stored_job.pipeline_name == "persistence_test"
         # With fast execution, job may already be completed
-        assert stored_job.status in [JobStatus.PENDING, JobStatus.RUNNING, JobStatus.COMPLETED, JobStatus.FAILED]
+        assert stored_job.status in [
+            JobStatus.PENDING,
+            JobStatus.RUNNING,
+            JobStatus.COMPLETED,
+            JobStatus.FAILED,
+        ]
 
     def test_concurrent_job_submissions(self, client: TestClient):
         """Test thread-safety with multiple job submissions."""

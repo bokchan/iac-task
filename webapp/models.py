@@ -20,7 +20,9 @@ class JobStatus(str, Enum):
 class JobSubmission(BaseModel):
     """Request model for job submission."""
 
-    pipeline_name: str = Field(..., description="Name of the Snakemake pipeline to execute")
+    pipeline_name: str = Field(
+        ..., description="Name of the Snakemake pipeline to execute"
+    )
     parameters: dict = Field(
         default_factory=dict, description="Pipeline parameters and configuration"
     )
@@ -47,8 +49,12 @@ class JobResponse(BaseModel):
     created_at: datetime = Field(..., description="Job creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
     started_at: Optional[datetime] = Field(None, description="Job start timestamp")
-    completed_at: Optional[datetime] = Field(None, description="Job completion timestamp")
-    error_message: Optional[str] = Field(None, description="Error message if job failed")
+    completed_at: Optional[datetime] = Field(
+        None, description="Job completion timestamp"
+    )
+    error_message: Optional[str] = Field(
+        None, description="Error message if job failed"
+    )
 
     class Config:
         json_schema_extra = {

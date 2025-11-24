@@ -91,4 +91,6 @@ async def execute_mock_pipeline(
             completed_at=datetime.utcnow(),
             error_message=error_message,
         )
-        logger.error(f"Job {job_id} encountered an error: {error_message}", exc_info=True)
+        logger.error(
+            f"Job {job_id} encountered an error: {error_message}", exc_info=True
+        )

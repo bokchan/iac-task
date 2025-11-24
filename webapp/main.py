@@ -125,4 +125,3 @@ async def list_jobs() -> JobList:
 
     logger.info(f"Listed {total} jobs")
     return JobList(jobs=jobs, total=total)
-
