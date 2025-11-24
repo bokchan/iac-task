@@ -8,6 +8,8 @@ Note: Parameter validation is now handled automatically by Pydantic models
 in JobSubmission, so explicit validation functions are no longer needed.
 """
 
+from typing import Any
+
 from fastapi import HTTPException
 
 from .pipeline_models import (
@@ -73,8 +75,8 @@ def get_pipeline_info(
 
 
 def sanitize_parameters(
-    parameters: GATKVariantCallingParams | RNASeqDESeq2Params | dict[str, object],
-) -> dict[str, object]:
+    parameters: GATKVariantCallingParams | RNASeqDESeq2Params | dict[str, Any],
+) -> dict[str, Any]:
     """
     Convert Pydantic model to dictionary for storage.
 
