@@ -214,50 +214,11 @@ total: int                      # Total number of jobs
 
 ## API Endpoints
 
-### Job Management
-
-| Method | Endpoint     | Description             | Status Codes                      |
-| ------ | ------------ | ----------------------- | --------------------------------- |
-| POST   | `/jobs`      | Submit new pipeline job | 201 Created, 422 Validation Error |
-| GET    | `/jobs/{id}` | Get job status by UUID  | 200 OK, 404 Not Found             |
-| GET    | `/jobs`      | List all jobs           | 200 OK                            |
-
-### System Endpoints
-
-| Method | Endpoint   | Description                             |
-| ------ | ---------- | --------------------------------------- |
-| GET    | `/`        | Echo message (configurable)             |
-| GET    | `/health`  | Health check for monitoring             |
-| GET    | `/version` | Application version                     |
-| GET    | `/docs`    | Interactive API documentation (Swagger) |
-| GET    | `/redoc`   | Alternative API documentation           |
+See [webapp/README.md](webapp/README.md#api-endpoints) for complete API documentation including job management, discovery, and system endpoints.
 
 ## Storage Implementation
 
-### JobStore Class
-
-Thread-safe in-memory storage using Python dictionary with `threading.Lock`:
-
-```python
-class JobStore:
-    def __init__(self):
-        self._jobs: dict[UUID, JobResponse] = {}
-        self._lock = threading.Lock()
-
-    def create(self, job: JobResponse) -> JobResponse
-    def get(self, job_id: UUID) -> Optional[JobResponse]
-    def update(self, job_id: UUID, **kwargs) -> Optional[JobResponse]
-    def list_all(self) -> list[JobResponse]
-    def count(self) -> int
-```
-
-**Characteristics:**
-
-- ✅ Thread-safe concurrent access
-- ✅ Fast read/write operations
-- ✅ Zero external dependencies
-- ⚠️ Data lost on restart (by design for PoC)
-- ⚠️ Single-instance limitation
+Thread-safe in-memory storage using `JobStore` class with `threading.Lock` for concurrent access. See [webapp/README.md](webapp/README.md#storage) for implementation details.
 
 ## Pipeline Execution
 
@@ -310,103 +271,15 @@ The `execute_mock_pipeline()` function simulates Snakemake pipeline execution:
 
 ## Testing
 
-### Test Suite Overview
-
-**23 comprehensive tests** organized in 3 files:
-
-#### test_jobs_api.py (15 tests)
-
-- Job submission (success, validation, concurrent)
-- Job retrieval (by ID, not found, invalid UUID)
-- Job listing (empty, populated, all fields)
-- Storage integration and persistence
-- Thread-safe concurrent operations
-
-#### test_pipeline.py (3 tests)
-
-- Background task execution
-- Multiple concurrent background tasks
-- Complete job lifecycle validation
-
-#### test_app.py (5 tests)
-
-- Root endpoint functionality
-- Health check endpoint
-- Version endpoint
-- Environment variable configuration
-
-### Test Performance
-
-- **Execution time**: ~9 seconds (all 23 tests)
-- **Optimization**: Mock pipeline durations set to 0.1-0.5s in tests
-- **Coverage**: All endpoints, error cases, and concurrent scenarios
-
-### Running Tests
-
-```bash
-# Install dependencies
-uv sync --group dev
-
-# Run all tests
-uv run pytest
-
-# Run with verbose output
-uv run pytest -v
-
-# Run specific test file
-uv run pytest webapp/tests/test_jobs_api.py
-```
+**23 comprehensive tests** covering all endpoints, error cases, and concurrent scenarios with ~9 second execution time. See [webapp/README.md](webapp/README.md#testing) for test suite details and running instructions.
 
 ## Configuration
 
-### Environment Variables
-
-| Variable       | Default         | Description                              |
-| -------------- | --------------- | ---------------------------------------- |
-| `ECHO_MESSAGE` | `"Hello World"` | Message returned by root endpoint        |
-| `LOG_LEVEL`    | `"INFO"`        | Logging level (DEBUG/INFO/WARNING/ERROR) |
-| `IMAGE_TAG`    | `"unknown"`     | Deployed image version                   |
-
-### Pipeline Parameters
-
-Configured in code (`pipeline.py`):
-
-```python
-min_duration: float = 10      # Minimum execution seconds
-max_duration: float = 30      # Maximum execution seconds
-success_rate: float = 0.8     # Success probability (0.0-1.0)
-```
+Environment variables (`ECHO_MESSAGE`, `LOG_LEVEL`, `IMAGE_TAG`) and pipeline parameters are configured in code. See [webapp/README.md](webapp/README.md#configuration) for complete configuration reference.
 
 ## Deployment
 
-### Docker Container
-
-Multi-stage build for optimal security and size:
-
-**Build stage**: Installs dependencies using UV package manager
-**Runtime stage**: Minimal Python 3.14 slim image with non-root user
-
-```bash
-# Build image
-docker build -f webapp/Dockerfile -t webapp:latest ./webapp
-
-# Run container
-docker run -p 8000:8000 \
-  -e LOG_LEVEL="INFO" \
-  -e IMAGE_TAG="v1.0.0" \
-  webapp:latest
-```
-
-### AWS ECS Deployment
-
-Deployed via existing infrastructure:
-
-- **Container**: ECS Fargate task
-- **Load Balancer**: Application Load Balancer
-- **Registry**: Amazon ECR
-- **CI/CD**: GitHub Actions with OIDC authentication
-
-See [infrastructure documentation](../infra/README.md) for deployment details.
+Deployed as a Docker container on AWS ECS Fargate with Application Load Balancer. See [webapp/README.md](webapp/README.md#docker) for Docker build instructions and [infra/README.md](infra/README.md) for AWS deployment details.
 
 ## Limitations and Scope
 
@@ -442,161 +315,10 @@ For production deployment, consider:
 
 ## Usage Examples
 
-### Submit a GATK Variant Calling Job
-
-```bash
-curl -X POST http://localhost:8000/jobs \
-  -H "Content-Type: application/json" \
-  -d '{
-    "pipeline_name": "gatk_variant_calling",
-    "parameters": {
-      "sample_id": "WGS_001",
-      "fastq_r1": "/data/WGS_001_R1.fastq.gz",
-      "fastq_r2": "/data/WGS_001_R2.fastq.gz",
-      "reference_genome": "hg38",
-      "caller": "HaplotypeCaller",
-      "quality_threshold": 30,
-      "depth_threshold": 10
-    },
-    "research_group": "genomics_lab",
-    "description": "WGS variant calling for patient sample"
-  }'
-```
-
-**Response:**
-
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "status": "pending",
-  "pipeline_name": "gatk_variant_calling",
-  "research_group": "genomics_lab",
-  "parameters": {
-    "sample_id": "WGS_001",
-    "reference_genome": "hg38",
-    "caller": "HaplotypeCaller"
-  },
-  "created_at": "2025-11-24T10:00:00Z",
-  "updated_at": "2025-11-24T10:00:00Z"
-}
-```
-
-### Submit an RNA-seq Analysis Job
-
-```bash
-curl -X POST http://localhost:8000/jobs \
-  -H "Content-Type: application/json" \
-  -d '{
-    "pipeline_name": "rnaseq_deseq2",
-    "parameters": {
-      "sample_id": "RNA_001",
-      "fastq_files": ["/data/RNA_001.fastq.gz"],
-      "reference": "gencode_v38",
-      "adapter_sequence": "AGATCGGAAGAGC",
-      "min_quality": 20,
-      "quantification_method": "salmon"
-    },
-    "research_group": "transcriptomics_lab",
-    "description": "RNA-seq differential expression analysis"
-  }'
-```
-
-### List Jobs with Filters
-
-```bash
-# List all jobs
-curl http://localhost:8000/jobs
-
-# Filter by research group
-curl "http://localhost:8000/jobs?research_group=genomics_lab"
-
-# Filter by status
-curl "http://localhost:8000/jobs?status=completed"
-```
-
-### Check Job Status
-
-```bash
-curl http://localhost:8000/jobs/550e8400-e29b-41d4-a716-446655440000
-```
-
-**Response (Running):**
-
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "status": "running",
-  "pipeline_name": "gatk_variant_calling",
-  "research_group": "genomics_lab",
-  "started_at": "2025-11-24T10:00:05Z",
-  "created_at": "2025-11-24T10:00:00Z",
-  "updated_at": "2025-11-24T10:00:05Z"
-}
-```
-
-**Response (Completed):**
-
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "status": "completed",
-  "pipeline_name": "gatk_variant_calling",
-  "research_group": "genomics_lab",
-  "started_at": "2025-11-24T10:00:05Z",
-  "completed_at": "2025-11-24T10:00:25Z",
-  "created_at": "2025-11-24T10:00:00Z",
-  "updated_at": "2025-11-24T10:00:25Z"
-}
-```
-
-### List All Jobs
-
-```bash
-curl http://localhost:8000/jobs
-```
-
-**Response:**
-
-```json
-{
-  "jobs": [
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "status": "completed",
-      ...
-    }
-  ],
-  "total": 1
-}
-```
-
-## Development
-
-### Local Setup
-
-```bash
-# Install UV package manager
-pip install uv
-
-# Install dependencies
-uv sync
-
-# Run development server
-uv run uvicorn main:app --reload
-```
-
-Access application at http://localhost:8000
-
-### Interactive Documentation
-
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **OpenAPI JSON**: http://localhost:8000/openapi.json
+Complete API usage examples with curl commands and responses are available in [webapp/README.md](webapp/README.md#usage).
 
 ## Additional Resources
 
-For project information, infrastructure details, and deployment instructions, see:
-
-- [Root README](README.md) - Project overview
-- [Infrastructure README](infra/README.md) - AWS deployment guide
-- [Web App README](webapp/README.md) - Detailed application documentation
+- [webapp/README.md](webapp/README.md) - Developer documentation, local setup, API usage
+- [README.md](README.md) - Project overview and quick start
+- [infra/README.md](infra/README.md) - AWS deployment and infrastructure

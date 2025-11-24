@@ -70,12 +70,16 @@ curl -X POST http://localhost:8000/jobs \
 curl http://localhost:8000/jobs/{job-id}
 ```
 
-**List all jobs (with research group filter):**
+**List all jobs (with optional filters):**
 ```bash
+# List all jobs
 curl http://localhost:8000/jobs
 
-# Filter by research group (if implemented):
+# Filter by research group
 curl "http://localhost:8000/jobs?research_group=genomics_lab"
+
+# Filter by status
+curl "http://localhost:8000/jobs?status=completed"
 ```
 
 ## API Endpoints
@@ -288,26 +292,7 @@ webapp/
 
 ## Limitations
 
-This is a **proof-of-concept** implementation:
-
-### Known Limitations
-
-1. **Storage**: In-memory only, data lost on restart
-2. **Scalability**: Single-instance, no distributed job processing
-3. **Persistence**: No database integration
-4. **Authentication**: Not implemented
-5. **Pipeline**: Mock only
-
-### Production Considerations
-
-For production deployment:
-
-- **Persistent storage**: PostgreSQL/DynamoDB
-- **Message queue**: SQS/SNS for job distribution
-- **Separate workers**: Dedicated worker service
-- **Authentication**: JWT/OAuth2
-- **Real pipeline**: Prefetch/Snakemake integration
-- **Monitoring**: CloudWatch metrics/alarms (2-4 hours)
+This is a **proof-of-concept** implementation with in-memory storage, single-instance design, no authentication, and mock pipeline execution. See [PROJECT.md](../PROJECT.md#limitations-and-scope) for complete limitations and production considerations.
 
 ## Deployment
 
@@ -421,8 +406,6 @@ Once running:
 - **ReDoc**: http://localhost:8000/redoc
 - **OpenAPI JSON**: http://localhost:8000/openapi.json
 
-## Additional Resources
+---
 
-- **[PROJECT.md](../PROJECT.md)**: Detailed technical documentation
-- **[Root README](../README.md)**: Project overview
-- **[Infrastructure README](../infra/README.md)**: AWS deployment guide
+For architecture and design rationale, see [PROJECT.md](../PROJECT.md). For infrastructure and deployment, see [infra/README.md](../infra/README.md).
