@@ -58,8 +58,8 @@ async def submit_to_orchestrator(
 async def submit_to_prefect(
     job_id: UUID,
     pipeline_name: str,
-    parameters: Dict,
-    research_group: Optional[str],
+    parameters: dict,
+    research_group: str | None = None,
 ) -> str:
     """
     Submit job to Prefect via REST API.
@@ -96,8 +96,8 @@ async def submit_to_prefect(
 async def submit_to_dagster(
     job_id: UUID,
     pipeline_name: str,
-    parameters: Dict,
-    research_group: Optional[str],
+    parameters: dict,
+    research_group: str | None = None,
 ) -> str:
     """
     Submit job to Dagster via GraphQL API.
@@ -119,8 +119,8 @@ async def submit_to_dagster(
 async def submit_to_airflow(
     job_id: UUID,
     pipeline_name: str,
-    parameters: Dict,
-    research_group: Optional[str],
+    parameters: dict,
+    research_group: str | None = None,
 ) -> str:
     """
     Submit job to Airflow via REST API.
@@ -142,7 +142,7 @@ async def submit_to_airflow(
 async def submit_to_mock_orchestrator(
     job_id: UUID,
     pipeline_name: str,
-    parameters: Dict,
+    parameters: dict,
 ) -> str:
     """
     Mock orchestrator for demonstration purposes.
@@ -185,7 +185,7 @@ async def cancel_job_in_orchestrator(job_id: UUID, orchestrator_run_id: str) -> 
         return False
 
 
-def get_orchestrator_status() -> Dict:
+def get_orchestrator_status() -> dict:
     """
     Get status information about the orchestration backend.
 

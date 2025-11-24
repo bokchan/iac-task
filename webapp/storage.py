@@ -45,11 +45,11 @@ class JobStore:
     def update(
         self,
         job_id: UUID,
-        status: Optional[JobStatus] = None,
-        started_at: Optional[datetime] = None,
-        completed_at: Optional[datetime] = None,
-        error_message: Optional[str] = None,
-    ) -> Optional[JobResponse]:
+        status: JobStatus | None = None,
+        started_at: datetime | None = None,
+        completed_at: datetime | None = None,
+        error_message: str | None = None,
+    ) -> JobResponse | None:
         """
         Update job status and timestamps.
 

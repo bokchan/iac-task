@@ -96,7 +96,9 @@ class JobResponse(BaseModel):
     id: UUID = Field(..., description="Unique job identifier")
     status: JobStatus = Field(..., description="Current job status")
     pipeline_name: PipelineName = Field(..., description="Pipeline name")
-    parameters: GATKVariantCallingParams | RNASeqDESeq2Params = Field(..., description="Pipeline parameters")
+    parameters: GATKVariantCallingParams | RNASeqDESeq2Params = Field(
+        ..., description="Pipeline parameters"
+    )
     description: str | None = Field(None, description="Job description")
     research_group: str | None = Field(
         None, description="Research group or lab identifier"
@@ -104,12 +106,8 @@ class JobResponse(BaseModel):
     created_at: datetime = Field(..., description="Job creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
     started_at: datetime | None = Field(None, description="Job start timestamp")
-    completed_at: datetime | None = Field(
-        None, description="Job completion timestamp"
-    )
-    error_message: str | None = Field(
-        None, description="Error message if job failed"
-    )
+    completed_at: datetime | None = Field(None, description="Job completion timestamp")
+    error_message: str | None = Field(None, description="Error message if job failed")
 
 
 class JobList(BaseModel):

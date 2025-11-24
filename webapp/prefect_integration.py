@@ -104,13 +104,13 @@ async def wait_for_job_completion(job_id: str, poll_interval: int = 30) -> dict:
 
 
 @task
-async def validate_fastq_quality(sample_id: str, fastq_files: List[str]) -> bool:
+async def validate_fastq_quality(sample_id: str, fastq_files: list[str]) -> bool:
     """
     Quality control check for FASTQ files before pipeline execution.
 
     Args:
         sample_id: Sample identifier
-        fastq_files: List of FASTQ file paths
+        fastq_files: list of FASTQ file paths
 
     Returns:
         True if quality checks pass
@@ -125,7 +125,7 @@ async def validate_fastq_quality(sample_id: str, fastq_files: List[str]) -> bool
 async def register_results_in_lims(
     job_id: str,
     sample_id: str,
-    output_files: List[str],
+    output_files: list[str],
     research_group: str,
 ) -> str:
     """
@@ -134,7 +134,7 @@ async def register_results_in_lims(
     Args:
         job_id: Completed job identifier
         sample_id: Sample identifier
-        output_files: List of output file paths
+        output_files: list of output file paths
         research_group: Research group for access control
 
     Returns:
@@ -233,7 +233,7 @@ async def batch_rnaseq_workflow(
     Process multiple RNA-seq samples with resource-aware scheduling.
 
     Args:
-        samples: List of sample dictionaries with 'sample_id' and 'fastq' keys
+        samples: list of sample dictionaries with 'sample_id' and 'fastq' keys
         reference_transcriptome: Reference transcriptome version
         research_group: Research group identifier
 
@@ -286,7 +286,7 @@ async def cross_lab_etl_workflow(
     Args:
         source_research_group: Source research group identifier
         target_research_group: Target research group identifier
-        data_types: List of data types to transfer (e.g., ["vcf", "bam", "metadata"])
+        data_types: list of data types to transfer (e.g., ["vcf", "bam", "metadata"])
 
     Returns:
         ETL workflow summary
