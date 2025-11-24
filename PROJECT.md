@@ -1,389 +1,173 @@
-# Make a service to run pipelines
+# Pipeline Orchestration Service - PoC
 
-## Main components
+## Overview
+A FastAPI-based REST API service for submitting and tracking Snakemake pipeline jobs.
 
-A high level description of the architecture
+**Scope**: 6-hour Proof of Concept
+**Focus**: Working job submission and tracking with mock pipeline execution
+**Infrastructure**: Reuse existing ECS deployment (no CDK changes needed)
 
-## webapp:
-
-- Rest API for submitting to submit jobs for snakemake
-  - submit job
-  - retrieve status for job
-  - retrieve list of running jobs
-- backend service to orchestrate the processing pipeline via snakemake
-  - store submitted jobs in the database
-
-
-Allow the pipeline to be mocked as the scope is a PoC
-
-## infrastructure
-
-IaC to deploy the necessary infrastructure to AWS
-
-## Implementation Plan (6-hour PoC)
-
-### Core Scope: Pipeline Submission & Execution Service
-**Goal**: Working REST API to submit and track mock Snakemake pipeline jobs
+## Implementation Plan (6 hours)
 
 ### AI-Assisted Development Strategy 🤖
-**Leverage GitHub Copilot + Claude/ChatGPT throughout:**
+**Leverage GitHub Copilot + Claude/ChatGPT throughout for 30-40% faster development:**
 - Generate Pydantic models and endpoint boilerplate
 - Create test cases and mock data
 - Debug issues and suggest fixes
 - Generate documentation and examples
-- Review code for best practices
-- **Time savings**: 30-40% faster development
 
-**Specific AI prompts to use:**
+**Key AI prompts:**
 1. "Generate FastAPI endpoint for job submission with Pydantic models"
 2. "Create in-memory storage class with thread-safe operations"
 3. "Write pytest test cases for job lifecycle"
 4. "Generate OpenAPI documentation examples"
 
+---
+
 ### Hour 1-2: FastAPI Application Setup
-1. **Job Models & API Endpoints**
-   ```python
-   # Pydantic models
-   - JobSubmission (input parameters)
-   - JobStatus (id, status, created_at, updated_at)
-   - JobList (paginated response)
 
-   # Endpoints
-   - POST /jobs - Submit new job
-   - GET /jobs/{job_id} - Get job status
-   - GET /jobs - List all jobs
-   ```
+**1. Job Models & API Endpoints**
+```python
+# Pydantic models
+- JobSubmission (input parameters)
+- JobStatus (id, status, created_at, updated_at)
+- JobList (paginated response)
 
-2. **In-Memory Storage Implementation**
-   ```python
-   # storage.py - Thread-safe in-memory job storage
-   import threading
-   from typing import Dict, List, Optional
-   from datetime import datetime
+# Endpoints
+- POST /jobs - Submit new job
+- GET /jobs/{job_id} - Get job status
+- GET /jobs - List all jobs
+```
 
-   class JobStore:
-       def __init__(self):
-           self._jobs: Dict[str, dict] = {}
-           self._lock = threading.Lock()
+**2. In-Memory Storage Implementation**
+```python
+# storage.py - Thread-safe in-memory job storage
+import threading
+from typing import Dict, List, Optional
 
-       def create(self, job_id: str, job_data: dict) -> dict:
-           with self._lock:
-               self._jobs[job_id] = job_data
-               return job_data
+class JobStore:
+    def __init__(self):
+        self._jobs: Dict[str, dict] = {}
+        self._lock = threading.Lock()
 
-       def get(self, job_id: str) -> Optional[dict]:
-           with self._lock:
-               return self._jobs.get(job_id)
+    def create(self, job_id: str, job_data: dict) -> dict:
+        with self._lock:
+            self._jobs[job_id] = job_data
+            return job_data
 
-       def update(self, job_id: str, updates: dict) -> Optional[dict]:
-           with self._lock:
-               if job_id in self._jobs:
-                   self._jobs[job_id].update(updates)
-                   return self._jobs[job_id]
-               return None
+    def get(self, job_id: str) -> Optional[dict]:
+        with self._lock:
+            return self._jobs.get(job_id)
 
-       def list_all(self) -> List[dict]:
-           with self._lock:
-               return list(self._jobs.values())
+    def update(self, job_id: str, updates: dict) -> Optional[dict]:
+        with self._lock:
+            if job_id in self._jobs:
+                self._jobs[job_id].update(updates)
+                return self._jobs[job_id]
+            return None
 
-   # Global instance
-   job_store = JobStore()
-   ```
+    def list_all(self) -> List[dict]:
+        with self._lock:
+            return list(self._jobs.values())
 
-   **How GET endpoints work with in-memory storage:**
-   - ✅ `GET /jobs/{job_id}` - Looks up job in dictionary by ID
-   - ✅ `GET /jobs` - Returns all jobs from dictionary values
-   - ✅ Background tasks update job status in same dictionary
-   - ✅ Thread-safe with locks for concurrent access
-   - ⚠️  Data lost on restart (acceptable for PoC)
+# Global instance
+job_store = JobStore()
+```
 
-   **This is NOT a mock** - it's a real working implementation:
-   - Jobs are actually stored and retrievable
-   - Status updates persist during application runtime
-   - Multiple concurrent requests work correctly
-   - Only limitation: no persistence across restarts
+**Key Points:**
+- ✅ Thread-safe with locks for concurrent access
+- ✅ GET endpoints work by looking up jobs in dictionary
+- ✅ Real functional storage (not a mock)
+- ⚠️  Data lost on restart (acceptable for PoC)
 
-3. **Mock Pipeline**
-   - Python function that simulates Snakemake execution
-   - Configurable delay (e.g., 10-30 seconds)
-   - Random success/failure (80% success rate)
+**3. Mock Pipeline**
+- Python function that simulates Snakemake execution
+- Configurable delay (10-30 seconds)
+- Random success/failure (80% success rate)
+
+---
 
 ### Hour 3-4: Background Job Processing
-1. **Background Task Worker**
-   - Use FastAPI `BackgroundTasks` for simplicity
-   - Process jobs asynchronously after submission
-   - Update job status during execution
 
-2. **Job Lifecycle**
-   ```
-   POST /jobs → Create job (pending)
-                ↓
-                Background worker picks up job
-                ↓
-                Update status (running)
-                ↓
-                Execute mock pipeline
-                ↓
-                Update status (completed/failed)
-   ```
+**1. Background Task Worker**
+- Use FastAPI `BackgroundTasks` for simplicity
+- Process jobs asynchronously after submission
+- Update job status during execution
 
-3. **Basic Error Handling**
-   - Try/catch around pipeline execution
-   - Store error messages in job object
+**2. Job Lifecycle**
+```
+POST /jobs → Create job (pending)
+             ↓
+             Background worker picks up job
+             ↓
+             Update status (running)
+             ↓
+             Execute mock pipeline
+             ↓
+             Update status (completed/failed)
+```
+
+**3. Error Handling**
+- Try/catch around pipeline execution
+- Store error messages in job object
+
+---
 
 ### Hour 5-6: Testing & Deployment
-1. **Local Testing**
-   - Test all endpoints with curl/Postman
-   - Submit multiple concurrent jobs
-   - Verify status updates
 
-2. **Documentation**
-   - OpenAPI docs (auto-generated by FastAPI)
-   - Simple README with usage examples
+**1. Local Testing**
+- Test all endpoints with curl/Postman
+- Submit multiple concurrent jobs
+- Verify status updates
 
-3. **Deployment Choice** (pick one):
-   - **Option A**: Deploy to existing ECS infrastructure (reuse current setup)
-   - **Option B**: Run locally with Docker Compose
+**2. Documentation**
+- OpenAPI docs (auto-generated by FastAPI)
+- Simple README with usage examples
 
-### Minimal File Structure
+**3. Deployment**
+- Update `webapp/` code
+- Push to GitHub
+- Existing CI/CD pipeline automatically deploys to ECS
+- Test on existing ALB URL
+
+---
+
+## Technical Architecture
+
+### File Structure
 ```
 webapp/
 ├── main.py              # FastAPI app with all endpoints
 ├── models.py            # Pydantic models
 ├── pipeline.py          # Mock pipeline execution
 ├── storage.py           # In-memory job storage
-├── requirements.txt     # Dependencies
-└── Dockerfile           # Existing file, no changes needed
+├── requirements.txt     # Dependencies (no changes needed)
+└── Dockerfile           # Existing file (no changes needed)
 ```
 
-### Technical Decisions (Simplified)
-- ✅ **Storage**: In-memory (Python dict/list) - No database
-- ✅ **Queue**: FastAPI BackgroundTasks - No SQS/Redis
-- ✅ **Worker**: Same process as API - No separate worker service
-- ✅ **Pipeline**: Mock Python function - No real Snakemake
-- ✅ **Infrastructure**: Reuse existing ECS infrastructure (no CDK changes)
-- ✅ **AI Tools**: GitHub Copilot + Claude/ChatGPT for rapid development
+### Technology Choices
+- ✅ **Storage**: Thread-safe in-memory dictionary
+- ✅ **Queue**: FastAPI BackgroundTasks
+- ✅ **Worker**: Same process as API
+- ✅ **Pipeline**: Mock Python function
+- ✅ **Infrastructure**: Existing ECS (VPC, ECR, OIDC, App Stack)
+- ✅ **CI/CD**: Existing GitHub Actions workflow
+- ✅ **AI Tools**: GitHub Copilot + Claude/ChatGPT
 
-### Storage Solution Comparison: In-Memory vs PostgreSQL
+### Deployment Architecture
+**Reuse existing infrastructure:**
+- VPC Stack → Networking already configured
+- ECR Stack → Push updated webapp image
+- GitHub OIDC Stack → Authentication ready
+- App Stack → ECS Fargate + ALB deployed
+- GitHub Actions → Automatic build + deploy
 
-#### Option 1: In-Memory Storage (Recommended for PoC)
-**Implementation:**
-```python
-# Simple thread-safe dictionary
-job_store = {"job_id": {status, data, timestamps}}
-```
-
-**Pros:**
-- ✅ Zero setup time - works immediately
-- ✅ No infrastructure changes needed
-- ✅ Fast read/write operations (microseconds)
-- ✅ Simple debugging and testing
-- ✅ Perfect for PoC/demo
-
-**Cons:**
-- ❌ Data lost on restart/redeploy
-- ❌ Not suitable for production
-- ❌ Single container only (doesn't scale horizontally)
-- ❌ No persistence for audit/history
-
-**Time Required:** Included in 6-hour estimate
+**Workflow**: Code → Push → Auto-deploy (3-5 min) → Test on ALB
 
 ---
 
-#### Option 2: PostgreSQL Database
-**Implementation:**
-```python
-# SQLAlchemy models + database connection
-class Job(Base):
-    id = Column(UUID, primary_key=True)
-    status = Column(String)
-    created_at = Column(DateTime)
-```
+## Implementation Checklist
 
-**Pros:**
-- ✅ Persistent storage across restarts
-- ✅ Production-ready solution
-- ✅ Supports multiple containers/horizontal scaling
-- ✅ Query capabilities (filter by status, date, etc.)
-- ✅ Audit trail and history
-
-**Cons:**
-- ❌ Requires new CDK database stack
-- ❌ More complex setup and testing
-- ❌ Slower than in-memory (milliseconds vs microseconds)
-- ❌ Additional costs (~$15-30/month for RDS)
-
-**Additional Time Required:** +3-4 hours
-- 1 hour: Create RDS stack in CDK (reuse VPC from existing infrastructure)
-- 1 hour: SQLAlchemy models and database connection
-- 0.5 hour: Update ECS task to include database credentials
-- 0.5 hour: Test database connectivity and migrations
-- 1 hour: Debugging and deployment
-
-**Additional CDK Stack Required:**
-```python
-# infra/stacks/database_stack.py
-class DatabaseStack(Stack):
-    def __init__(self, scope, vpc_stack, config):
-        self.db = rds.DatabaseInstance(
-            self, "PostgresDB",
-            engine=rds.DatabaseInstanceEngine.postgres(...),
-            vpc=vpc_stack.vpc,
-            vpc_subnets=vpc_stack.vpc.select_subnets(
-                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
-            ),
-            multi_az=False,  # Single AZ for PoC
-            allocated_storage=20,
-            instance_type=ec2.InstanceType.of(
-                ec2.InstanceClass.T3,
-                ec2.InstanceSize.MICRO
-            ),
-            removal_policy=RemovalPolicy.DESTROY,  # PoC only
-        )
-```
-
-**Updated File Structure:**
-```
-webapp/
-├── main.py
-├── models.py
-├── database.py          # NEW: SQLAlchemy setup
-├── crud.py              # NEW: Database operations
-├── pipeline.py
-├── requirements.txt     # Add: sqlalchemy, psycopg2
-└── Dockerfile
-
-infra/stacks/
-├── database_stack.py    # NEW: RDS PostgreSQL stack
-└── ... (existing stacks)
-```
-
----
-
-### Recommendation for 6-Hour PoC
-
-**Use In-Memory Storage** because:
-1. **Time constraint**: Database adds 3-4 hours = no time for testing/refinement
-2. **PoC purpose**: Demonstrates functionality, not production readiness
-3. **Working solution**: In-memory storage is fully functional, not a compromise
-4. **Existing infrastructure**: No CDK changes needed - deploy immediately
-
-**When to add PostgreSQL:**
-- If PoC needs to demonstrate persistence
-- If planning multi-container deployment
-- If demonstrating production-readiness is critical
-- If you have 9-10 hours instead of 6 hours
-
----
-
-### What's Excluded (Out of Scope)
-- ❌ Database (RDS/DynamoDB)
-- ❌ Message queue (SQS)
-- ❌ Separate worker service
-- ❌ Authentication/Authorization
-- ❌ Production monitoring
-- ❌ CDK infrastructure changes
-- ❌ Comprehensive testing
-- ❌ Job persistence (data lost on restart)
-
-### Deployment: Use Existing ECS Infrastructure ✅
-
-**Why this is optimal:**
-1. ✅ **Zero infrastructure work** - No new CDK stacks needed
-2. ✅ **Proven deployment** - Your CI/CD pipeline already works
-3. ✅ **Fast iteration** - Push code, automatic deployment in 3-5 minutes
-4. ✅ **Production-like** - Same environment pattern as production
-
-**What gets reused from your existing setup:**
-- VPC Stack (networking already configured)
-- ECR Stack (push updated webapp image)
-- GitHub OIDC Stack (authentication already set up)
-- App Stack (ECS Fargate + ALB already deployed)
-- GitHub Actions CI/CD (automatic build + deploy)
-
-**Development workflow:**
-1. Make code changes in `webapp/` directory
-2. Commit and push to GitHub
-3. Existing GitHub Actions workflow builds and deploys
-4. Test endpoints on existing ALB URL
-5. **AI assist**: Use Copilot to generate code, Claude to review
-
-**No new infrastructure needed!** 🎉
-
----
-
-### Deployment Options Comparison (For Reference)
-
-#### Option A: Existing ECS Infrastructure (✅ RECOMMENDED)
-**Pros:**
-- ✅ Already set up and working
-- ✅ No new infrastructure needed
-- ✅ Familiar deployment process (CDK + GitHub Actions)
-- ✅ Production-like environment
-
-**Cons:**
-- ❌ Slightly slower iteration (deploy takes ~3-5 minutes)
-- ❌ AWS costs (minimal for PoC)
-
-**Deployment**: Update `webapp/main.py`, push to GitHub, existing pipeline deploys
-
-#### Option B: Local Kubernetes (Docker Desktop)
-**Pros:**
-- ✅ Fast local iteration
-- ✅ No AWS costs
-- ✅ Learn K8s if that's a goal
-
-**Cons:**
-- ❌ Need to create K8s manifests (deployment, service, ingress)
-- ❌ Additional setup time (~1-2 hours)
-- ❌ Different from your existing infrastructure pattern
-- ❌ More complexity for a simple PoC
-
-**Setup Required:**
-```yaml
-# kubernetes/deployment.yaml
-# kubernetes/service.yaml
-# kubernetes/ingress.yaml (optional)
-```
-
-#### Option C: Docker Compose (Simplest)
-**Pros:**
-- ✅ Fastest setup (5 minutes)
-- ✅ Simple and familiar
-- ✅ No infrastructure complexity
-
-**Cons:**
-- ❌ Not representative of production
-- ❌ Single machine only
-
-**Setup**:
-```yaml
-# docker-compose.yml
-version: '3.8'
-services:
-  api:
-    build: ./webapp
-    ports:
-      - "8000:8000"
-```
-
-### Recommendation: Use Existing ECS Infrastructure
-
-**Rationale:**
-1. **Already built** - Your CDK infrastructure is production-ready
-2. **6-hour constraint** - No time to learn K8s if unfamiliar
-3. **Realistic** - Mirrors real deployment scenario
-4. **Proven** - Your CI/CD pipeline works perfectly
-
-**K8s would add:**
-- Learning curve for K8s concepts (if new)
-- Writing K8s manifests from scratch
-- Debugging K8s-specific issues
-- ~2 hours of setup time
-
-**Verdict**: Only use K8s if you specifically want to learn it or plan to use it in production. Otherwise, stick with your working ECS setup.
-
-### Implementation Checklist (6 hours with AI assistance)
 - [ ] Hour 1: AI-generate Pydantic models and basic endpoint structure
 - [ ] Hour 2: Implement thread-safe in-memory storage with AI help
 - [ ] Hour 2: Create mock pipeline function
@@ -395,12 +179,10 @@ services:
 - [ ] Hour 6: Deploy to existing ECS via GitHub Actions
 - [ ] Hour 6: Verify all endpoints work on deployed ALB
 
-**AI Tools Usage Throughout:**
-- GitHub Copilot: Code generation and completion
-- Claude/ChatGPT: Architecture decisions, debugging, test generation
-- Copilot Chat: Inline code explanations and refactoring suggestions
+---
 
-### Success Criteria
+## Success Criteria
+
 ✅ Can submit a job via POST /jobs
 ✅ Job status updates from pending → running → completed
 ✅ Can retrieve job status via GET /jobs/{id} (real-time from in-memory store)
@@ -412,25 +194,29 @@ services:
 
 ---
 
-## FAQ: In-Memory Storage
+## FAQ
 
 **Q: How do GET endpoints work without a database?**
-A: Jobs are stored in a Python dictionary with thread-safe locks. When you call GET /jobs/{id}, it looks up the job in memory. When background tasks update job status, they update the same in-memory dictionary. This works perfectly for a single-container PoC.
+A: Jobs are stored in a Python dictionary with thread-safe locks. When you call GET /jobs/{id}, it looks up the job in memory. Background tasks update the same dictionary. Works perfectly for single-container PoC.
 
 **Q: Is this just mocking the storage?**
-A: No! This is real, functional storage - just not persistent. Jobs are actually created, updated, and retrieved. The only difference from a database is that data is lost on restart.
+A: No! This is real, functional storage - just not persistent. Jobs are actually created, updated, and retrieved. Only difference from a database is data loss on restart.
 
 **Q: Can I test multiple jobs?**
-A: Yes! You can submit dozens of jobs, they'll all be stored and tracked correctly during the application runtime.
+A: Yes! Submit dozens of jobs - they'll all be stored and tracked correctly during application runtime.
 
 **Q: What happens on ECS restart/redeploy?**
-A: All job data is lost. For a PoC demo, simply submit new test jobs after deployment.
+A: All job data is lost. For PoC demo, simply submit new test jobs after deployment.
 
-**Q: When should I add PostgreSQL?**
-A: When you need:
-- Persistence across restarts
-- Multiple container instances (horizontal scaling)
-- Historical job data and audit trails
-- Production deployment
-(Adds 3-4 hours to implementation time)
+---
+
+## Future Enhancements (Out of Scope)
+
+If you need to extend beyond PoC (+3-4 hours for PostgreSQL):
+- Persistent storage with RDS PostgreSQL
+- Separate worker service for better scaling
+- Authentication/Authorization
+- Production monitoring and alarms
+- Comprehensive testing suite
+- Message queue (SQS) for better job distribution
 
