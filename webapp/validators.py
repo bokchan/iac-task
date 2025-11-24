@@ -8,8 +8,6 @@ Note: Parameter validation is now handled automatically by Pydantic models
 in JobSubmission, so explicit validation functions are no longer needed.
 """
 
-from typing import Any, Dict, Optional, Union
-
 from fastapi import HTTPException
 
 from .pipeline_models import (
@@ -32,8 +30,8 @@ PIPELINE_REGISTRY: dict[PipelineName, dict] = {
 
 
 def get_pipeline_info(
-    pipeline_name: Optional[str | PipelineName] = None,
-) -> Dict[str, Any]:
+    pipeline_name: str | PipelineName | None = None,
+) -> dict[str, object]:
     """
     Get information about available pipelines.
 
@@ -75,12 +73,10 @@ def get_pipeline_info(
 
 
 def sanitize_parameters(
-    parameters: Union[
-        GATKVariantCallingParams,
-        RNASeqDESeq2Params,
-        Dict[str, Any],
-    ],
-) -> Dict[str, Any]:
+    parameters: GATKVariantCallingParams
+    | RNASeqDESeq2Params
+    | dict[str, object],
+) -> dict[str, object]:
     """
     Convert Pydantic model to dictionary for storage.
 

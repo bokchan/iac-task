@@ -6,7 +6,6 @@ for each bioinformatics pipeline supported by the orchestration service.
 """
 
 from enum import Enum
-from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -82,35 +81,35 @@ class GATKVariantCallingParams(PipelineParamsBase):
     reference_genome: ReferenceGenome = Field(
         ..., description="Reference genome version", examples=["hg38"]
     )
-    fastq_r1: Optional[str] = Field(
+    fastq_r1: str | None = Field(
         None,
         description="Path to forward reads FASTQ file",
         examples=["s3://data/WGS_001_R1.fastq.gz"],
     )
-    fastq_r2: Optional[str] = Field(
+    fastq_r2: str | None = Field(
         None,
         description="Path to reverse reads FASTQ file",
         examples=["s3://data/WGS_001_R2.fastq.gz"],
     )
-    bam_file: Optional[str] = Field(
+    bam_file: str | None = Field(
         None,
         description="Path to aligned BAM file (alternative to FASTQ)",
         examples=["s3://data/WGS_001.bam"],
     )
-    caller: Optional[VariantCaller] = Field(
+    caller: VariantCaller | None = Field(
         VariantCaller.HAPLOTYPE_CALLER,
         description="Variant calling algorithm",
     )
-    quality_threshold: Optional[int] = Field(
+    quality_threshold: int | None = Field(
         30, ge=0, le=60, description="Minimum base quality score"
     )
-    depth_threshold: Optional[int] = Field(
+    depth_threshold: int | None = Field(
         10, ge=1, description="Minimum read depth for variant calling"
     )
 
     @field_validator("fastq_r1", "fastq_r2", "bam_file")
     @classmethod
-    def validate_file_path(cls, v: Optional[str]) -> Optional[str]:
+    def validate_file_path(cls, v: str | None) -> str | None:
         if v is None:
             return v
         valid_prefixes = ["s3://", "/data/", "/mnt/", "gs://", "https://"]
@@ -152,26 +151,26 @@ class RNASeqDESeq2Params(PipelineParamsBase):
     reference: ReferenceTranscriptome = Field(
         ..., description="Reference transcriptome version", examples=["gencode_v38"]
     )
-    fastq_files: Optional[List[str]] = Field(
+    fastq_files: list[str] | None = Field(
         None,
         description="List of FASTQ file paths",
         examples=[["s3://data/RNA_001.fastq.gz"]],
     )
-    adapter_sequence: Optional[str] = Field(
+    adapter_sequence: str | None = Field(
         None,
         description="Adapter sequence for trimming",
         examples=["AGATCGGAAGAGC"],
     )
-    min_quality: Optional[int] = Field(
+    min_quality: int | None = Field(
         20, ge=0, le=40, description="Minimum base quality score"
     )
-    quantification_method: Optional[QuantificationMethod] = Field(
+    quantification_method: QuantificationMethod | None = Field(
         QuantificationMethod.SALMON, description="Quantification tool"
     )
 
     @field_validator("fastq_files")
     @classmethod
-    def validate_fastq_paths(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+    def validate_fastq_paths(cls, v: list[str] | None) -> list[str] | None:
         if v is None:
             return v
         valid_prefixes = ["s3://", "/data/", "/mnt/", "gs://", "https://"]

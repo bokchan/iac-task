@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Union
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -42,11 +41,11 @@ class JobSubmission(BaseModel):
     pipeline_name: PipelineName = Field(
         ..., description="Name of the bioinformatics pipeline to execute"
     )
-    parameters: Union[GATKVariantCallingParams, RNASeqDESeq2Params] = Field(
+    parameters: GATKVariantCallingParams | RNASeqDESeq2Params = Field(
         ..., description="Pipeline parameters and configuration"
     )
-    description: Optional[str] = Field(None, description="Optional job description")
-    research_group: Optional[str] = Field(
+    description: str | None = Field(None, description="Optional job description")
+    research_group: str | None = Field(
         None, description="Research group or lab identifier submitting the job"
     )
 
@@ -98,17 +97,17 @@ class JobResponse(BaseModel):
     status: JobStatus = Field(..., description="Current job status")
     pipeline_name: str = Field(..., description="Pipeline name")
     parameters: dict = Field(..., description="Pipeline parameters")
-    description: Optional[str] = Field(None, description="Job description")
-    research_group: Optional[str] = Field(
+    description: str | None = Field(None, description="Job description")
+    research_group: str | None = Field(
         None, description="Research group or lab identifier"
     )
     created_at: datetime = Field(..., description="Job creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
-    started_at: Optional[datetime] = Field(None, description="Job start timestamp")
-    completed_at: Optional[datetime] = Field(
+    started_at: datetime | None = Field(None, description="Job start timestamp")
+    completed_at: datetime | None = Field(
         None, description="Job completion timestamp"
     )
-    error_message: Optional[str] = Field(
+    error_message: str | None = Field(
         None, description="Error message if job failed"
     )
 

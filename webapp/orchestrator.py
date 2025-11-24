@@ -6,7 +6,6 @@ allowing you to swap Prefect for another system without changing the REST API.
 """
 
 import logging
-from typing import Dict, Optional
 from uuid import UUID
 
 from webapp.pipeline_models import PipelineName
@@ -22,7 +21,7 @@ async def submit_to_orchestrator(
     job_id: UUID,
     pipeline_name: str | PipelineName,
     parameters: dict,
-    research_group: Optional[str] = None,
+    research_group: str | None = None,
 ) -> str:
     """
     Submit job to the configured orchestration backend.

@@ -24,7 +24,6 @@ Usage:
 
 import asyncio
 from datetime import timedelta
-from typing import Dict, List, Optional
 
 import httpx
 from prefect import flow, task
@@ -42,8 +41,8 @@ API_BASE_URL = "http://localhost:8000"  # Change to your deployed URL
 )
 async def submit_pipeline_job(
     pipeline_name: str,
-    parameters: Dict,
-    research_group: Optional[str] = None,
+    parameters: dict,
+    research_group: str | None = None,
 ) -> str:
     """
     Submit a pipeline job to the FastAPI orchestration service.
@@ -75,7 +74,7 @@ async def submit_pipeline_job(
 
 
 @task(retries=5, retry_delay_seconds=60)
-async def wait_for_job_completion(job_id: str, poll_interval: int = 30) -> Dict:
+async def wait_for_job_completion(job_id: str, poll_interval: int = 30) -> dict:
     """
     Poll job status until completion or failure.
 
@@ -153,7 +152,7 @@ async def gatk_variant_calling_workflow(
     fastq_r2: str,
     reference_genome: str = "hg38",
     research_group: str = "genomics_lab",
-) -> Dict:
+) -> dict:
     """
     Complete GATK variant calling workflow with quality control and LIMS integration.
 
@@ -224,10 +223,10 @@ async def gatk_variant_calling_workflow(
 
 @flow(name="Batch RNA-seq Analysis", log_prints=True)
 async def batch_rnaseq_workflow(
-    samples: List[Dict[str, str]],
+    samples: list[dict[str, str]],
     reference_transcriptome: str = "gencode_v38",
     research_group: str = "transcriptomics_lab",
-) -> List[Dict]:
+) -> list[dict]:
     """
     Process multiple RNA-seq samples with resource-aware scheduling.
 
@@ -277,8 +276,8 @@ async def batch_rnaseq_workflow(
 async def cross_lab_etl_workflow(
     source_research_group: str,
     target_research_group: str,
-    data_types: List[str],
-) -> Dict:
+    data_types: list[str],
+) -> dict:
     """
     ETL workflow for transferring and transforming data between research groups.
 

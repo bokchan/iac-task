@@ -2,7 +2,6 @@
 
 import threading
 from datetime import datetime, timezone
-from typing import Optional
 from uuid import UUID
 
 from .models import JobResponse, JobStatus
@@ -30,7 +29,7 @@ class JobStore:
             self._jobs[job.id] = job
             return job
 
-    def get(self, job_id: UUID) -> Optional[JobResponse]:
+    def get(self, job_id: UUID) -> JobResponse | None:
         """
         Retrieve a job by ID.
 

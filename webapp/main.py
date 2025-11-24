@@ -1,7 +1,6 @@
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Optional
 from uuid import UUID, uuid4
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
@@ -175,8 +174,8 @@ async def get_job(job_id: UUID) -> JobResponse:
 
 @app.get("/jobs", response_model=JobList)
 async def list_jobs(
-    research_group: Optional[str] = Query(None, description="Filter by research group"),
-    status: Optional[JobStatus] = Query(None, description="Filter by job status"),
+    research_group: str | None = Query(None, description="Filter by research group"),
+    status: JobStatus | None = Query(None, description="Filter by job status"),
 ) -> JobList:
     """
     List all jobs with optional filtering.
