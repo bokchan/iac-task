@@ -11,7 +11,6 @@ from .storage import job_store
 from .validators import (
     validate_pipeline_exists,
     validate_pipeline_parameters,
-    check_research_group_quota,
     validate_file_paths,
     sanitize_parameters,
     get_pipeline_info,
@@ -102,10 +101,9 @@ async def submit_job(
 
     This endpoint demonstrates FastAPI's value as an abstraction layer:
     1. Validates pipeline exists and parameters are correct
-    2. Checks research group quotas
-    3. Sanitizes and normalizes parameters
-    4. Abstracts the underlying orchestration engine (Prefect/Dagster/etc.)
-    5. Provides unified job tracking across all pipelines
+    2. Sanitizes and normalizes parameters
+    3. Abstracts the underlying orchestration engine (Prefect/Dagster/etc.)
+    4. Provides unified job tracking across all pipelines
 
     Args:
         job_submission: Job submission details including pipeline name and parameters
@@ -115,7 +113,7 @@ async def submit_job(
         JobResponse with the created job details
 
     Raises:
-        HTTPException: 400 for validation errors, 429 for quota exceeded
+        HTTPException: 400 for validation errors
     """
     # Business Logic Layer: Validate pipeline and parameters
     validate_pipeline_exists(job_submission.pipeline_name)
@@ -123,19 +121,6 @@ async def submit_job(
         job_submission.pipeline_name, job_submission.parameters
     )
     validate_file_paths(job_submission.parameters)
-
-    # Business Logic Layer: Check research group quota
-    if job_submission.research_group:
-        # Count jobs submitted today by this research group
-        today_jobs = len(
-            [
-                j
-                for j in job_store.list_all()
-                if j.research_group == job_submission.research_group
-                and j.created_at.date() == datetime.now(tz=timezone.utc).date()
-            ]
-        )
-        check_research_group_quota(job_submission.research_group, today_jobs)
 
     # Business Logic Layer: Sanitize and normalize parameters
     sanitized_params = sanitize_parameters(job_submission.parameters)

@@ -49,16 +49,6 @@ PIPELINE_REGISTRY = {
 }
 
 
-# Research group quotas (jobs per day)
-RESEARCH_GROUP_QUOTAS = {
-    "genomics_lab": 100,
-    "transcriptomics_lab": 50,
-    "cancer_genomics_lab": 100,
-    "clinical_research": 30,
-    "data_integration_team": 20,
-}
-
-
 def validate_pipeline_exists(pipeline_name: str) -> None:
     """
     Validate that the requested pipeline is supported.
@@ -116,32 +106,6 @@ def validate_pipeline_parameters(pipeline_name: str, parameters: Dict) -> None:
                 status_code=400,
                 detail=f"Invalid reference. Valid options for {pipeline_name}: {valid_refs}",
             )
-
-
-def check_research_group_quota(research_group: Optional[str], job_count: int) -> None:
-    """
-    Check if research group has exceeded their quota.
-
-    Args:
-        research_group: Research group identifier
-        job_count: Current number of jobs submitted today
-
-    Raises:
-        HTTPException: 429 if quota exceeded
-    """
-    if not research_group:
-        return  # No quota enforcement for anonymous submissions
-
-    quota = RESEARCH_GROUP_QUOTAS.get(research_group)
-    if quota is None:
-        # Unknown research group - allow but log warning
-        return
-
-    if job_count >= quota:
-        raise HTTPException(
-            status_code=429,
-            detail=f"Research group '{research_group}' has exceeded daily quota of {quota} jobs",
-        )
 
 
 def validate_file_paths(parameters: Dict) -> None:

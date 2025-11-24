@@ -44,5 +44,6 @@ def fast_pipeline_execution(monkeypatch):
             success_rate=success_rate,
         )
 
-    monkeypatch.setattr("webapp.main.execute_mock_pipeline", fast_execute)
+    monkeypatch.setattr("webapp.orchestrator.submit_to_mock_orchestrator",
+                        lambda *args, **kwargs: fast_execute(args[0], args[1], args[2]))
     monkeypatch.setattr("webapp.pipeline.execute_mock_pipeline", fast_execute)
