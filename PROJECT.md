@@ -420,15 +420,24 @@ For production deployment, consider:
 
 ## Usage Examples
 
-### Submit a Job
+### Submit a GATK Variant Calling Job
 
 ```bash
 curl -X POST http://localhost:8000/jobs \
   -H "Content-Type: application/json" \
   -d '{
-    "pipeline_name": "variant_calling",
-    "parameters": {"sample_id": "S001", "genome": "hg38"},
-    "description": "Run variant calling on sample S001"
+    "pipeline_name": "gatk_variant_calling",
+    "parameters": {
+      "sample_id": "WGS_001",
+      "fastq_r1": "/data/WGS_001_R1.fastq.gz",
+      "fastq_r2": "/data/WGS_001_R2.fastq.gz",
+      "reference_genome": "hg38",
+      "caller": "HaplotypeCaller",
+      "quality_threshold": 30,
+      "depth_threshold": 10
+    },
+    "research_group": "genomics_lab",
+    "description": "WGS variant calling for patient sample"
   }'
 ```
 
@@ -437,10 +446,55 @@ curl -X POST http://localhost:8000/jobs \
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "status": "pending",
-  "pipeline_name": "variant_calling",
+  "pipeline_name": "gatk_variant_calling",
+  "research_group": "genomics_lab",
+  "parameters": {
+    "sample_id": "WGS_001",
+    "reference_genome": "hg38",
+    "caller": "HaplotypeCaller"
+  },
   "created_at": "2025-11-24T10:00:00Z",
-  ...
+  "updated_at": "2025-11-24T10:00:00Z"
 }
+```
+
+### Submit an RNA-seq Analysis Job
+
+```bash
+curl -X POST http://localhost:8000/jobs \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pipeline_name": "rnaseq_deseq2",
+    "parameters": {
+      "sample_id": "RNA_001",
+      "fastq_files": ["/data/RNA_001.fastq.gz"],
+      "reference": "gencode_v38",
+      "adapter_sequence": "AGATCGGAAGAGC",
+      "min_quality": 20,
+      "quantification_method": "salmon"
+    },
+    "research_group": "transcriptomics_lab",
+    "description": "RNA-seq differential expression analysis"
+  }'
+```
+
+### Submit a Cross-Lab ETL Job
+
+```bash
+curl -X POST http://localhost:8000/jobs \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pipeline_name": "cross_lab_etl",
+    "parameters": {
+      "source_group": "genomics_lab",
+      "target_group": "clinical_research",
+      "data_types": ["vcf", "phenotype_data"],
+      "validation_level": "strict",
+      "anonymize": true
+    },
+    "research_group": "data_integration_team",
+    "description": "Transfer variant data to clinical research group"
+  }'
 ```
 
 ### Check Job Status
@@ -449,14 +503,30 @@ curl -X POST http://localhost:8000/jobs \
 curl http://localhost:8000/jobs/550e8400-e29b-41d4-a716-446655440000
 ```
 
-**Response:**
+**Response (Running):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "running",
+  "pipeline_name": "gatk_variant_calling",
+  "research_group": "genomics_lab",
+  "started_at": "2025-11-24T10:00:05Z",
+  "created_at": "2025-11-24T10:00:00Z",
+  "updated_at": "2025-11-24T10:00:05Z"
+}
+```
+
+**Response (Completed):**
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "status": "completed",
+  "pipeline_name": "gatk_variant_calling",
+  "research_group": "genomics_lab",
   "started_at": "2025-11-24T10:00:05Z",
   "completed_at": "2025-11-24T10:00:25Z",
-  ...
+  "created_at": "2025-11-24T10:00:00Z",
+  "updated_at": "2025-11-24T10:00:25Z"
 }
 ```
 

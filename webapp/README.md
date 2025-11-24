@@ -28,25 +28,54 @@ docker compose up --build
 
 ### Usage
 
-**Submit a job:**
+**Submit a GATK variant calling job:**
 ```bash
 curl -X POST http://localhost:8000/jobs \
   -H "Content-Type: application/json" \
   -d '{
-    "pipeline_name": "variant_calling",
-    "parameters": {"sample_id": "S001"},
-    "description": "Run variant calling"
+    "pipeline_name": "gatk_variant_calling",
+    "parameters": {
+      "sample_id": "WGS_001",
+      "fastq_r1": "/data/WGS_001_R1.fastq.gz",
+      "fastq_r2": "/data/WGS_001_R2.fastq.gz",
+      "reference_genome": "hg38",
+      "caller": "HaplotypeCaller",
+      "quality_threshold": 30
+    },
+    "research_group": "genomics_lab",
+    "description": "Whole genome sequencing variant calling"
   }'
 ```
 
-**Check status:**
+**Submit an RNA-seq analysis job:**
 ```bash
-curl http://localhost:8000/jobs/\{job-id\}
+curl -X POST http://localhost:8000/jobs \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pipeline_name": "rnaseq_deseq2",
+    "parameters": {
+      "sample_id": "RNA_001",
+      "fastq_files": ["/data/RNA_001.fastq.gz"],
+      "reference": "gencode_v38",
+      "quantification_method": "salmon",
+      "min_quality": 20
+    },
+    "research_group": "transcriptomics_lab",
+    "description": "RNA-seq differential expression analysis"
+  }'
 ```
 
-**List all jobs:**
+**Check job status:**
+```bash
+curl http://localhost:8000/jobs/{job-id}
+```
+
+**List all jobs (with research group filter):**
 ```bash
 curl http://localhost:8000/jobs
+
+# Filter by research group (if implemented):
+curl "http://localhost:8000/jobs?research_group=genomics_lab"
 ```
 
 ## API Endpoints
@@ -76,7 +105,7 @@ curl http://localhost:8000/jobs
 ### JobStatus
 ```python
 PENDING    # Awaiting execution
-RUNNING    # Currently executing  
+RUNNING    # Currently executing
 COMPLETED  # Finished successfully
 FAILED     # Finished with errors
 ```
@@ -151,10 +180,10 @@ uv run pytest webapp/tests/test_jobs_api.py
 
 ### Components
 
-**main.py**: FastAPI application with REST endpoints  
-**models.py**: Pydantic data models for validation  
-**storage.py**: Thread-safe in-memory job storage (`JobStore`)  
-**pipeline.py**: Mock pipeline execution simulator  
+**main.py**: FastAPI application with REST endpoints
+**models.py**: Pydantic data models for validation
+**storage.py**: Thread-safe in-memory job storage (`JobStore`)
+**pipeline.py**: Mock pipeline execution simulator
 
 ### Storage
 
@@ -337,7 +366,7 @@ POST /jobs
 Once running:
 
 - **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc  
+- **ReDoc**: http://localhost:8000/redoc
 - **OpenAPI JSON**: http://localhost:8000/openapi.json
 
 ## Additional Resources
