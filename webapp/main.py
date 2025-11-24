@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
@@ -57,7 +57,7 @@ async def submit_job(
     """
     # Create job with unique ID and initial status
     job_id = uuid4()
-    now = datetime.utcnow()
+    now = datetime.now(tz=timezone.utc)
 
     job = JobResponse(
         id=job_id,

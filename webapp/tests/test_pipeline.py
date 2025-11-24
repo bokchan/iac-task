@@ -77,6 +77,7 @@ class TestBackgroundTaskIntegration:
 
         # Check job status - should have completed or failed (not pending)
         updated_job = job_store.get(uuid.UUID(job_id))
+        assert updated_job
         assert updated_job.status in [JobStatus.COMPLETED, JobStatus.FAILED]
 
         # Verify timestamps are set
@@ -103,7 +104,7 @@ class TestBackgroundTaskIntegration:
         time.sleep(1.0)
 
         # Check that jobs have been processed
-        statuses = [job_store.get(uuid.UUID(jid)).status for jid in job_ids]
+        statuses = [job_store.get(uuid.UUID(jid)).status for jid in job_ids]  # pyrefly: ignore
 
         # All jobs should have completed (COMPLETED or FAILED)
         assert all(

@@ -1,7 +1,7 @@
 """Thread-safe in-memory job storage."""
 
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -80,7 +80,7 @@ class JobStore:
                 job.error_message = error_message
 
             # Always update the updated_at timestamp
-            job.updated_at = datetime.utcnow()
+            job.updated_at = datetime.now(tz=timezone.utc)
 
             return job
 

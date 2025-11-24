@@ -3,7 +3,7 @@
 import asyncio
 import logging
 import random
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from .models import JobStatus
@@ -16,8 +16,8 @@ async def execute_mock_pipeline(
     job_id: UUID,
     pipeline_name: str,
     parameters: dict,
-    min_duration: int = 10,
-    max_duration: int = 30,
+    min_duration: float = 10,
+    max_duration: float = 30,
     success_rate: float = 0.8,
 ) -> None:
     """
@@ -37,7 +37,7 @@ async def execute_mock_pipeline(
     job_store.update(
         job_id=job_id,
         status=JobStatus.RUNNING,
-        started_at=datetime.utcnow(),
+        started_at=datetime.now(tz=timezone.utc),
     )
     logger.info(f"Job {job_id} status updated to RUNNING")
 
@@ -56,7 +56,7 @@ async def execute_mock_pipeline(
             job_store.update(
                 job_id=job_id,
                 status=JobStatus.COMPLETED,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(tz=timezone.utc),
             )
             logger.info(
                 f"Job {job_id} completed successfully after {duration:.2f} seconds"
@@ -75,7 +75,7 @@ async def execute_mock_pipeline(
             job_store.update(
                 job_id=job_id,
                 status=JobStatus.FAILED,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(tz=timezone.utc),
                 error_message=error_message,
             )
             logger.warning(
@@ -88,7 +88,7 @@ async def execute_mock_pipeline(
         job_store.update(
             job_id=job_id,
             status=JobStatus.FAILED,
-            completed_at=datetime.utcnow(),
+            completed_at=datetime.now(tz=timezone.utc),
             error_message=error_message,
         )
         logger.error(
