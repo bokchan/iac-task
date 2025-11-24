@@ -1,6 +1,6 @@
-# IaC Task - FastAPI Cloud Infrastructure
+# Cloud Based Pipeline Orchestration Service
 
-A production-ready FastAPI application deployed on AWS using Infrastructure as Code (CDK) with automated CI/CD pipeline via GitHub Actions. Designed for pipeline orchestration in **multi-research-group computational biology environments** with support for variant calling, RNA-seq analysis, and cross-lab data integration workflows.
+A FastAPI application deployed on AWS using Infrastructure as Code (CDK) with automated CI/CD pipeline via GitHub Actions. Designed for pipeline orchestration in **multi-research-group computational biology environments** with support for variant calling, RNA-seq analysis, and cross-lab data integration workflows.
 
 ## 🏗️ System Architecture
 
@@ -33,10 +33,12 @@ iac-task/
 ├── webapp/                     # 🌐 FastAPI Application
 │   ├── README.md               # → API docs, local dev, testing
 │   ├── main.py                 # Application code
+│   ├── ...                     #
 │   └── tests/                  # Test suite
 └── infra/                      # ☁️ AWS Infrastructure
     ├── README.md               # → Deployment, architecture, CI/CD
     ├── deploy.sh               # Deployment scripts
+    ├── ...                     #
     └── stacks/                 # CDK infrastructure code
 ```
 
@@ -81,7 +83,7 @@ cd infra
 
 ### 🌐 [Web Application](webapp/README.md)
 
-- **Purpose**: Pipeline Orchestration Service - REST API for submitting and tracking Snakemake pipeline jobs
+- **Purpose**: Pipeline Orchestration Service - REST API for submitting and pipeline jobs
 - **Quick Start**: Local development, testing, Docker deployment
 - **Key Features**: Job submission, status tracking, background task processing, thread-safe storage
 - **API Endpoints**: `/jobs` (submit/list), `/jobs/{id}` (status), `/health`, `/version`, `/docs`

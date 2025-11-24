@@ -1,6 +1,6 @@
 # Pipeline Orchestration Service - Web Application
 
-A FastAPI-based REST API service for submitting and tracking Snakemake pipeline jobs with background task processing and thread-safe storage.
+A FastAPI-based REST API service for submitting and tracking pipeline jobs with background task processing and thread-safe storage.
 
 > **Documentation**: See [PROJECT.md](../PROJECT.md) for detailed architecture and technical specifications.
 
@@ -296,17 +296,17 @@ This is a **proof-of-concept** implementation:
 2. **Scalability**: Single-instance, no distributed job processing
 3. **Persistence**: No database integration
 4. **Authentication**: Not implemented
-5. **Pipeline**: Mock only, not real Snakemake
+5. **Pipeline**: Mock only
 
 ### Production Considerations
 
 For production deployment:
 
-- **Persistent storage**: PostgreSQL/DynamoDB (3-4 hours)
-- **Message queue**: SQS/SNS for job distribution (2-3 hours)
-- **Separate workers**: Dedicated worker service (4-6 hours)
-- **Authentication**: JWT/OAuth2 (4-6 hours)
-- **Real pipeline**: Snakemake integration (8-16 hours)
+- **Persistent storage**: PostgreSQL/DynamoDB
+- **Message queue**: SQS/SNS for job distribution
+- **Separate workers**: Dedicated worker service
+- **Authentication**: JWT/OAuth2
+- **Real pipeline**: Prefetch/Snakemake integration
 - **Monitoring**: CloudWatch metrics/alarms (2-4 hours)
 
 ## Deployment

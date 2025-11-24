@@ -15,13 +15,14 @@ This architecture addresses common challenges in bioinformatics core facilities 
 **Challenge**: Multiple research groups submit WGS/WES samples for variant calling, requiring standardized processing and transparent status tracking.
 
 **Solution**:
+
 - Standardized REST API ensures consistent job submission format across labs
-- Research group tracking enables quota management and billing allocation
 - Background processing handles long-running GATK/FreeBayes/DeepVariant workflows
 - Real-time job status provides transparency across research groups
 - Job parameters validation ensures data quality (reference genome versions, quality thresholds)
 
 **Example Job Submission**:
+
 ```json
 {
   "pipeline_name": "gatk_variant_calling",
@@ -42,6 +43,7 @@ This architecture addresses common challenges in bioinformatics core facilities 
 **Challenge**: Research groups submit RNA-seq samples with varying experimental designs, requiring resource coordination and preventing computational bottlenecks.
 
 **Solution**:
+
 - Queue management prevents resource contention on shared HPC clusters
 - Job prioritization based on research group quotas and deadlines
 - Status tracking shows pipeline progress (QC → Alignment → Quantification → DE Analysis)
@@ -49,6 +51,7 @@ This architecture addresses common challenges in bioinformatics core facilities 
 - Integration with downstream visualization tools (IGV, R/Bioconductor)
 
 **Example Job Submission**:
+
 ```json
 {
   "pipeline_name": "rnaseq_deseq2",
@@ -69,6 +72,7 @@ This architecture addresses common challenges in bioinformatics core facilities 
 **Challenge**: Consolidating sequencing data from multiple research groups with different LIMS systems and data formats.
 
 **Solution**:
+
 - Standardized job metadata enables data consolidation across diverse sources
 - Research group tracking for compliance, billing, and audit trails
 - API-first design integrates with existing LIMS systems (Benchling, LabKey, OpenSpecimen)
@@ -76,6 +80,7 @@ This architecture addresses common challenges in bioinformatics core facilities 
 - Job history provides reproducibility and provenance tracking
 
 **Benefits for Core Facilities**:
+
 - **Transparency**: Research groups see pipeline status in real-time
 - **Accountability**: Track resource usage per lab for billing/chargeback
 - **Reproducibility**: Complete job parameters logged for publication/validation
@@ -86,14 +91,15 @@ This architecture addresses common challenges in bioinformatics core facilities 
 
 Compatible with standard bioinformatics workflow engines:
 
-| Workflow Engine | Integration Method | Use Case |
-|----------------|-------------------|----------|
-| **Snakemake** | Direct execution via subprocess | Python-based workflows, conda environments |
-| **Nextflow** | REST API to Seqera Platform | Production genomics pipelines (nf-core) |
-| **Prefect** | Native Python orchestration | Complex ETL, data validation, notifications |
-| **CWL** | cwltool execution | Portable, standardized workflows |
+| Workflow Engine | Integration Method              | Use Case                                    |
+| --------------- | ------------------------------- | ------------------------------------------- |
+| **Snakemake**   | Direct execution via subprocess | Python-based workflows, conda environments  |
+| **Nextflow**    | REST API to Seqera Platform     | Production genomics pipelines (nf-core)     |
+| **Prefect**     | Native Python orchestration     | Complex ETL, data validation, notifications |
+| **CWL**         | cwltool execution               | Portable, standardized workflows            |
 
 **Recommended Architecture**:
+
 ```
 Research Groups → FastAPI (this service) → Prefect → Snakemake/Nextflow → Results
                       ↓                        ↓
@@ -135,14 +141,14 @@ Research Groups → FastAPI (this service) → Prefect → Snakemake/Nextflow �
 
 ### Technology Stack
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| **Web Framework** | FastAPI | REST API with automatic OpenAPI docs |
-| **Storage** | In-memory dictionary | Thread-safe job data persistence |
-| **Task Queue** | FastAPI BackgroundTasks | Asynchronous job processing |
-| **Data Validation** | Pydantic | Request/response models |
-| **Testing** | pytest | Automated test suite |
-| **Containerization** | Docker | Multi-stage build for deployment |
+| Component            | Technology              | Purpose                              |
+| -------------------- | ----------------------- | ------------------------------------ |
+| **Web Framework**    | FastAPI                 | REST API with automatic OpenAPI docs |
+| **Storage**          | In-memory dictionary    | Thread-safe job data persistence     |
+| **Task Queue**       | FastAPI BackgroundTasks | Asynchronous job processing          |
+| **Data Validation**  | Pydantic                | Request/response models              |
+| **Testing**          | pytest                  | Automated test suite                 |
+| **Containerization** | Docker                  | Multi-stage build for deployment     |
 
 ### File Structure
 
@@ -169,6 +175,7 @@ webapp/
 ## Data Models
 
 ### JobStatus (Enum)
+
 ```python
 PENDING    # Job created, awaiting execution
 RUNNING    # Job currently executing
@@ -177,6 +184,7 @@ FAILED     # Job finished with errors
 ```
 
 ### JobSubmission (Request)
+
 ```python
 pipeline_name: PipelineName                                    # Pipeline to execute (enum)
 parameters: GATKVariantCallingParams | RNASeqDESeq2Params     # Typed pipeline parameters
@@ -187,6 +195,7 @@ research_group: str | None                                     # Research group 
 **Validation**: Model validator ensures pipeline_name matches parameter type.
 
 ### JobResponse (Response)
+
 ```python
 id: UUID                                                       # Unique job identifier
 status: JobStatus                                              # Current execution status
@@ -202,6 +211,7 @@ error_message: str | None                                      # Error details i
 ```
 
 ### JobList (Response)
+
 ```python
 jobs: List[JobResponse]         # Array of job objects
 total: int                      # Total number of jobs
@@ -211,21 +221,21 @@ total: int                      # Total number of jobs
 
 ### Job Management
 
-| Method | Endpoint | Description | Status Codes |
-|--------|----------|-------------|--------------|
-| POST | `/jobs` | Submit new pipeline job | 201 Created, 422 Validation Error |
-| GET | `/jobs/{id}` | Get job status by UUID | 200 OK, 404 Not Found |
-| GET | `/jobs` | List all jobs | 200 OK |
+| Method | Endpoint     | Description             | Status Codes                      |
+| ------ | ------------ | ----------------------- | --------------------------------- |
+| POST   | `/jobs`      | Submit new pipeline job | 201 Created, 422 Validation Error |
+| GET    | `/jobs/{id}` | Get job status by UUID  | 200 OK, 404 Not Found             |
+| GET    | `/jobs`      | List all jobs           | 200 OK                            |
 
 ### System Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | Echo message (configurable) |
-| GET | `/health` | Health check for monitoring |
-| GET | `/version` | Application version |
-| GET | `/docs` | Interactive API documentation (Swagger) |
-| GET | `/redoc` | Alternative API documentation |
+| Method | Endpoint   | Description                             |
+| ------ | ---------- | --------------------------------------- |
+| GET    | `/`        | Echo message (configurable)             |
+| GET    | `/health`  | Health check for monitoring             |
+| GET    | `/version` | Application version                     |
+| GET    | `/docs`    | Interactive API documentation (Swagger) |
+| GET    | `/redoc`   | Alternative API documentation           |
 
 ## Storage Implementation
 
@@ -247,11 +257,12 @@ class JobStore:
 ```
 
 **Characteristics:**
+
 - ✅ Thread-safe concurrent access
 - ✅ Fast read/write operations
 - ✅ Zero external dependencies
-- ⚠️  Data lost on restart (by design for PoC)
-- ⚠️  Single-instance limitation
+- ⚠️ Data lost on restart (by design for PoC)
+- ⚠️ Single-instance limitation
 
 ## Pipeline Execution
 
@@ -260,11 +271,13 @@ class JobStore:
 The `execute_mock_pipeline()` function simulates Snakemake pipeline execution:
 
 **Configuration:**
+
 - `min_duration`: Minimum execution time (default: 10s)
 - `max_duration`: Maximum execution time (default: 30s)
 - `success_rate`: Probability of success (default: 0.8)
 
 **Behavior:**
+
 1. Updates job status to `RUNNING`
 2. Simulates execution with random duration
 3. Randomly succeeds or fails based on success rate
@@ -272,6 +285,7 @@ The `execute_mock_pipeline()` function simulates Snakemake pipeline execution:
 5. Stores error messages on failure
 
 **Example Error Messages:**
+
 - "Pipeline step 'variant_calling' failed: insufficient memory"
 - "Reference genome file not found"
 - "Sample quality check failed: low coverage"
@@ -306,6 +320,7 @@ The `execute_mock_pipeline()` function simulates Snakemake pipeline execution:
 **23 comprehensive tests** organized in 3 files:
 
 #### test_jobs_api.py (15 tests)
+
 - Job submission (success, validation, concurrent)
 - Job retrieval (by ID, not found, invalid UUID)
 - Job listing (empty, populated, all fields)
@@ -313,11 +328,13 @@ The `execute_mock_pipeline()` function simulates Snakemake pipeline execution:
 - Thread-safe concurrent operations
 
 #### test_pipeline.py (3 tests)
+
 - Background task execution
 - Multiple concurrent background tasks
 - Complete job lifecycle validation
 
 #### test_app.py (5 tests)
+
 - Root endpoint functionality
 - Health check endpoint
 - Version endpoint
@@ -349,11 +366,11 @@ uv run pytest webapp/tests/test_jobs_api.py
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ECHO_MESSAGE` | `"Hello World"` | Message returned by root endpoint |
-| `LOG_LEVEL` | `"INFO"` | Logging level (DEBUG/INFO/WARNING/ERROR) |
-| `IMAGE_TAG` | `"unknown"` | Deployed image version |
+| Variable       | Default         | Description                              |
+| -------------- | --------------- | ---------------------------------------- |
+| `ECHO_MESSAGE` | `"Hello World"` | Message returned by root endpoint        |
+| `LOG_LEVEL`    | `"INFO"`        | Logging level (DEBUG/INFO/WARNING/ERROR) |
+| `IMAGE_TAG`    | `"unknown"`     | Deployed image version                   |
 
 ### Pipeline Parameters
 
@@ -388,6 +405,7 @@ docker run -p 8000:8000 \
 ### AWS ECS Deployment
 
 Deployed via existing infrastructure:
+
 - **Container**: ECS Fargate task
 - **Load Balancer**: Application Load Balancer
 - **Registry**: Amazon ECR
@@ -400,6 +418,7 @@ See [infrastructure documentation](../infra/README.md) for deployment details.
 ### Current Implementation
 
 This is a **proof-of-concept** implementation optimized for:
+
 - ✅ Rapid development and demonstration
 - ✅ Single-container deployments
 - ✅ Development and testing environments
@@ -417,14 +436,14 @@ This is a **proof-of-concept** implementation optimized for:
 
 For production deployment, consider:
 
-| Enhancement | Effort | Description |
-|-------------|--------|-------------|
-| **Persistent Storage** | 3-4 hours | Migrate to PostgreSQL/DynamoDB |
-| **Message Queue** | 2-3 hours | Add SQS/SNS for job distribution |
-| **Separate Workers** | 4-6 hours | Dedicated worker service |
-| **Authentication** | 4-6 hours | JWT/OAuth2 implementation |
-| **Real Pipeline** | 8-16 hours | Snakemake integration |
-| **Monitoring** | 2-4 hours | CloudWatch metrics/alarms |
+| Enhancement            | Effort     | Description                      |
+| ---------------------- | ---------- | -------------------------------- |
+| **Persistent Storage** | 3-4 hours  | Migrate to PostgreSQL/DynamoDB   |
+| **Message Queue**      | 2-3 hours  | Add SQS/SNS for job distribution |
+| **Separate Workers**   | 4-6 hours  | Dedicated worker service         |
+| **Authentication**     | 4-6 hours  | JWT/OAuth2 implementation        |
+| **Real Pipeline**      | 8-16 hours | Snakemake integration            |
+| **Monitoring**         | 2-4 hours  | CloudWatch metrics/alarms        |
 
 ## Usage Examples
 
@@ -450,6 +469,7 @@ curl -X POST http://localhost:8000/jobs \
 ```
 
 **Response:**
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -506,6 +526,7 @@ curl http://localhost:8000/jobs/550e8400-e29b-41d4-a716-446655440000
 ```
 
 **Response (Running):**
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -519,6 +540,7 @@ curl http://localhost:8000/jobs/550e8400-e29b-41d4-a716-446655440000
 ```
 
 **Response (Completed):**
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -539,6 +561,7 @@ curl http://localhost:8000/jobs
 ```
 
 **Response:**
+
 ```json
 {
   "jobs": [
@@ -578,6 +601,7 @@ Access application at http://localhost:8000
 ## Additional Resources
 
 For project information, infrastructure details, and deployment instructions, see:
+
 - [Root README](README.md) - Project overview
 - [Infrastructure README](infra/README.md) - AWS deployment guide
 - [Web App README](webapp/README.md) - Detailed application documentation
