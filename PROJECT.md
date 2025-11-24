@@ -79,33 +79,36 @@ This architecture addresses common challenges in bioinformatics core facilities 
 - **Reproducibility**: Complete job parameters logged with timestamps
 - **Flexibility**: Easy integration with external tools via REST API
 
-### Pipeline Integration
+### Current Implementation (Proof of Concept)
 
-Compatible with standard bioinformatics workflow engines:
+This is a **demonstration/PoC** system with mock pipeline execution. The architecture is designed to be extensible for future integration with workflow engines, but currently uses simulated execution.
 
-| Workflow Engine | Integration Method              | Use Case                                    |
-| --------------- | ------------------------------- | ------------------------------------------- |
-| **Snakemake**   | Direct execution via subprocess | Python-based workflows, conda environments  |
-| **Nextflow**    | REST API to Seqera Platform     | Production genomics pipelines (nf-core)     |
-| **Prefect**     | Native Python orchestration     | Complex ETL, data validation, notifications |
-| **CWL**         | cwltool execution               | Portable, standardized workflows            |
+**What's Implemented:**
+- FastAPI REST API for job submission and tracking
+- Mock pipeline execution (Python sleep with configurable duration)
+- In-memory job storage with thread safety
+- Pydantic validation for pipeline parameters
 
-**Recommended Architecture**:
+**Future Integration Possibilities:**
+The abstraction layer in `orchestrator.py` is designed to support integration with:
+- **Prefect**: Native Python orchestration
+- **Snakemake**: Python-based bioinformatics workflows
+- **Nextflow**: Production genomics pipelines (nf-core)
+- **Dagster**: Data pipeline orchestration
+- **Airflow**: Workflow scheduling
 
-```
-Research Groups → FastAPI (this service) → Prefect → Snakemake/Nextflow → Results
-                      ↓                        ↓
-                  Job Tracking           Workflow DAG Management
-```
+> **Note**: Currently all jobs use mock execution. See `webapp/orchestrator.py` where `ORCHESTRATOR_BACKEND = "mock"`.
 
 ## Features
 
 - **REST API**: Submit, track, and list pipeline execution jobs
 - **Background Processing**: Asynchronous job execution using FastAPI BackgroundTasks
 - **Thread-Safe Storage**: Concurrent-safe in-memory job management
-- **Mock Pipeline Execution**: Configurable simulation of Snakemake pipeline runs
+- **Mock Pipeline Execution**: Simulated pipeline runs with configurable duration (10-30s)
+- **Parameter Validation**: Pydantic models for GATK and RNA-seq pipeline parameters
 - **Comprehensive Testing**: Full test coverage with 23 automated tests
 - **OpenAPI Documentation**: Auto-generated interactive API documentation
+- **Extensible Architecture**: Abstraction layer ready for real orchestrator integration
 
 ## Architecture
 
@@ -125,11 +128,13 @@ Research Groups → FastAPI (this service) → Prefect → Snakemake/Nextflow �
          │
          ↓
 ┌─────────────────┐
-│ Background      │  Async task execution
-│ Tasks           │  - Job lifecycle management
-│ (pipeline.py)   │  - Status updates
-└─────────────────┘  - Error handling
+│ Mock Pipeline   │  Simulated execution
+│ (pipeline.py)   │  - Random duration (10-30s)
+└─────────────────┘  - 80% success rate
+                     - Job status updates
 ```
+
+> **Note**: The `orchestrator.py` module provides an abstraction layer for future integration with real workflow engines (Prefect, Dagster, Airflow), but currently routes all jobs to mock execution.
 
 ### Technology Stack
 
