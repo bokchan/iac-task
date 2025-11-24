@@ -137,3 +137,40 @@ class JobList(BaseModel):
 
     jobs: list[JobResponse] = Field(..., description="List of jobs")
     total: int = Field(..., description="Total number of jobs")
+
+class PipelineInfo(BaseModel):
+    """Model for pipeline information including schema and example."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "pipeline_name": "gatk_variant_calling",
+                "description": "GATK variant calling pipeline for WGS/WES data",
+                "parameters_schema": {
+                    "title": "GATKVariantCallingParams",
+                    "type": "object",
+                    "properties": {
+                        "name": {"title": "Name", "type": "string", "enum": ["gatk_variant_calling"]},
+                        "sample_id": {"title": "Sample Id", "type": "string"},
+                        "reference_genome": {"title": "Reference Genome", "type": "string", "enum": ["hg19", "hg38"]},
+                        # ... additional schema properties ...
+                    },
+                    "required": ["name", "sample_id", "reference_genome"],
+                },
+                "example": {
+                    "sample_id": "WGS_001",
+                    "reference_genome": "hg38",
+                    "fastq_r1": "/data/samples/WGS_001_R1.fastq.gz",
+                    "fastq_r2": "/data/samples/WGS_001_R2.fastq.gz",
+                    "variant_caller": "HaplotypeCaller",
+                    "quality_threshold": 30,
+                    "read_filters": ["MappingQualityReadFilter", "GoodCigarReadFilter"],
+                },
+            }
+        }
+    )
+
+    pipeline_name: PipelineName = Field(..., description="Pipeline name")
+    description: str = Field(..., description="Pipeline description")
+    parameters_schema: dict = Field(..., description="JSON schema of pipeline parameters")
+    example: dict = Field(..., description="Example parameters for the pipeline")

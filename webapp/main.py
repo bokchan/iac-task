@@ -3,6 +3,8 @@ import os
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
+from .models import PipelineInfo
+
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 
 from webapp.models import JobList, JobResponse, JobStatus, JobSubmission
@@ -51,7 +53,7 @@ async def version():
 
 
 @app.get("/pipelines")
-async def list_pipelines():
+async def list_pipelines() -> list[PipelineInfo]:
     """
     List available pipelines with their requirements.
 
@@ -62,7 +64,7 @@ async def list_pipelines():
 
 
 @app.get("/pipelines/{pipeline_name}")
-async def get_pipeline(pipeline_name: str):
+async def get_pipeline(pipeline_name: str) -> PipelineInfo:
     """
     Get detailed information about a specific pipeline.
 

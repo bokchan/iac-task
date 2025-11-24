@@ -11,6 +11,7 @@ in pipeline_models.py and models.py, not in this module.
 
 from fastapi import HTTPException
 
+from .models import PipelineInfo
 from .pipeline_models import (
     GATKVariantCallingParams,
     PipelineName,
@@ -32,7 +33,7 @@ PIPELINE_REGISTRY: dict[PipelineName, dict] = {
 
 def get_pipeline_info(
     pipeline_name: str | PipelineName | None = None,
-) -> dict[str, object]:
+) -> PipelineInfo | list[PipelineInfo]:
     """
     Get information about available pipelines.
 
@@ -54,20 +55,19 @@ def get_pipeline_info(
         example = model_class.model_config.get("json_schema_extra", {}).get(
             "example", {}
         )
-        return {
+        return PipelineInfo.model_validate ({
             "pipeline_name": pipeline_name,
             "description": config["description"],
             "parameters_schema": schema,
             "example": example,
-        }
+        })
 
-    return {
-        "available_pipelines": [
-            {
-                "name": name,
-                "description": config["description"],
-                "parameters_schema": config["model"].model_json_schema(),
-            }
-            for name, config in PIPELINE_REGISTRY.items()
-        ]
-    }
+    return [
+        PipelineInfo.model_validate({
+            "pipeline_name": name,
+            "description": config["description"],
+            "parameters_schema": config["model"].model_json_schema(),
+            "example": config["model"].model_config.get("json_schema_extra", {}).get("example", {}),
+        })
+        for name, config in PIPELINE_REGISTRY.items()
+    ]
