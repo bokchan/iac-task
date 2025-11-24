@@ -21,19 +21,29 @@ class JobSubmission(BaseModel):
     """Request model for job submission."""
 
     pipeline_name: str = Field(
-        ..., description="Name of the Snakemake pipeline to execute"
+        ..., description="Name of the bioinformatics pipeline to execute"
     )
     parameters: dict = Field(
         default_factory=dict, description="Pipeline parameters and configuration"
     )
     description: Optional[str] = Field(None, description="Optional job description")
+    research_group: Optional[str] = Field(
+        None, description="Research group or lab identifier submitting the job"
+    )
 
     class Config:
         json_schema_extra = {
             "example": {
-                "pipeline_name": "variant_calling",
-                "parameters": {"sample_id": "S001", "genome": "hg38"},
-                "description": "Run variant calling on sample S001",
+                "pipeline_name": "gatk_variant_calling",
+                "parameters": {
+                    "sample_id": "WGS_001",
+                    "reference_genome": "hg38",
+                    "bam_file": "s3://input-data/WGS_001.bam",
+                    "quality_threshold": 30,
+                    "caller": "HaplotypeCaller"
+                },
+                "description": "GATK variant calling for tumor sample WGS_001",
+                "research_group": "cancer_genomics_lab",
             }
         }
 
@@ -46,6 +56,9 @@ class JobResponse(BaseModel):
     pipeline_name: str = Field(..., description="Pipeline name")
     parameters: dict = Field(..., description="Pipeline parameters")
     description: Optional[str] = Field(None, description="Job description")
+    research_group: Optional[str] = Field(
+        None, description="Research group or lab identifier"
+    )
     created_at: datetime = Field(..., description="Job creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
     started_at: Optional[datetime] = Field(None, description="Job start timestamp")
@@ -61,9 +74,16 @@ class JobResponse(BaseModel):
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "status": "running",
-                "pipeline_name": "variant_calling",
-                "parameters": {"sample_id": "S001", "genome": "hg38"},
-                "description": "Run variant calling on sample S001",
+                "pipeline_name": "gatk_variant_calling",
+                "parameters": {
+                    "sample_id": "WGS_001",
+                    "reference_genome": "hg38",
+                    "bam_file": "s3://input-data/WGS_001.bam",
+                    "quality_threshold": 30,
+                    "caller": "HaplotypeCaller"
+                },
+                "description": "GATK variant calling for tumor sample WGS_001",
+                "research_group": "cancer_genomics_lab",
                 "created_at": "2025-11-24T10:00:00Z",
                 "updated_at": "2025-11-24T10:00:05Z",
                 "started_at": "2025-11-24T10:00:05Z",
@@ -86,8 +106,12 @@ class JobList(BaseModel):
                     {
                         "id": "550e8400-e29b-41d4-a716-446655440000",
                         "status": "completed",
-                        "pipeline_name": "variant_calling",
-                        "parameters": {"sample_id": "S001"},
+                        "pipeline_name": "gatk_variant_calling",
+                        "parameters": {
+                            "sample_id": "WGS_001",
+                            "reference_genome": "hg38"
+                        },
+                        "research_group": "cancer_genomics_lab",
                         "created_at": "2025-11-24T10:00:00Z",
                         "updated_at": "2025-11-24T10:00:30Z",
                     }

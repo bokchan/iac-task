@@ -65,6 +65,7 @@ async def submit_job(
         pipeline_name=job_submission.pipeline_name,
         parameters=job_submission.parameters,
         description=job_submission.description,
+        research_group=job_submission.research_group,
         created_at=now,
         updated_at=now,
     )

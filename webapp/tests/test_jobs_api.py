@@ -23,9 +23,14 @@ class TestJobSubmission:
     def test_submit_job_success(self, client: TestClient):
         """Test successful job submission."""
         payload = {
-            "pipeline_name": "variant_calling",
-            "parameters": {"sample_id": "S001", "genome": "hg38"},
-            "description": "Test variant calling job",
+            "pipeline_name": "gatk_variant_calling",
+            "parameters": {
+                "sample_id": "WGS_001",
+                "reference_genome": "hg38",
+                "quality_threshold": 30
+            },
+            "description": "GATK variant calling for sample WGS_001",
+            "research_group": "genomics_lab",
         }
 
         response = client.post("/jobs", json=payload)
@@ -36,9 +41,11 @@ class TestJobSubmission:
         # Verify response structure
         assert "id" in data
         assert data["status"] == JobStatus.PENDING.value
-        assert data["pipeline_name"] == "variant_calling"
-        assert data["parameters"] == {"sample_id": "S001", "genome": "hg38"}
-        assert data["description"] == "Test variant calling job"
+        assert data["pipeline_name"] == "gatk_variant_calling"
+        assert data["parameters"]["sample_id"] == "WGS_001"
+        assert data["parameters"]["reference_genome"] == "hg38"
+        assert data["description"] == "GATK variant calling for sample WGS_001"
+        assert data["research_group"] == "genomics_lab"
         assert "created_at" in data
         assert "updated_at" in data
         assert data["started_at"] is None
@@ -49,7 +56,8 @@ class TestJobSubmission:
         job_id = uuid.UUID(data["id"])
         stored_job = job_store.get(job_id)
         assert stored_job is not None
-        assert stored_job.pipeline_name == "variant_calling"
+        assert stored_job.pipeline_name == "gatk_variant_calling"
+        assert stored_job.research_group == "genomics_lab"
 
     def test_submit_job_minimal(self, client: TestClient):
         """Test job submission with minimal required fields."""
