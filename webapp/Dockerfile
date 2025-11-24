@@ -36,6 +36,7 @@ FROM python:3.14-slim-bookworm AS runtime
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH="/app"
 
 # Install runtime dependencies only
 RUN apt-get update && apt-get install -y \
@@ -47,14 +48,14 @@ RUN apt-get update && apt-get install -y \
 RUN groupadd --system --gid 999 nonroot \
     && useradd --system --gid 999 --uid 999 --create-home --shell /bin/bash nonroot
 
-# Set working directory
+# Set working directory to parent of webapp
 WORKDIR /app
 
 # Copy virtual environment from builder stage
 COPY --from=builder --chown=nonroot:nonroot /app/.venv /app/.venv
 
-# Copy application code
-COPY --from=builder --chown=nonroot:nonroot /app /app
+# Copy application code into webapp subdirectory
+COPY --from=builder --chown=nonroot:nonroot /app /app/webapp
 
 # Switch to non-root user
 USER nonroot
@@ -62,6 +63,6 @@ USER nonroot
 # Expose the port FastAPI will run on
 EXPOSE 8000
 
-# Use uvicorn to run the FastAPI application in production
+# Use uvicorn to run the FastAPI application as a module
 # Note: LOG_LEVEL environment variable will be used if set, otherwise defaults to "info"
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "uvicorn webapp.main:app --host 0.0.0.0 --port 8000"]
