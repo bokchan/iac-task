@@ -1,6 +1,6 @@
-# IaC Task - FastAPI Cloud Infrastructure
+# Cloud Based Pipeline Orchestration Service
 
-A production-ready FastAPI application deployed on AWS using Infrastructure as Code (CDK) with automated CI/CD pipeline via GitHub Actions.
+A FastAPI application deployed on AWS using Infrastructure as Code (CDK) with automated CI/CD pipeline via GitHub Actions. Designed for pipeline orchestration in **multi-research-group computational biology environments** with support for variant calling and RNA-seq analysis workflows.
 
 ## 🏗️ System Architecture
 
@@ -16,11 +16,11 @@ A production-ready FastAPI application deployed on AWS using Infrastructure as C
 
 This project demonstrates a complete cloud-native application lifecycle:
 
-| Component                               | Purpose          | Technology Stack          |
-| --------------------------------------- | ---------------- | ------------------------- |
-| **[Web Application](webapp/README.md)** | REST API service | FastAPI, Python, Docker   |
-| **[Infrastructure](infra/README.md)**        | Cloud resources  | AWS CDK, ECS Fargate, ALB |
-| **CI/CD Pipeline**                      | Automation       | GitHub Actions, OIDC      |
+| Component                               | Purpose                    | Technology Stack          |
+| --------------------------------------- | -------------------------- | ------------------------- |
+| **[Web Application](webapp/README.md)** | Pipeline orchestration API | FastAPI, Python, Docker   |
+| **[Infrastructure](infra/README.md)**   | Cloud resources            | AWS CDK, ECS Fargate, ALB |
+| **CI/CD Pipeline**                      | Automation                 | GitHub Actions, OIDC      |
 
 > **Quick Navigation**: Start with [local development](#🚀-getting-started) or jump to [AWS deployment](infra/README.md#setup-and-deployment-instructions)
 
@@ -33,10 +33,12 @@ iac-task/
 ├── webapp/                     # 🌐 FastAPI Application
 │   ├── README.md               # → API docs, local dev, testing
 │   ├── main.py                 # Application code
+│   ├── ...                     #
 │   └── tests/                  # Test suite
 └── infra/                      # ☁️ AWS Infrastructure
     ├── README.md               # → Deployment, architecture, CI/CD
     ├── deploy.sh               # Deployment scripts
+    ├── ...                     #
     └── stacks/                 # CDK infrastructure code
 ```
 
@@ -45,10 +47,12 @@ iac-task/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - **Docker** (recommended) or **>=Python 3.14**
 - **AWS Account** (for cloud deployment)
 
 ### 1. Run Locally
+
 ```bash
 git clone <repository-url>
 cd iac-task
@@ -62,6 +66,7 @@ cd webapp && pip install uv && uv sync && uv run uvicorn main:app --reload
 ```
 
 ### 2. Deploy to AWS from host
+
 ```bash
 cd infra
 # Full deployment instructions in infra/README.md
@@ -69,6 +74,7 @@ cd infra
 ```
 
 ### 3. Explore the Application
+
 - **API Endpoints**: See [webapp documentation](webapp/README.md#api-endpoints)
 - **Infrastructure**: See [infra documentation](infra/README.md#architecture-overview)
 - **API Docs**: http://localhost:8000/docs (when running locally)
@@ -76,27 +82,30 @@ cd infra
 ## Component Documentation
 
 ### 🌐 [Web Application](webapp/README.md)
-- **Purpose**: FastAPI REST service with monitoring endpoints
+
+- **Purpose**: Pipeline Orchestration Service - REST API for submitting and pipeline jobs
 - **Quick Start**: Local development, testing, Docker deployment
-- **Key Features**: Health checks, version tracking, configurable responses
+- **Key Features**: Job submission, status tracking, background task processing, thread-safe storage
+- **API Endpoints**: `/jobs` (submit/list), `/jobs/{id}` (status), `/health`, `/version`, `/docs`
 
 ### ☁️ [Infrastructure](infra/README.md)
+
 - **Purpose**: AWS cloud resources and deployment automation
 - **Quick Start**: CDK setup, AWS deployment, CI/CD configuration
 - **Key Features**: ECS Fargate, Load Balancer, Multi-environment support
 
 ### CI/CD Pipeline
+
 - **Implementation**: GitHub Actions with OIDC authentication
 - **Environments**: Development (auto) → Production (manual approval)
 - **Details**: See [Infrastructure Documentation](infra/README.md#ci-cd-pipeline-overview)
 
 ## 🔍 Quick Reference
 
-| Task | Command | Documentation |
-|------|---------|---------------|
-| **Local Development** | `docker compose up --build` | [webapp/README.md](webapp/README.md#running-the-application) |
-| **Run Tests** | `cd webapp && uv run pytest` | [webapp/README.md](webapp/README.md#testing) |
-| **Deploy to AWS** | `cd infra && ./deploy.sh dev deploy --image_tag <tag>` | [infra/README.md](infra/README.md#deployment-process) |
-| **Verify Deployment** | `cd infra && ./check-deployment.sh dev` | [infra/README.md](infra/README.md#deployment-verification) |
-| **View API Docs** | http://localhost:8000/docs | [webapp/README.md](webapp/README.md#api-documentation) |
-
+| Task                  | Command                                                | Documentation                                                |
+| --------------------- | ------------------------------------------------------ | ------------------------------------------------------------ |
+| **Local Development** | `docker compose up --build`                            | [webapp/README.md](webapp/README.md#running-the-application) |
+| **Run Tests**         | `cd webapp && uv run pytest`                           | [webapp/README.md](webapp/README.md#testing)                 |
+| **Deploy to AWS**     | `cd infra && ./deploy.sh dev deploy --image_tag <tag>` | [infra/README.md](infra/README.md#deployment-process)        |
+| **Verify Deployment** | `cd infra && ./check-deployment.sh dev`                | [infra/README.md](infra/README.md#deployment-verification)   |
+| **View API Docs**     | http://localhost:8000/docs                             | [webapp/README.md](webapp/README.md#api-documentation)       |
