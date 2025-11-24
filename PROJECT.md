@@ -148,18 +148,22 @@ Research Groups → FastAPI (this service) → Prefect → Snakemake/Nextflow �
 
 ```
 webapp/
-├── main.py              # FastAPI application and endpoints
-├── models.py            # Pydantic data models
-├── storage.py           # Thread-safe in-memory storage
-├── pipeline.py          # Mock pipeline execution logic
-├── run.py               # Application entry point
-├── pyproject.toml       # Dependencies and configuration
-├── Dockerfile           # Container image definition
-└── tests/               # Test suite (23 tests)
-    ├── conftest.py      # Test fixtures
-    ├── test_app.py      # Application endpoint tests
-    ├── test_jobs_api.py # Job management tests
-    └── test_pipeline.py # Background task tests
+├── main.py                   # FastAPI application and endpoints
+├── models.py                 # Job management Pydantic models
+├── pipeline_models.py        # Pipeline parameter models with validators
+├── validators.py             # Pipeline registry and utility functions
+├── storage.py                # Thread-safe in-memory storage
+├── orchestrator.py           # Orchestration abstraction layer
+├── prefect_integration.py    # Example Prefect workflows
+├── pipeline.py               # Mock pipeline execution logic
+├── run.py                    # Application entry point
+├── pyproject.toml            # Dependencies and configuration
+├── Dockerfile                # Container image definition
+└── tests/                    # Test suite (23 tests)
+    ├── conftest.py           # Test fixtures
+    ├── test_app.py           # Application endpoint tests
+    ├── test_jobs_api.py      # Job management tests
+    └── test_pipeline.py      # Background task tests
 ```
 
 ## Data Models
@@ -174,23 +178,27 @@ FAILED     # Job finished with errors
 
 ### JobSubmission (Request)
 ```python
-pipeline_name: str              # Name of pipeline to execute
-parameters: dict                # Pipeline configuration
-description: Optional[str]      # Human-readable description
+pipeline_name: PipelineName                                    # Pipeline to execute (enum)
+parameters: GATKVariantCallingParams | RNASeqDESeq2Params     # Typed pipeline parameters
+description: str | None                                        # Optional job description
+research_group: str | None                                     # Research group identifier
 ```
+
+**Validation**: Model validator ensures pipeline_name matches parameter type.
 
 ### JobResponse (Response)
 ```python
-id: UUID                        # Unique job identifier
-status: JobStatus               # Current execution status
-pipeline_name: str              # Pipeline name
-parameters: dict                # Pipeline parameters
-description: Optional[str]      # Job description
-created_at: datetime            # Creation timestamp
-updated_at: datetime            # Last update timestamp
-started_at: Optional[datetime]  # Execution start time
-completed_at: Optional[datetime]# Execution completion time
-error_message: Optional[str]    # Error details if failed
+id: UUID                                                       # Unique job identifier
+status: JobStatus                                              # Current execution status
+pipeline_name: PipelineName                                    # Pipeline name (enum)
+parameters: GATKVariantCallingParams | RNASeqDESeq2Params     # Typed pipeline parameters
+description: str | None                                        # Job description
+research_group: str | None                                     # Research group identifier
+created_at: datetime                                           # Creation timestamp
+updated_at: datetime                                           # Last update timestamp
+started_at: datetime | None                                    # Execution start time
+completed_at: datetime | None                                  # Execution completion time
+error_message: str | None                                      # Error details if failed
 ```
 
 ### JobList (Response)
@@ -478,23 +486,17 @@ curl -X POST http://localhost:8000/jobs \
   }'
 ```
 
-### Submit a Cross-Lab ETL Job
+### List Jobs with Filters
 
 ```bash
-curl -X POST http://localhost:8000/jobs \
-  -H "Content-Type: application/json" \
-  -d '{
-    "pipeline_name": "cross_lab_etl",
-    "parameters": {
-      "source_group": "genomics_lab",
-      "target_group": "clinical_research",
-      "data_types": ["vcf", "phenotype_data"],
-      "validation_level": "strict",
-      "anonymize": true
-    },
-    "research_group": "data_integration_team",
-    "description": "Transfer variant data to clinical research group"
-  }'
+# List all jobs
+curl http://localhost:8000/jobs
+
+# Filter by research group
+curl "http://localhost:8000/jobs?research_group=genomics_lab"
+
+# Filter by status
+curl "http://localhost:8000/jobs?status=completed"
 ```
 
 ### Check Job Status

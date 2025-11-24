@@ -112,22 +112,25 @@ FAILED     # Finished with errors
 
 ### JobSubmission (Request)
 ```python
-pipeline_name: str              # Pipeline to execute
-parameters: dict                # Configuration
-description: Optional[str]      # Optional description
+pipeline_name: PipelineName                                    # Pipeline to execute (enum)
+parameters: GATKVariantCallingParams | RNASeqDESeq2Params     # Typed pipeline parameters
+description: str | None                                        # Optional description
+research_group: str | None                                     # Research group identifier
 ```
 
 ### JobResponse (Response)
 ```python
-id: UUID                        # Unique identifier
-status: JobStatus               # Current status
-pipeline_name: str              # Pipeline name
-parameters: dict                # Configuration
-created_at: datetime            # Creation time
-updated_at: datetime            # Last update
-started_at: Optional[datetime]  # Start time
-completed_at: Optional[datetime]# Completion time
-error_message: Optional[str]    # Error details
+id: UUID                                                       # Unique identifier
+status: JobStatus                                              # Current status
+pipeline_name: PipelineName                                    # Pipeline name (enum)
+parameters: GATKVariantCallingParams | RNASeqDESeq2Params     # Typed pipeline parameters
+description: str | None                                        # Job description
+research_group: str | None                                     # Research group identifier
+created_at: datetime                                           # Creation time
+updated_at: datetime                                           # Last update
+started_at: datetime | None                                    # Start time
+completed_at: datetime | None                                  # Completion time
+error_message: str | None                                      # Error details
 ```
 
 ## Configuration
@@ -140,7 +143,19 @@ error_message: Optional[str]    # Error details
 | `LOG_LEVEL` | `"INFO"` | Logging level |
 | `IMAGE_TAG` | `"unknown"` | Application version |
 
-### Pipeline Configuration
+### Supported Pipelines
+
+Two pipelines with Pydantic validation:
+
+1. **GATK Variant Calling** (`PipelineName.GATK_VARIANT_CALLING`)
+   - Parameters: `GATKVariantCallingParams`
+   - Fields: sample_id, fastq_r1, fastq_r2, reference_genome, caller, quality_threshold, depth_threshold
+
+2. **RNA-seq DESeq2** (`PipelineName.RNASEQ_DESEQ2`)
+   - Parameters: `RNASeqDESeq2Params`
+   - Fields: sample_id, fastq_files, reference, adapter_sequence, min_quality, quantification_method
+
+### Pipeline Execution Configuration
 
 In `pipeline.py`:
 ```python
@@ -181,8 +196,12 @@ uv run pytest webapp/tests/test_jobs_api.py
 ### Components
 
 **main.py**: FastAPI application with REST endpoints
-**models.py**: Pydantic data models for validation
+**models.py**: Pydantic data models for job management (JobSubmission, JobResponse, JobStatus)
+**pipeline_models.py**: Pydantic models for pipeline parameters with field validators
+**validators.py**: Pipeline registry and utility functions
 **storage.py**: Thread-safe in-memory job storage (`JobStore`)
+**orchestrator.py**: Abstraction layer over orchestration engines (Prefect/Dagster)
+**prefect_integration.py**: Example Prefect workflows
 **pipeline.py**: Mock pipeline execution simulator
 
 ### Storage
@@ -246,18 +265,22 @@ docker run -p 8000:8000 \
 
 ```
 webapp/
-├── main.py              # FastAPI app + endpoints
-├── models.py            # Pydantic models
-├── storage.py           # JobStore implementation
-├── pipeline.py          # Mock pipeline execution
-├── run.py               # Entry point
-├── pyproject.toml       # Dependencies
-├── Dockerfile           # Container image
-└── tests/               # Test suite (23 tests)
-    ├── conftest.py      # Fixtures
-    ├── test_app.py      # System endpoints (5)
-    ├── test_jobs_api.py # Job management (15)
-    └── test_pipeline.py # Background tasks (3)
+├── main.py                   # FastAPI app + endpoints
+├── models.py                 # Job management Pydantic models
+├── pipeline_models.py        # Pipeline parameter models (GATK, RNASeq)
+├── validators.py             # Pipeline registry and utilities
+├── storage.py                # JobStore implementation
+├── orchestrator.py           # Orchestration abstraction layer
+├── prefect_integration.py    # Example Prefect workflows
+├── pipeline.py               # Mock pipeline execution
+├── run.py                    # Entry point
+├── pyproject.toml            # Dependencies
+├── Dockerfile                # Container image
+└── tests/                    # Test suite (23 tests)
+    ├── conftest.py           # Fixtures
+    ├── test_app.py           # System endpoints (5)
+    ├── test_jobs_api.py      # Job management (15)
+    └── test_pipeline.py      # Background tasks (3)
 ```
 
 ## Limitations
