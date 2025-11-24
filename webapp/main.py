@@ -11,7 +11,6 @@ from .storage import job_store
 from .validators import (
     validate_pipeline_exists,
     validate_pipeline_parameters,
-    validate_file_paths,
     sanitize_parameters,
     get_pipeline_info,
 )
@@ -115,15 +114,14 @@ async def submit_job(
     Raises:
         HTTPException: 400 for validation errors
     """
-    # Business Logic Layer: Validate pipeline and parameters
+    # Business Logic Layer: Validate pipeline and parameters using Pydantic models
     validate_pipeline_exists(job_submission.pipeline_name)
-    validate_pipeline_parameters(
+    validated_params = validate_pipeline_parameters(
         job_submission.pipeline_name, job_submission.parameters
     )
-    validate_file_paths(job_submission.parameters)
 
-    # Business Logic Layer: Sanitize and normalize parameters
-    sanitized_params = sanitize_parameters(job_submission.parameters)
+    # Business Logic Layer: Convert validated model to dict for storage
+    sanitized_params = sanitize_parameters(validated_params)
 
     # Create job with unique ID and initial status
     job_id = uuid4()
