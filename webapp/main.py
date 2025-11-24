@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 
 from .models import JobList, JobResponse, JobStatus, JobSubmission
+from .pipeline import execute_mock_pipeline
 from .storage import job_store
 
 app = FastAPI(
@@ -76,8 +77,14 @@ async def submit_job(
         f"with parameters {job_submission.parameters}"
     )
 
-    # TODO: Schedule background task to process the job
-    # background_tasks.add_task(process_job, job_id)
+    # Schedule background task to process the job
+    background_tasks.add_task(
+        execute_mock_pipeline,
+        job_id=job_id,
+        pipeline_name=job_submission.pipeline_name,
+        parameters=job_submission.parameters,
+    )
+    logger.info(f"Background task scheduled for job {job_id}")
 
     return job
 
