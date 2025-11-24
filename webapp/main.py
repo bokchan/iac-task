@@ -109,9 +109,6 @@ async def submit_job(
     Raises:
         HTTPException: 400 for validation errors
     """
-    # Parameters are already validated by Pydantic during request parsing
-    # Convert validated model to dict for storage
-    sanitized_params = sanitize_parameters(job_submission.parameters)
 
     # Create job with unique ID and initial status
     job_id = uuid4()
