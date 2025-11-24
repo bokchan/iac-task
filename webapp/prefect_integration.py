@@ -348,7 +348,7 @@ if __name__ == "__main__":
     ]
 
     result2 = asyncio.run(
-        batch_rnaseq_workflow(
+        batch_rnaseq_workflow(  # type: ignore
             samples=samples,
             reference_transcriptome="gencode_v38",
             research_group="transcriptomics_lab",

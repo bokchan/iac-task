@@ -122,9 +122,7 @@ class TestBackgroundTaskIntegration:
         time.sleep(2.0)
 
         # Check that jobs have been processed
-        statuses = [
-            job_store.get(uuid.UUID(jid)).status for jid in job_ids
-        ]  # pyrefly: ignore
+        statuses = [job_store.get(uuid.UUID(jid)).status for jid in job_ids]  # type: ignore
 
         # All jobs should have completed (COMPLETED or FAILED)
         assert all(

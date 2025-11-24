@@ -1,94 +1,39 @@
 """
-Business Logic and Validation Layer
+Pipeline Information and Utility Functions
 
-This module demonstrates FastAPI's value as an abstraction layer by implementing
-domain-specific validation and business rules before submitting to Prefect.
+This module provides pipeline registry information and utility functions
+for converting between Pydantic models and dictionaries.
+
+Note: Parameter validation is now handled automatically by Pydantic models
+in JobSubmission, so explicit validation functions are no longer needed.
 """
 
 from typing import Any, Dict, Optional, Union
 
 from fastapi import HTTPException
-from pydantic import ValidationError
 
 from .pipeline_models import (
-    PIPELINE_MODELS,
     GATKVariantCallingParams,
+    PipelineName,
     RNASeqDESeq2Params,
 )
 
 # Pipeline descriptions for API documentation
-PIPELINE_REGISTRY = {
-    "gatk_variant_calling": {
+PIPELINE_REGISTRY: dict[PipelineName, dict] = {
+    PipelineName.GATK_VARIANT_CALLING: {
         "description": "GATK variant calling pipeline for WGS/WES data",
         "model": GATKVariantCallingParams,
     },
-    "rnaseq_deseq2": {
+    PipelineName.RNASEQ_DESEQ2: {
         "description": "RNA-seq differential expression analysis with DESeq2",
         "model": RNASeqDESeq2Params,
     },
 }
 
 
-def validate_pipeline_exists(pipeline_name: str) -> None:
-    """
-    Validate that the requested pipeline is supported.
-
-    Args:
-        pipeline_name: Name of the pipeline
-
-    Raises:
-        HTTPException: 400 if pipeline not found
-    """
-    if pipeline_name not in PIPELINE_REGISTRY:
-        available = list(PIPELINE_REGISTRY.keys())
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unknown pipeline '{pipeline_name}'. Available: {available}",
-        )
-
-
-def validate_pipeline_parameters(
-    pipeline_name: str, parameters: Dict[str, Any]
-) -> Union[GATKVariantCallingParams, RNASeqDESeq2Params]:
-    """
-    Validate pipeline parameters using Pydantic models.
-
-    Args:
-        pipeline_name: Name of the pipeline
-        parameters: Pipeline parameters dictionary
-
-    Returns:
-        Validated Pydantic model instance
-
-    Raises:
-        HTTPException: 400 if validation fails
-    """
-    if pipeline_name not in PIPELINE_MODELS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unknown pipeline '{pipeline_name}'",
-        )
-
-    model_class = PIPELINE_MODELS[pipeline_name]
-
-    try:
-        # Validate using Pydantic model
-        validated_params = model_class(**parameters)
-        return validated_params
-    except ValidationError as e:
-        # Format validation errors for API response
-        errors = []
-        for error in e.errors():
-            field = " -> ".join(str(x) for x in error["loc"])
-            errors.append(f"{field}: {error['msg']}")
-
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid parameters for '{pipeline_name}': {'; '.join(errors)}",
-        )
-
-
-def get_pipeline_info(pipeline_name: Optional[str] = None) -> Dict[str, Any]:
+def get_pipeline_info(
+    pipeline_name: Optional[str | PipelineName] = None,
+) -> Dict[str, Any]:
     """
     Get information about available pipelines.
 
@@ -137,13 +82,13 @@ def sanitize_parameters(
     ],
 ) -> Dict[str, Any]:
     """
-    Convert validated Pydantic model to dictionary for storage.
+    Convert Pydantic model to dictionary for storage.
 
     Args:
-        parameters: Validated pipeline parameters (Pydantic model or dict)
+        parameters: Pipeline parameters (Pydantic model or dict)
 
     Returns:
-        Dictionary of parameters
+        Dictionary of parameters with None values excluded
     """
     # If already a Pydantic model, convert to dict
     if hasattr(parameters, "model_dump"):

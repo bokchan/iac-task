@@ -10,11 +10,7 @@ from webapp.models import JobList, JobResponse, JobStatus, JobSubmission
 
 from .orchestrator import get_orchestrator_status, submit_to_orchestrator
 from .storage import job_store
-from .validators import (
-    get_pipeline_info,
-    sanitize_parameters,
-    validate_pipeline_exists,
-)
+from .validators import get_pipeline_info, sanitize_parameters
 
 app = FastAPI(
     title="Pipeline Orchestration Service",
@@ -114,11 +110,8 @@ async def submit_job(
     Raises:
         HTTPException: 400 for validation errors
     """
-    # Business Logic Layer: Validate pipeline exists
-    # (parameters are already validated by Pydantic during request parsing)
-    validate_pipeline_exists(job_submission.pipeline_name)
-
-    # Business Logic Layer: Convert validated model to dict for storage
+    # Parameters are already validated by Pydantic during request parsing
+    # Convert validated model to dict for storage
     sanitized_params = sanitize_parameters(job_submission.parameters)
 
     # Create job with unique ID and initial status

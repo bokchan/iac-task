@@ -7,7 +7,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from .pipeline_models import GATKVariantCallingParams, RNASeqDESeq2Params
+from .pipeline_models import GATKVariantCallingParams, PipelineName, RNASeqDESeq2Params
 
 
 class JobStatus(str, Enum):
@@ -39,7 +39,7 @@ class JobSubmission(BaseModel):
         }
     )
 
-    pipeline_name: str = Field(
+    pipeline_name: PipelineName = Field(
         ..., description="Name of the bioinformatics pipeline to execute"
     )
     parameters: Union[GATKVariantCallingParams, RNASeqDESeq2Params] = Field(

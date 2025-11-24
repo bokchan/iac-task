@@ -9,6 +9,8 @@ import logging
 from typing import Dict, Optional
 from uuid import UUID
 
+from webapp.pipeline_models import PipelineName
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,8 +20,8 @@ ORCHESTRATOR_BACKEND = "mock"  # Options: "mock", "prefect", "dagster", "airflow
 
 async def submit_to_orchestrator(
     job_id: UUID,
-    pipeline_name: str,
-    parameters: Dict,
+    pipeline_name: str | PipelineName,
+    parameters: dict,
     research_group: Optional[str] = None,
 ) -> str:
     """

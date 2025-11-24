@@ -45,7 +45,20 @@ class QuantificationMethod(str, Enum):
     FEATURECOUNTS = "featureCounts"
 
 
-class GATKVariantCallingParams(BaseModel):
+class PipelineName(str, Enum):
+    """Supported pipeline names."""
+
+    GATK_VARIANT_CALLING = "gatk_variant_calling"
+    RNASEQ_DESEQ2 = "rnaseq_deseq2"
+
+
+class PipelineParamsBase(BaseModel):
+    """Base class for pipeline parameter models."""
+
+    name: PipelineName = Field(..., description="Pipeline name")
+
+
+class GATKVariantCallingParams(PipelineParamsBase):
     """Parameters for GATK variant calling pipeline."""
 
     model_config = ConfigDict(
@@ -62,6 +75,9 @@ class GATKVariantCallingParams(BaseModel):
         }
     )
 
+    name: PipelineName = Field(
+        PipelineName.GATK_VARIANT_CALLING, description="Pipeline name"
+    )
     sample_id: str = Field(..., description="Sample identifier", examples=["WGS_001"])
     reference_genome: ReferenceGenome = Field(
         ..., description="Reference genome version", examples=["hg38"]
@@ -115,7 +131,7 @@ class GATKVariantCallingParams(BaseModel):
         return v
 
 
-class RNASeqDESeq2Params(BaseModel):
+class RNASeqDESeq2Params(PipelineParamsBase):
     """Parameters for RNA-seq differential expression analysis."""
 
     model_config = ConfigDict(
@@ -131,6 +147,7 @@ class RNASeqDESeq2Params(BaseModel):
         }
     )
 
+    name: PipelineName = Field(PipelineName.RNASEQ_DESEQ2, description="Pipeline name")
     sample_id: str = Field(..., description="Sample identifier", examples=["RNA_001"])
     reference: ReferenceTranscriptome = Field(
         ..., description="Reference transcriptome version", examples=["gencode_v38"]
@@ -167,7 +184,7 @@ class RNASeqDESeq2Params(BaseModel):
 
 
 # Pipeline registry mapping pipeline names to their parameter models
-PIPELINE_MODELS = {
-    "gatk_variant_calling": GATKVariantCallingParams,
-    "rnaseq_deseq2": RNASeqDESeq2Params,
+PIPELINE_MODELS: dict[PipelineName, type[PipelineParamsBase]] = {
+    PipelineName.GATK_VARIANT_CALLING: GATKVariantCallingParams,
+    PipelineName.RNASEQ_DESEQ2: RNASeqDESeq2Params,
 }
