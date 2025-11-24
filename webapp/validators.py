@@ -73,9 +73,7 @@ def get_pipeline_info(
 
 
 def sanitize_parameters(
-    parameters: GATKVariantCallingParams
-    | RNASeqDESeq2Params
-    | dict[str, object],
+    parameters: GATKVariantCallingParams | RNASeqDESeq2Params | dict[str, object],
 ) -> dict[str, object]:
     """
     Convert Pydantic model to dictionary for storage.
