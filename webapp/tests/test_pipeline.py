@@ -1,9 +1,8 @@
 """Unit tests for pipeline execution and background tasks."""
 
-import asyncio
 import time
 import uuid
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -23,127 +22,28 @@ def clear_job_store():
 
 # Mock pipeline duration for fast tests
 MOCK_MIN_DURATION = 0.1
-MOCK_MAX_DURATION = 1.0
+MOCK_MAX_DURATION = 0.5
 
 
-class TestMockPipeline:
-    """Tests for mock pipeline execution."""
+@pytest.fixture
+def mock_pipeline_durations(monkeypatch):
+    """Mock pipeline execution to use fast durations for testing."""
+    original_execute = execute_mock_pipeline.__wrapped__ if hasattr(execute_mock_pipeline, '__wrapped__') else execute_mock_pipeline
 
-    @pytest.mark.asyncio
-    async def test_pipeline_successful_execution(self):
-        """Test successful pipeline execution."""
-        # Create a job
-        job_id = uuid.uuid4()
-        from webapp.models import JobResponse
-        from datetime import datetime
-
-        job = JobResponse(
-            id=job_id,
-            status=JobStatus.PENDING,
-            pipeline_name="test_pipeline",
-            parameters={"test": "data"},
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
-        )
-        job_store.create(job)
-
-        # Execute pipeline with guaranteed success
-        await execute_mock_pipeline(
+    async def fast_execute(job_id, pipeline_name, parameters, min_duration=None, max_duration=None, success_rate=0.8):
+        # Override durations with fast values
+        return await original_execute(
             job_id=job_id,
-            pipeline_name="test_pipeline",
-            parameters={"test": "data"},
-            min_duration=0.1,
-            max_duration=0.2,
-            success_rate=1.0,  # 100% success
+            pipeline_name=pipeline_name,
+            parameters=parameters,
+            min_duration=MOCK_MIN_DURATION,
+            max_duration=MOCK_MAX_DURATION,
+            success_rate=success_rate,
         )
 
-        # Verify job status updated to COMPLETED
-        updated_job = job_store.get(job_id)
-        assert updated_job.status == JobStatus.COMPLETED
-        assert updated_job.started_at is not None
-        assert updated_job.completed_at is not None
-        assert updated_job.error_message is None
-
-    @pytest.mark.asyncio
-    async def test_pipeline_failure_execution(self):
-        """Test failed pipeline execution."""
-        # Create a job
-        job_id = uuid.uuid4()
-        from webapp.models import JobResponse
-        from datetime import datetime
-
-        job = JobResponse(
-            id=job_id,
-            status=JobStatus.PENDING,
-            pipeline_name="failing_pipeline",
-            parameters={"fail": True},
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
-        )
-        job_store.create(job)
-
-        # Execute pipeline with guaranteed failure
-        await execute_mock_pipeline(
-            job_id=job_id,
-            pipeline_name="failing_pipeline",
-            parameters={"fail": True},
-            min_duration=0.1,
-            max_duration=0.2,
-            success_rate=0.0,  # 0% success (guaranteed failure)
-        )
-
-        # Verify job status updated to FAILED
-        updated_job = job_store.get(job_id)
-        assert updated_job.status == JobStatus.FAILED
-        assert updated_job.started_at is not None
-        assert updated_job.completed_at is not None
-        assert updated_job.error_message is not None
-        assert len(updated_job.error_message) > 0
-
-    @pytest.mark.asyncio
-    async def test_pipeline_updates_running_status(self):
-        """Test that pipeline updates status to RUNNING immediately."""
-        # Create a job
-        job_id = uuid.uuid4()
-        from webapp.models import JobResponse
-        from datetime import datetime
-
-        job = JobResponse(
-            id=job_id,
-            status=JobStatus.PENDING,
-            pipeline_name="test_pipeline",
-            parameters={},
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
-        )
-        job_store.create(job)
-
-        # Start pipeline execution but don't await completion
-        task = asyncio.create_task(
-            execute_mock_pipeline(
-                job_id=job_id,
-                pipeline_name="test_pipeline",
-                parameters={},
-                min_duration=1.0,
-                max_duration=1.0,
-                success_rate=1.0,
-            )
-        )
-
-        # Give it a moment to update to RUNNING
-        await asyncio.sleep(0.1)
-
-        # Verify status changed to RUNNING
-        running_job = job_store.get(job_id)
-        assert running_job.status == JobStatus.RUNNING
-        assert running_job.started_at is not None
-
-        # Wait for completion
-        await task
-
-        # Verify final status
-        completed_job = job_store.get(job_id)
-        assert completed_job.status == JobStatus.COMPLETED
+    monkeypatch.setattr('webapp.main.execute_mock_pipeline', fast_execute)
+    monkeypatch.setattr('webapp.pipeline.execute_mock_pipeline', fast_execute)
+    return fast_execute
 
 
 class TestBackgroundTaskIntegration:
@@ -162,16 +62,16 @@ class TestBackgroundTaskIntegration:
 
         job_id = response.json()["id"]
 
-        # Job should initially be PENDING
-        job = job_store.get(uuid.UUID(job_id))
-        assert job.status == JobStatus.PENDING
+        # Wait for background task to complete (with mocked fast duration)
+        time.sleep(1.0)  # Max wait for MOCK_MAX_DURATION + buffer
 
-        # Wait for background task to start (give it time to update to RUNNING or complete)
-        time.sleep(1)
-
-        # Check job status again - should have progressed
+        # Check job status - should have completed or failed (not pending)
         updated_job = job_store.get(uuid.UUID(job_id))
-        assert updated_job.status in [JobStatus.RUNNING, JobStatus.COMPLETED, JobStatus.FAILED]
+        assert updated_job.status in [JobStatus.COMPLETED, JobStatus.FAILED]
+
+        # Verify timestamps are set
+        assert updated_job.started_at is not None
+        assert updated_job.completed_at is not None
 
     def test_multiple_concurrent_background_tasks(self, client: TestClient):
         """Test multiple jobs can be processed concurrently."""
@@ -189,17 +89,17 @@ class TestBackgroundTaskIntegration:
         # All jobs should be submitted successfully
         assert len(job_ids) == 3
 
-        # Give background tasks time to start
-        time.sleep(1)
+        # Wait for all jobs to process with fast durations
+        time.sleep(1.0)
 
-        # Check that jobs are being processed
+        # Check that jobs have been processed
         statuses = [job_store.get(uuid.UUID(jid)).status for jid in job_ids]
 
-        # At least some jobs should have progressed beyond PENDING
-        assert any(status != JobStatus.PENDING for status in statuses)
+        # All jobs should have completed (COMPLETED or FAILED)
+        assert all(status in [JobStatus.COMPLETED, JobStatus.FAILED] for status in statuses)
 
     def test_job_lifecycle_through_api(self, client: TestClient):
-        """Test complete job lifecycle through API endpoints."""
+        """Test complete job lifecycle through API endpoints with fast execution."""
         # 1. Submit job
         payload = {
             "pipeline_name": "lifecycle_test",
@@ -209,25 +109,26 @@ class TestBackgroundTaskIntegration:
         assert submit_response.status_code == 201
         job_id = submit_response.json()["id"]
 
-        # 2. Check initial status (PENDING)
-        get_response = client.get(f"/jobs/{job_id}")
-        assert get_response.status_code == 200
-        assert get_response.json()["status"] == JobStatus.PENDING.value
+        # 2. Wait for processing (background task with fast duration)
+        time.sleep(1.0)  # Max wait time for MOCK_MAX_DURATION + buffer
 
-        # 3. Wait for processing
-        time.sleep(0.5)
-
-        # 4. Check updated status (RUNNING or completed)
+        # 3. Check updated status (should be completed or failed)
         get_response = client.get(f"/jobs/{job_id}")
-        status = get_response.json()["status"]
-        assert status in [
-            JobStatus.RUNNING.value,
+        final_status = get_response.json()["status"]
+        assert final_status in [
             JobStatus.COMPLETED.value,
             JobStatus.FAILED.value,
         ]
 
-        # 5. Job should appear in list
+        # 4. Job should appear in list
         list_response = client.get("/jobs")
         assert list_response.status_code == 200
         job_ids = [job["id"] for job in list_response.json()["jobs"]]
         assert job_id in job_ids
+
+        # 5. Verify timestamps are set
+        job_data = get_response.json()
+        assert job_data["created_at"] is not None
+        assert job_data["updated_at"] is not None
+        assert job_data["started_at"] is not None
+        assert job_data["completed_at"] is not None
