@@ -2,10 +2,12 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from .pipeline_models import GATKVariantCallingParams, RNASeqDESeq2Params
 
 
 class JobStatus(str, Enum):
@@ -38,13 +40,29 @@ class JobSubmission(BaseModel):
     pipeline_name: str = Field(
         ..., description="Name of the bioinformatics pipeline to execute"
     )
-    parameters: dict = Field(
-        default_factory=dict, description="Pipeline parameters and configuration",
+    parameters: Union[GATKVariantCallingParams, RNASeqDESeq2Params] = Field(
+        ..., description="Pipeline parameters and configuration"
     )
     description: Optional[str] = Field(None, description="Optional job description")
     research_group: Optional[str] = Field(
         None, description="Research group or lab identifier submitting the job"
     )
+
+    @model_validator(mode='after')
+    def validate_pipeline_parameters_match(self):
+        """Ensure parameters match the pipeline_name."""
+        pipeline_to_model = {
+            'gatk_variant_calling': GATKVariantCallingParams,
+            'rnaseq_deseq2': RNASeqDESeq2Params,
+        }
+
+        expected_model = pipeline_to_model.get(self.pipeline_name)
+        if expected_model and not isinstance(self.parameters, expected_model):
+            raise ValueError(
+                f"Parameters for pipeline '{self.pipeline_name}' must be of type "
+                f"{expected_model.__name__}, got {type(self.parameters).__name__}"
+            )
+        return self
 
 
 class JobResponse(BaseModel):

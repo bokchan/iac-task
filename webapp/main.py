@@ -114,14 +114,12 @@ async def submit_job(
     Raises:
         HTTPException: 400 for validation errors
     """
-    # Business Logic Layer: Validate pipeline and parameters using Pydantic models
+    # Business Logic Layer: Validate pipeline exists
+    # (parameters are already validated by Pydantic during request parsing)
     validate_pipeline_exists(job_submission.pipeline_name)
-    validated_params = validate_pipeline_parameters(
-        job_submission.pipeline_name, job_submission.parameters
-    )
 
     # Business Logic Layer: Convert validated model to dict for storage
-    sanitized_params = sanitize_parameters(validated_params)
+    sanitized_params = sanitize_parameters(job_submission.parameters)
 
     # Create job with unique ID and initial status
     job_id = uuid4()

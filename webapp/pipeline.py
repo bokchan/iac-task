@@ -21,7 +21,7 @@ async def execute_mock_pipeline(
     success_rate: float = 0.8,
 ) -> None:
     """
-    Execute a mock Snakemake pipeline with simulated processing time.
+    Execute a mock pipeline with simulated processing time.
 
     Args:
         job_id: UUID of the job to execute
