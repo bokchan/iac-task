@@ -9,7 +9,7 @@ from webapp.models import JobList, JobResponse, JobStatus, JobSubmission
 
 from .orchestrator import get_orchestrator_status, submit_to_orchestrator
 from .storage import job_store
-from .validators import get_pipeline_info, sanitize_parameters
+from .service import get_pipeline_info
 
 app = FastAPI(
     title="Pipeline Orchestration Service",
@@ -121,7 +121,7 @@ async def submit_job(
         id=job_id,
         status=JobStatus.PENDING,
         pipeline_name=job_submission.pipeline_name,
-        parameters=sanitized_params,
+        parameters=job_submission.parameters,
         description=job_submission.description,
         research_group=job_submission.research_group,
         created_at=now,

@@ -154,7 +154,7 @@ webapp/
 ├── main.py                   # FastAPI application and endpoints
 ├── models.py                 # Job management Pydantic models
 ├── pipeline_models.py        # Pipeline parameter models with validators
-├── validators.py             # Pipeline registry and utility functions
+├── service.py                # Pipeline registry and utility functions
 ├── storage.py                # Thread-safe in-memory storage
 ├── orchestrator.py           # Orchestration abstraction layer
 ├── run.py                    # Application entry point

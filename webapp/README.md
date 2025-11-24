@@ -205,7 +205,7 @@ uv run pytest webapp/tests/test_jobs_api.py
 **main.py**: FastAPI application with REST endpoints
 **models.py**: Pydantic data models for job management (JobSubmission, JobResponse, JobStatus)
 **pipeline_models.py**: Pydantic models for pipeline parameters with field validators
-**validators.py**: Pipeline registry and utility functions
+**service.py**: Pipeline registry and utility functions
 **storage.py**: Thread-safe in-memory job storage (`JobStore`)
 **orchestrator.py**: Abstraction layer over orchestration engines (Prefect/Dagster)
 **prefect_integration.py**: Example Prefect workflows
@@ -275,7 +275,7 @@ webapp/
 ├── main.py                   # FastAPI app + endpoints
 ├── models.py                 # Job management Pydantic models
 ├── pipeline_models.py        # Pipeline parameter models (GATK, RNASeq)
-├── validators.py             # Pipeline registry and utilities
+├── service.py                # Pipeline registry and utilities
 ├── storage.py                # JobStore implementation
 ├── orchestrator.py           # Orchestration abstraction layer
 ├── prefect_integration.py    # Example Prefect workflows
