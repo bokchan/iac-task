@@ -196,8 +196,8 @@ def get_orchestrator_status() -> Dict:
         "backend": ORCHESTRATOR_BACKEND,
         "status": "healthy",
         "supported_pipelines": [
-            "gatk_variant_calling",
-            "rnaseq_deseq2",
+            PipelineName.GATK_VARIANT_CALLING.value,
+            PipelineName.RNASEQ_DESEQ2.value,
             "cross_lab_etl",
             "chip_seq_macs2",
         ],

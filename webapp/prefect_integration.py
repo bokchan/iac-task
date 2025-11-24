@@ -29,6 +29,8 @@ import httpx
 from prefect import flow, task
 from prefect.tasks import task_input_hash
 
+from .pipeline_models import PipelineName
+
 # Configuration
 API_BASE_URL = "http://localhost:8000"  # Change to your deployed URL
 
@@ -181,7 +183,7 @@ async def gatk_variant_calling_workflow(
 
     # Step 2: Submit pipeline job
     job_id = await submit_pipeline_job(
-        pipeline_name="gatk_variant_calling",
+        pipeline_name=PipelineName.GATK_VARIANT_CALLING,
         parameters={
             "sample_id": sample_id,
             "fastq_r1": fastq_r1,
@@ -244,7 +246,7 @@ async def batch_rnaseq_workflow(
     for sample in samples:
         # Submit each sample as a separate job
         job_id = await submit_pipeline_job(
-            pipeline_name="rnaseq_deseq2",
+            pipeline_name=PipelineName.RNASEQ_DESEQ2,
             parameters={
                 "sample_id": sample["sample_id"],
                 "fastq_files": sample["fastq"],

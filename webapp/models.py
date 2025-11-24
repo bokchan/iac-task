@@ -53,8 +53,8 @@ class JobSubmission(BaseModel):
     def validate_pipeline_parameters_match(self):
         """Ensure parameters match the pipeline_name."""
         pipeline_to_model = {
-            "gatk_variant_calling": GATKVariantCallingParams,
-            "rnaseq_deseq2": RNASeqDESeq2Params,
+            PipelineName.GATK_VARIANT_CALLING: GATKVariantCallingParams,
+            PipelineName.RNASEQ_DESEQ2: RNASeqDESeq2Params,
         }
 
         expected_model = pipeline_to_model.get(self.pipeline_name)
@@ -95,8 +95,8 @@ class JobResponse(BaseModel):
 
     id: UUID = Field(..., description="Unique job identifier")
     status: JobStatus = Field(..., description="Current job status")
-    pipeline_name: str = Field(..., description="Pipeline name")
-    parameters: dict = Field(..., description="Pipeline parameters")
+    pipeline_name: PipelineName = Field(..., description="Pipeline name")
+    parameters: GATKVariantCallingParams | RNASeqDESeq2Params = Field(..., description="Pipeline parameters")
     description: str | None = Field(None, description="Job description")
     research_group: str | None = Field(
         None, description="Research group or lab identifier"
