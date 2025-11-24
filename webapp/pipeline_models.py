@@ -52,7 +52,12 @@ class PipelineName(str, Enum):
 
 
 class PipelineParamsBase(BaseModel):
-    """Base class for pipeline parameter models."""
+    """
+    Base class for pipeline parameter models.
+
+    All pipeline parameter models inherit from this base and set their
+    specific pipeline name as the default value for the name field.
+    """
 
     name: PipelineName = Field(..., description="Pipeline name")
 
@@ -110,6 +115,11 @@ class GATKVariantCallingParams(PipelineParamsBase):
     @field_validator("fastq_r1", "fastq_r2", "bam_file")
     @classmethod
     def validate_file_path(cls, v: str | None) -> str | None:
+        """
+        Validate file paths start with approved prefixes.
+
+        Ensures file paths use supported storage backends (S3, GCS, local).
+        """
         if v is None:
             return v
         valid_prefixes = ["s3://", "/data/", "/mnt/", "gs://", "https://"]
@@ -171,6 +181,11 @@ class RNASeqDESeq2Params(PipelineParamsBase):
     @field_validator("fastq_files")
     @classmethod
     def validate_fastq_paths(cls, v: list[str] | None) -> list[str] | None:
+        """
+        Validate all FASTQ file paths start with approved prefixes.
+
+        Ensures file paths use supported storage backends (S3, GCS, local).
+        """
         if v is None:
             return v
         valid_prefixes = ["s3://", "/data/", "/mnt/", "gs://", "https://"]

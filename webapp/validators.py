@@ -1,11 +1,13 @@
 """
-Pipeline Information and Utility Functions
+Pipeline Registry and Utility Functions
 
-This module provides pipeline registry information and utility functions
-for converting between Pydantic models and dictionaries.
+Provides:
+- Pipeline registry with descriptions and parameter schemas
+- get_pipeline_info() for API discovery endpoints
+- sanitize_parameters() for converting Pydantic models to dicts
 
-Note: Parameter validation is now handled automatically by Pydantic models
-in JobSubmission, so explicit validation functions are no longer needed.
+Note: Parameter validation is handled automatically by Pydantic models
+in pipeline_models.py and models.py, not in this module.
 """
 
 from typing import Any

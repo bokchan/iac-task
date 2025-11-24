@@ -1,4 +1,14 @@
-"""Entry point for running the FastAPI application."""
+"""
+Application Entry Point
+
+Direct execution entry point for local development.
+Runs the FastAPI application with uvicorn and hot-reload enabled.
+
+Usage:
+    python -m webapp.run
+
+Note: In production, use uvicorn directly or via Docker.
+"""
 
 import uvicorn
 

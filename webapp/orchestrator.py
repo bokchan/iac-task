@@ -190,7 +190,7 @@ def get_orchestrator_status() -> dict:
     Get status information about the orchestration backend.
 
     Returns:
-        Status information including backend type, health, etc.
+        Status information including backend type, health, and supported pipelines
     """
     return {
         "backend": ORCHESTRATOR_BACKEND,
@@ -198,7 +198,5 @@ def get_orchestrator_status() -> dict:
         "supported_pipelines": [
             PipelineName.GATK_VARIANT_CALLING.value,
             PipelineName.RNASEQ_DESEQ2.value,
-            "cross_lab_etl",
-            "chip_seq_macs2",
         ],
     }
