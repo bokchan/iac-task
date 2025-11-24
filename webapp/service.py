@@ -55,19 +55,25 @@ def get_pipeline_info(
         example = model_class.model_config.get("json_schema_extra", {}).get(
             "example", {}
         )
-        return PipelineInfo.model_validate ({
-            "pipeline_name": pipeline_name,
-            "description": config["description"],
-            "parameters_schema": schema,
-            "example": example,
-        })
+        return PipelineInfo.model_validate(
+            {
+                "pipeline_name": pipeline_name,
+                "description": config["description"],
+                "parameters_schema": schema,
+                "example": example,
+            }
+        )
 
     return [
-        PipelineInfo.model_validate({
-            "pipeline_name": name,
-            "description": config["description"],
-            "parameters_schema": config["model"].model_json_schema(),
-            "example": config["model"].model_config.get("json_schema_extra", {}).get("example", {}),
-        })
+        PipelineInfo.model_validate(
+            {
+                "pipeline_name": name,
+                "description": config["description"],
+                "parameters_schema": config["model"].model_json_schema(),
+                "example": config["model"]
+                .model_config.get("json_schema_extra", {})
+                .get("example", {}),
+            }
+        )
         for name, config in PIPELINE_REGISTRY.items()
     ]

@@ -3,12 +3,11 @@ import os
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
-from .models import PipelineInfo
-
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 
 from webapp.models import JobList, JobResponse, JobStatus, JobSubmission
 
+from .models import PipelineInfo
 from .orchestrator import get_orchestrator_status, submit_to_orchestrator
 from .service import get_pipeline_info
 from .storage import job_store
@@ -60,7 +59,7 @@ async def list_pipelines() -> list[PipelineInfo]:
     This endpoint demonstrates domain-specific API design - clients don't need
     to know about Prefect deployments, Dagster jobs, or Airflow DAGs.
     """
-    return get_pipeline_info()
+    return get_pipeline_info()  # type: ignore[bad-return]
 
 
 @app.get("/pipelines/{pipeline_name}")
@@ -74,7 +73,7 @@ async def get_pipeline(pipeline_name: str) -> PipelineInfo:
     Returns:
         Pipeline configuration and requirements
     """
-    return get_pipeline_info(pipeline_name)
+    return get_pipeline_info(pipeline_name)  # type: ignore[bad-return]
 
 
 @app.get("/orchestrator/status")
