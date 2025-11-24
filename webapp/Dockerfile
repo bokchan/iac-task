@@ -22,8 +22,8 @@ COPY ./pyproject.toml ./uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev
 
-# Copy application source code (excluding unnecessary files)
-COPY ./*.py ./README.md ./
+# Copy application source code
+COPY ./*.py ./__init__.py ./README.md ./
 
 # Install the application
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -54,8 +54,10 @@ WORKDIR /app
 # Copy virtual environment from builder stage
 COPY --from=builder --chown=nonroot:nonroot /app/.venv /app/.venv
 
-# Copy application code into webapp subdirectory
-COPY --from=builder --chown=nonroot:nonroot /app /app/webapp
+# Copy application code into webapp subdirectory (exclude .venv to avoid duplication)
+COPY --from=builder --chown=nonroot:nonroot /app/*.py /app/webapp/
+COPY --from=builder --chown=nonroot:nonroot /app/__init__.py /app/webapp/
+COPY --from=builder --chown=nonroot:nonroot /app/README.md /app/webapp/
 
 # Switch to non-root user
 USER nonroot

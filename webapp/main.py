@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 
-from .models import JobList, JobResponse, JobStatus, JobSubmission
+from webapp.models import JobList, JobResponse, JobStatus, JobSubmission
 from .pipeline import execute_mock_pipeline
 from .storage import job_store
 
