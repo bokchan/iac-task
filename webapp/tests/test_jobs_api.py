@@ -62,16 +62,19 @@ class TestJobSubmission:
     def test_submit_job_minimal(self, client: TestClient):
         """Test job submission with minimal required fields."""
         payload = {
-            "pipeline_name": "simple_pipeline",
-            "parameters": {},
+            "pipeline_name": "rnaseq_deseq2",
+            "parameters": {
+                "sample_id": "RNA_001",
+                "reference": "gencode_v38",
+            },
         }
 
         response = client.post("/jobs", json=payload)
 
         assert response.status_code == 201
         data = response.json()
-        assert data["pipeline_name"] == "simple_pipeline"
-        assert data["parameters"] == {}
+        assert data["pipeline_name"] == "rnaseq_deseq2"
+        assert data["parameters"]["sample_id"] == "RNA_001"
         assert data["description"] is None
 
     def test_submit_job_missing_pipeline_name(self, client: TestClient):
@@ -86,10 +89,16 @@ class TestJobSubmission:
 
     def test_submit_multiple_jobs(self, client: TestClient):
         """Test submitting multiple jobs."""
-        for i in range(3):
+        pipelines = [
+            ("gatk_variant_calling", {"sample_id": "WGS_001", "reference_genome": "hg38"}),
+            ("rnaseq_deseq2", {"sample_id": "RNA_001", "reference": "gencode_v38"}),
+            ("chip_seq_macs2", {"sample_id": "ChIP_001", "reference_genome": "hg38", "antibody": "H3K27ac"}),
+        ]
+
+        for pipeline_name, params in pipelines:
             payload = {
-                "pipeline_name": f"pipeline_{i}",
-                "parameters": {"job_number": i},
+                "pipeline_name": pipeline_name,
+                "parameters": params,
             }
             response = client.post("/jobs", json=payload)
             assert response.status_code == 201
@@ -105,8 +114,8 @@ class TestGetJob:
         """Test retrieving an existing job."""
         # First, create a job
         payload = {
-            "pipeline_name": "test_pipeline",
-            "parameters": {"key": "value"},
+            "pipeline_name": "gatk_variant_calling",
+            "parameters": {"sample_id": "WGS_001", "reference_genome": "hg38"},
         }
         create_response = client.post("/jobs", json=payload)
         job_id = create_response.json()["id"]
@@ -117,7 +126,7 @@ class TestGetJob:
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == job_id
-        assert data["pipeline_name"] == "test_pipeline"
+        assert data["pipeline_name"] == "gatk_variant_calling"
         # With fast execution, job may already be completed
         assert data["status"] in [
             JobStatus.PENDING.value,
@@ -157,10 +166,16 @@ class TestListJobs:
         """Test listing multiple jobs."""
         # Create several jobs
         job_ids = []
-        for i in range(3):
+        pipelines = [
+            ("gatk_variant_calling", {"sample_id": "WGS_001", "reference_genome": "hg38"}),
+            ("rnaseq_deseq2", {"sample_id": "RNA_001", "reference": "gencode_v38"}),
+            ("chip_seq_macs2", {"sample_id": "ChIP_001", "reference_genome": "hg38", "antibody": "H3K27ac"}),
+        ]
+
+        for pipeline_name, params in pipelines:
             payload = {
-                "pipeline_name": f"pipeline_{i}",
-                "parameters": {"index": i},
+                "pipeline_name": pipeline_name,
+                "parameters": params,
             }
             response = client.post("/jobs", json=payload)
             job_ids.append(response.json()["id"])
@@ -180,8 +195,8 @@ class TestListJobs:
     def test_list_jobs_returns_all_fields(self, client: TestClient):
         """Test that list returns complete job information."""
         payload = {
-            "pipeline_name": "complete_pipeline",
-            "parameters": {"test": "data"},
+            "pipeline_name": "rnaseq_deseq2",
+            "parameters": {"sample_id": "RNA_001", "reference": "gencode_v38"},
             "description": "Full test job",
         }
         client.post("/jobs", json=payload)
@@ -206,8 +221,8 @@ class TestJobStorageIntegration:
     def test_job_persists_in_storage(self, client: TestClient):
         """Test that submitted job persists in storage."""
         payload = {
-            "pipeline_name": "persistence_test",
-            "parameters": {"persistent": True},
+            "pipeline_name": "gatk_variant_calling",
+            "parameters": {"sample_id": "WGS_001", "reference_genome": "hg38"},
         }
 
         response = client.post("/jobs", json=payload)
@@ -216,7 +231,7 @@ class TestJobStorageIntegration:
         # Verify direct access to storage (may complete quickly with mocked fast duration)
         stored_job = job_store.get(job_id)
         assert stored_job is not None
-        assert stored_job.pipeline_name == "persistence_test"
+        assert stored_job.pipeline_name == "gatk_variant_calling"
         # With fast execution, job may already be completed
         assert stored_job.status in [
             JobStatus.PENDING,
@@ -229,10 +244,24 @@ class TestJobStorageIntegration:
         """Test thread-safety with multiple job submissions."""
         import concurrent.futures
 
+        pipelines = [
+            "gatk_variant_calling",
+            "rnaseq_deseq2",
+            "chip_seq_macs2",
+        ]
+
         def submit_job(index: int):
+            pipeline = pipelines[index % len(pipelines)]
+            if pipeline == "gatk_variant_calling":
+                params = {"sample_id": f"WGS_{index:03d}", "reference_genome": "hg38"}
+            elif pipeline == "rnaseq_deseq2":
+                params = {"sample_id": f"RNA_{index:03d}", "reference": "gencode_v38"}
+            else:
+                params = {"sample_id": f"ChIP_{index:03d}", "reference_genome": "hg38", "antibody": "H3K27ac"}
+
             payload = {
-                "pipeline_name": f"concurrent_pipeline_{index}",
-                "parameters": {"index": index},
+                "pipeline_name": pipeline,
+                "parameters": params,
             }
             response = client.post("/jobs", json=payload)
             return response.status_code
