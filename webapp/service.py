@@ -9,8 +9,6 @@ Note: Parameter validation is handled automatically by Pydantic models
 in pipeline_models.py and models.py, not in this module.
 """
 
-from typing import Any
-
 from fastapi import HTTPException
 
 from .pipeline_models import (

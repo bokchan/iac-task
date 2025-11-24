@@ -8,8 +8,8 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 from webapp.models import JobList, JobResponse, JobStatus, JobSubmission
 
 from .orchestrator import get_orchestrator_status, submit_to_orchestrator
-from .storage import job_store
 from .service import get_pipeline_info
+from .storage import job_store
 
 app = FastAPI(
     title="Pipeline Orchestration Service",
@@ -130,7 +130,7 @@ async def submit_job(
 
     logger.info(
         f"Job {job_id} submitted by {job_submission.research_group or 'anonymous'}: "
-        f"{job_submission.pipeline_name} with parameters {sanitized_params}"
+        f"{job_submission.pipeline_name} with parameters {job_submission.parameters}"
     )
 
     # Orchestration Abstraction: Submit to configured backend (Prefect/Dagster/etc.)
@@ -138,7 +138,7 @@ async def submit_job(
         submit_to_orchestrator,
         job_id=job_id,
         pipeline_name=job_submission.pipeline_name,
-        parameters=sanitized_params,
+        parameters=job_submission.parameters.model_dump(exclude_none=True),
         research_group=job_submission.research_group,
     )
     logger.info(f"Job {job_id} submitted to orchestration backend")
