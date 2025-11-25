@@ -18,7 +18,7 @@ services:
       - PYTHONPATH=/app
       - IMAGE_TAG=1234
     # Use the fastapi dev server with auto-reload for development
-    command: ["sh", "-c", ". .venv/bin/activate; fastapi dev main.py --host 0.0.0.0 --port 8000 --reload"]
+    command: ["sh", "-c", ". .venv/bin/activate; fastapi dev webapp/main.py --host 0.0.0.0 --port 8000 --reload"]
     # Add health check override for faster development feedback
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]
@@ -38,7 +38,7 @@ services:
         # Sync only Python source files for faster sync
         - action: sync
           path: ./webapp/
-          target: /app/
+          target: /app/webapp
           ignore:
             - .venv/
             - __pycache__/
