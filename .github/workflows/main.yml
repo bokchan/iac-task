@@ -3,6 +3,13 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      target_job:
+        description: 'Which job to run'
+        required: true
+        default: 'build'
+
 permissions:
   id-token: write # Required for OIDC authentication with AWS
   contents: read # Required to check out the repository
