@@ -209,6 +209,7 @@ __marimo__/
 # User specific
 docs
 .DS_STORE
+*.html
 
 # IDE
 .vscode
