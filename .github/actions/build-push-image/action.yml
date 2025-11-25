@@ -28,8 +28,8 @@ runs:
         platforms: linux/amd64,linux/arm64
         context: ${{ inputs.working_directory }}
         push: true
+        # Tags for the Docker image. Automatically tags the most recent image as 'latest'
         tags: |
-          # Tags for the Docker image. Automatically tags the most recent image as 'latest'
           ${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr_repository }}:${{ inputs.image_tag }}
           ${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr_repository }}:latest
         # Use GitHub Actions cache for Docker layers)
