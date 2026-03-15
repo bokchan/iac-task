@@ -74,9 +74,14 @@ Notes:
 
 ### 2. Configure Variables
 
-Update [azure-infra/dev.tfvars](azure-infra/dev.tfvars) with your real values:
+Set subscription id from environment:
 
-- `subscription_id`
+```bash
+export TF_VAR_subscription_id="<your-subscription-id>"
+```
+
+Then update [azure-infra/dev.tfvars](azure-infra/dev.tfvars) with your real values:
+
 - `location` (if needed)
 - app settings (`echo_message`, `log_level`)
 

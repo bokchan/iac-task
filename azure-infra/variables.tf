@@ -1,6 +1,11 @@
 variable "subscription_id" {
   description = "Azure subscription ID used for deployment."
   type        = string
+
+  validation {
+    condition     = can(regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", trimspace(var.subscription_id)))
+    error_message = "subscription_id must be a non-empty UUID in Azure subscription format. Provide it via TF_VAR_subscription_id or a secure var source."
+  }
 }
 
 variable "location" {
