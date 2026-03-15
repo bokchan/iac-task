@@ -67,6 +67,18 @@ variable "deploy_container_app" {
   default     = false
 }
 
+variable "enable_destroy_protection" {
+  description = "Enable production guardrail checks that block destructive bootstrap patterns by default."
+  type        = bool
+  default     = true
+}
+
+variable "allow_prod_bootstrap" {
+  description = "Allow deploy_container_app=false when environment=prod. Keep false unless explicitly running a controlled bootstrap."
+  type        = bool
+  default     = false
+}
+
 variable "container_port" {
   description = "Container port exposed by the webapp."
   type        = number
@@ -89,12 +101,22 @@ variable "min_replicas" {
   description = "Minimum number of running container replicas."
   type        = number
   default     = 1
+
+  validation {
+    condition     = var.min_replicas >= 0
+    error_message = "min_replicas must be greater than or equal to 0."
+  }
 }
 
 variable "max_replicas" {
   description = "Maximum number of container replicas."
   type        = number
   default     = 2
+
+  validation {
+    condition     = var.max_replicas >= 1
+    error_message = "max_replicas must be greater than or equal to 1."
+  }
 }
 
 variable "echo_message" {

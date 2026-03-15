@@ -192,11 +192,17 @@ cython_debug/
 .terraform/
 *.tfstate
 *.tfstate.*
+*.tfplan
+*.tfplan.*
+*.plan
+*.plan.*
 crash.log
 override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+azure-infra/backend.*.hcl
+!azure-infra/backend.*.hcl.example
 
 # Ruff stuff:
 .ruff_cache/
@@ -217,8 +223,16 @@ marimo/_lsp/
 __marimo__/
 
 # User specific
-docs
 .DS_STORE
+
+# Keep docs ignored by default; track only migration governance artifacts.
+docs/*
+!docs/adr/
+docs/adr/*
+!docs/adr/0001-iac-language-and-migration-strategy.md
+!docs/adr/0002-azure-target-architecture-and-phased-rollout.md
+!docs/migration-risk-register.md
+!docs/terraform-state-strategy.md
 
 # IDE
 .vscode

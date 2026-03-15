@@ -13,6 +13,13 @@ resource "azurerm_resource_group" "main" {
   name     = "${local.name_prefix}-rg"
   location = var.location
   tags     = local.common_tags
+
+  lifecycle {
+    precondition {
+      condition     = !(var.environment == "prod" && var.enable_destroy_protection == true && var.deploy_container_app == false && var.allow_prod_bootstrap == false)
+      error_message = "In prod, deploy_container_app=false is blocked by default. Set allow_prod_bootstrap=true for a controlled bootstrap."
+    }
+  }
 }
 
 resource "azurerm_container_registry" "main" {

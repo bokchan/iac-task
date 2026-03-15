@@ -173,6 +173,25 @@ Once manual Azure deployment is stable, replace AWS-specific GitHub actions in:
 
 with Azure federation login, ACR push, and Terraform apply steps.
 
+## Senior Delivery Artifacts
+
+The migration now includes additional governance and execution controls:
+
+- ADRs:
+   - [docs/adr/0001-iac-language-and-migration-strategy.md](docs/adr/0001-iac-language-and-migration-strategy.md)
+   - [docs/adr/0002-azure-target-architecture-and-phased-rollout.md](docs/adr/0002-azure-target-architecture-and-phased-rollout.md)
+- Risk register:
+   - [docs/migration-risk-register.md](docs/migration-risk-register.md)
+- Remote state strategy:
+   - [docs/terraform-state-strategy.md](docs/terraform-state-strategy.md)
+- CI guardrails:
+   - [.github/workflows/terraform-azure.yml](.github/workflows/terraform-azure.yml)
+
+Terraform now includes production guardrails in [azure-infra/main.tf](azure-infra/main.tf):
+
+- Guard against accidental `deploy_container_app = false` in production unless explicitly overridden
+- Keep destructive bootstrap behavior explicitly opt-in for production
+
 ## Troubleshooting
 
 ### Missing provider registration
