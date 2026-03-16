@@ -7,6 +7,10 @@ on:
       - ".github/workflows/terraform-azure.yml"
 
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
     paths:
       - "azure-infra/**"
       - ".github/workflows/terraform-azure.yml"
@@ -45,7 +49,6 @@ jobs:
     name: Terraform Plan (Dev)
     needs: validate
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || (secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '') }}
     defaults:
       run:
         working-directory: azure-infra
@@ -59,7 +62,22 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      - name: Check Azure secrets
+        id: azure_secrets
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          if [ -z "$AZURE_CLIENT_ID" ] || [ -z "$AZURE_TENANT_ID" ] || [ -z "$AZURE_SUBSCRIPTION_ID" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Azure secrets are not configured. Skipping Terraform plan steps."
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Azure login (OIDC)
+        if: ${{ steps.azure_secrets.outputs.available == 'true' }}
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -67,15 +85,19 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Terraform init
+        if: ${{ steps.azure_secrets.outputs.available == 'true' }}
         run: terraform init -input=false
 
       - name: Terraform plan
+        if: ${{ steps.azure_secrets.outputs.available == 'true' }}
         run: terraform plan -input=false -var-file=dev.tfvars -var="deploy_container_app=true" -out=tfplan
 
       - name: Render plan output
+        if: ${{ steps.azure_secrets.outputs.available == 'true' }}
         run: terraform show -no-color tfplan > tfplan.txt
 
       - name: Upload plan artifact
+        if: ${{ steps.azure_secrets.outputs.available == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: terraform-azure-dev-plan
