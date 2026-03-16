@@ -1,6 +1,11 @@
 name: Terraform Azure Guardrails
 
 on:
+  push:
+    paths:
+      - "azure-infra/**"
+      - ".github/workflows/terraform-azure.yml"
+
   pull_request:
     paths:
       - "azure-infra/**"
