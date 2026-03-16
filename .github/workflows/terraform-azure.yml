@@ -86,7 +86,7 @@ jobs:
 
       - name: Terraform init
         if: ${{ steps.azure_secrets.outputs.available == 'true' }}
-        run: terraform init -input=false
+        run: terraform init -backend=false -input=false
 
       - name: Terraform plan
         if: ${{ steps.azure_secrets.outputs.available == 'true' }}
