@@ -84,9 +84,16 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Disable remote backend for CI plan
+        if: ${{ steps.azure_secrets.outputs.available == 'true' }}
+        run: |
+          if [ -f backend.tf ]; then
+            mv backend.tf backend.tf.ci.disabled
+          fi
+
       - name: Terraform init
         if: ${{ steps.azure_secrets.outputs.available == 'true' }}
-        run: terraform init -backend=false -input=false
+        run: terraform init -input=false
 
       - name: Terraform plan
         if: ${{ steps.azure_secrets.outputs.available == 'true' }}
