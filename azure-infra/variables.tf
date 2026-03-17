@@ -136,6 +136,127 @@ variable "log_level" {
   default     = "INFO"
 }
 
+variable "create_github_oidc_identity" {
+  description = "Create Entra App Registration and Service Principal for GitHub OIDC. Set false to reuse an existing identity."
+  type        = bool
+  default     = true
+}
+
+variable "existing_github_oidc_client_id" {
+  description = "Existing Entra application client_id to reuse when create_github_oidc_identity is false."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition = var.existing_github_oidc_client_id == null || can(regex(
+      "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      trimspace(var.existing_github_oidc_client_id)
+    ))
+    error_message = "existing_github_oidc_client_id must be null or a valid UUID."
+  }
+
+  validation {
+    condition     = var.create_github_oidc_identity || var.existing_github_oidc_client_id != null
+    error_message = "existing_github_oidc_client_id is required when create_github_oidc_identity is false."
+  }
+}
+
+variable "existing_github_oidc_application_object_id" {
+  description = "Existing Entra application object_id (required if reusing identity and creating federated credential)."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition = var.existing_github_oidc_application_object_id == null || can(regex(
+      "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      trimspace(var.existing_github_oidc_application_object_id)
+    ))
+    error_message = "existing_github_oidc_application_object_id must be null or a valid UUID."
+  }
+
+  validation {
+    condition     = !(var.create_github_federated_credential && !var.create_github_oidc_identity && var.existing_github_oidc_application_object_id == null)
+    error_message = "existing_github_oidc_application_object_id is required when create_github_federated_credential is true and create_github_oidc_identity is false."
+  }
+}
+
+variable "github_oidc_application_name" {
+  description = "Display name for the GitHub OIDC Entra application."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "create_github_federated_credential" {
+  description = "Create a federated credential on the Entra application for GitHub OIDC."
+  type        = bool
+  default     = true
+}
+
+variable "github_repository_owner" {
+  description = "GitHub repository owner for OIDC subject matching."
+  type        = string
+  default     = "bokchan"
+}
+
+variable "github_repository_name" {
+  description = "GitHub repository name for OIDC subject matching."
+  type        = string
+  default     = "iac-task"
+}
+
+variable "github_oidc_subject" {
+  description = "Optional explicit GitHub OIDC subject claim. If null, Terraform derives one from branch or environment inputs."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "github_oidc_branch" {
+  description = "Git branch used to derive OIDC subject when github_oidc_environment_name is null."
+  type        = string
+  default     = "main"
+}
+
+variable "github_oidc_environment_name" {
+  description = "Optional GitHub Actions environment name used in OIDC subject derivation."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "github_oidc_audiences" {
+  description = "Audiences accepted by the federated credential."
+  type        = list(string)
+  default     = ["api://AzureADTokenExchange"]
+}
+
+variable "github_oidc_federated_credential_name" {
+  description = "Name of the Entra federated credential object."
+  type        = string
+  default     = "github-oidc"
+}
+
+variable "assign_github_oidc_rg_contributor" {
+  description = "Assign Contributor role at Resource Group scope to the GitHub OIDC service principal."
+  type        = bool
+  default     = true
+}
+
+variable "assign_github_oidc_acr_push" {
+  description = "Assign AcrPush role on ACR to the GitHub OIDC service principal."
+  type        = bool
+  default     = true
+}
+
+variable "assign_github_oidc_subscription_contributor" {
+  description = "Assign Contributor role at subscription scope to the GitHub OIDC service principal. Keep false unless required."
+  type        = bool
+  default     = false
+}
+
 variable "tags" {
   description = "Additional Azure tags."
   type        = map(string)

@@ -18,6 +18,20 @@ max_replicas         = 2
 echo_message         = "Hello from Azure MVP"
 log_level            = "INFO"
 
+# GitHub OIDC identity and RBAC
+create_github_oidc_identity = true
+# Set create_github_oidc_identity = false and provide existing_github_oidc_client_id if app/SP already exist.
+# existing_github_oidc_client_id          = "00000000-0000-0000-0000-000000000000"
+# existing_github_oidc_application_object_id = "00000000-0000-0000-0000-000000000000"
+create_github_federated_credential = true
+github_repository_owner            = "bokchan"
+github_repository_name             = "iac-task"
+github_oidc_branch                 = "main"
+# github_oidc_environment_name      = "production"
+assign_github_oidc_rg_contributor           = true
+assign_github_oidc_acr_push                 = true
+assign_github_oidc_subscription_contributor = false
+
 tags = {
   Owner      = "andreas"
   ManagedBy  = "terraform"
