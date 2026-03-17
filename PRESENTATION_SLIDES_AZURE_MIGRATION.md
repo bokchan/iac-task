@@ -24,6 +24,9 @@ style: |
   .tiny {
     font-size: 18px;
   }
+  .mermaid {
+    font-size: 20px;
+  }
 ---
 
 # AWS to Azure Migration
@@ -43,17 +46,15 @@ Opening:
 
 ## Context and Assumptions
 
-- I am assigned to migrate an existing deployment from AWS to Azure.
-- The existing project uses CDKTF
-- I have limited Azure experience and less familiarity with Terraform.
-
-- Limited knowledge and experience with Azure and Terraform
-- For this exercise, I assume CDKTF is sunset and no longer a good strategic choice.
-- I want to demonstrate that I can still deliver a successful migration using AI responsibly.
+- Assignment: migrate an existing AWS deployment to Azure.
+- Starting point: infrastructure defined with CDKTF.
+- Constraint: limited Azure and Terraform experience at project start.
+- Assumption: CDKTF is sunset, so long-term direction must change.
+- Objective: deliver a working migration with AI assistance and clear engineering ownership.
 
 <div class="small">
 
-Working premise: the value is not "I knew Azure already". The value is that I can reduce risk, make sound decisions, validate outcomes, and leave behind a maintainable migration path.
+Core value: reduce risk, make explicit trade-offs, validate outcomes, and leave a maintainable migration path.
 
 </div>
 
@@ -76,12 +77,10 @@ Key message:
 
 ## Starting Point: Existing AWS Solution
 
-- FastAPI application in Docker
-- CDKTF-based AWS infrastructure
-- ECS Fargate for runtime
-- ALB for public ingress
-- ECR for container registry
-- GitHub Actions with OIDC-based deployment
+- FastAPI app packaged as Docker image
+- CDKTF-managed AWS infrastructure
+- ECS Fargate + ALB for runtime and ingress
+- ECR + GitHub Actions with OIDC authentication
 
 <!--
 Reused context from previous interview exercise.
@@ -116,14 +115,14 @@ Key: Zero long-lived credentials, complete automation -->
 
 ### Migration driver
 
-- Azure migration was the assignment.
-- CDKTF was not a durable long-term direction for this scenario.
-- I needed the fastest credible path to a working Azure deployment.
+- Azure migration was mandated by the assignment.
+- CDKTF no longer fit the long-term strategy.
+- Priority was fastest credible path to a working Azure deployment.
 
 ### Choice made
 
 - Use Terraform for the Azure MVP.
-- Keep Pulumi as a follow-up discussion, not a second migration inside the migration.
+- Keep Pulumi as an explicit follow-up, not a second migration during MVP delivery.
 
 <div class="tiny">
 
@@ -144,11 +143,11 @@ This is a senior trade-off slide.
 
 | Decision             | Chosen Option                      | Why                                                    |
 | -------------------- | ---------------------------------- | ------------------------------------------------------ |
-| Azure compute target | Azure Container Apps               | Small operational surface, public ingress, fast MVP    |
-| IaC language         | Terraform                          | Direct provider support, fastest path to delivery      |
-| Registry auth        | Managed Identity + AcrPull         | Avoid admin credentials and long-lived secrets         |
-| Rollout model        | Two-phase bootstrap + app deploy   | Prevent first-run failures before image exists         |
-| Delivery approach    | AI-assisted with manual validation | Faster discovery without giving up engineering control |
+| Azure compute target | Azure Container Apps               | Low ops overhead, public ingress, fast MVP |
+| IaC language         | Terraform                          | Direct provider support, shortest path to delivery |
+| Registry auth        | Managed Identity + AcrPull         | No admin credentials, no long-lived secrets |
+| Rollout model        | Two-phase bootstrap + app deploy   | Avoid first-run failures before image exists |
+| Delivery approach    | AI-assisted with manual validation | Faster iteration with retained engineering control |
 
 <!--
 This slide is where I show selection criteria, not tool fandom.
@@ -176,43 +175,50 @@ Senior angle: I mapped capabilities first, then decided what to keep, replace, o
 
 ---
 
-## Target Architecture After Migration
+## Azure Target Architecture
 
-```text
-GitHub Repository
-    ↓
-Manual / CI-triggered Terraform workflow
-    ↓
-Azure Resource Group
-    ├── Azure Container Registry
-    ├── Log Analytics Workspace
-    ├── Container Apps Environment
-    ├── User Assigned Managed Identity
-    └── Azure Container App
-          ├── Public HTTPS ingress
-          ├── Image pull from ACR via managed identity
-          ├── Health probes on /health
-          └── Scale rules with cost-aware defaults
+```mermaid
+flowchart LR
+  User[Internet User] --> Ingress[Azure Container Apps Ingress]
+  Repo[GitHub Repository] --> Workflow[Manual or CI Terraform Workflow]
+  Workflow --> RG[Azure Resource Group]
+  RG --> ACR[Azure Container Registry]
+  RG --> LAW[Log Analytics Workspace]
+  RG --> CAE[Container Apps Environment]
+  RG --> UAMI[User Assigned Managed Identity]
+  CAE --> App[Azure Container App]
+  UAMI --> App
+  ACR --> App
+  App --> Ingress
+  App --> Health[Health Probes /health]
+  App --> Logs[Application Logs]
+  Logs --> LAW
 ```
+
+<!--
+Talk track:
+- Deliberately small MVP architecture.
+- Registry access is identity-based.
+- Observability is included from day one.
+- Network hardening beyond public ingress is deferred, not ignored.
+-->
+
 ---
 
 ### Result
 
 - Public Azure-hosted web app
-- Private image registry with identity-based access
-- IaC-controlled deployment flow
+- Identity-based private registry access
+- Simpler operational model than original AWS baseline
 
 ---
 
 ## Execution Journey: What Actually Happened
 
-- I started with limited Azure knowledge.
-- AI helped accelerate exploration, command generation, and Terraform scaffolding.
-- I still had to debug real platform issues:
-  - Missing Azure provider registrations
-  - Missing image tag in ACR
-  - Wrong container image architecture on Apple Silicon
-- I converted those failures into a more reliable deployment model.
+- Learned Azure basics through Microsoft Learn and set up Terraform locally.
+- Used AI for discovery, command drafting, and IaC scaffolding.
+- Debugged real failures: provider registration, state drift, image tag/architecture issues.
+- Converted failure patterns into a more reliable deployment workflow.
 
 ### Key correction
 
@@ -228,12 +234,13 @@ This is one of the strongest slides.
 
 ---
 
+
 ## How I Used AI
 
 ### AI helped with
 
-- Service comparison and option exploration
-- Terraform scaffolding and iteration speed
+- Service comparison and option framing
+- Terraform scaffolding and faster iteration
 - Troubleshooting hypotheses
 - Documentation and runbook drafting
 
@@ -246,7 +253,7 @@ This is one of the strongest slides.
 
 <div class="small">
 
-My claim is not "AI solved it". My claim is that I used AI as an accelerator and still owned the engineering outcome.
+AI was an accelerator. Architecture decisions, risk acceptance, and validation remained my responsibility.
 
 </div>
 
@@ -259,25 +266,35 @@ My claim is not "AI solved it". My claim is that I used AI as an accelerator and
 - Successful AWS to Azure MVP migration
 - Working Azure Container App with public ingress
 - Clean-slate reprovision validated
-- Cost-aware dev defaults such as scale-to-zero
+- Cost-aware defaults such as scale-to-zero
 
 ### Added hardening
 
 - ADRs for migration and architecture decisions
 - Risk register and rollback thinking
 - Remote state scaffolding for team-safe execution
-- GitHub Actions workflow for Terraform validate and reviewed plan output
+- GitHub Actions workflow for Terraform validate and plan artifact review
 - Production guardrails to prevent accidental bootstrap behavior
 
 ---
 
-## What I Would Do Next in a Real Project
+## Improvement Backlog
 
-1. Move Terraform state to Azure Storage with locked shared access.
-2. Replace manual deployment with Azure-authenticated CI/CD.
-3. Add static checks such as `tflint`, `tfsec` or `checkov`, and drift detection.
-4. Introduce production networking hardening, secret management, and budget alerts.
-5. Revisit long-term IaC direction: stay on Terraform or move to Pulumi once the Azure baseline is stable.
+| Area | Current State | Next Step |
+|---|---|---|
+| State management | Local-first with remote backend scaffolding | Move fully to shared remote state |
+| Deployment | Manual plus validated Terraform workflow | Add Azure OIDC CI/CD apply path |
+| Security | Managed identity and private registry pull | Add secret store integration and policy scanning |
+| Platform reliability | Two-phase deploy and smoke checks | Add drift detection and environment promotion |
+| Cost control | Dev scale-to-zero defaults | Add budget alerts and environment-specific SKUs |
+
+---
+
+## Next 90 Days (Production Path)
+
+1. Move fully to shared remote state with access control and locking.
+2. Implement Azure OIDC CI/CD apply pipeline with approval gates.
+3. Add policy/security checks, drift detection, and budget alerts.
 
 <!--
 This keeps the story grounded: MVP first, then platform hardening.
@@ -290,7 +307,7 @@ This keeps the story grounded: MVP first, then platform hardening.
 ### Questions I would welcome
 
 - Was Terraform the right bridge technology from CDKTF?
-- When is a second IaC migration justified?
+- At what point does a second IaC migration become justified?
 - How should AI usage be governed in infrastructure work?
 - What would be your production-readiness bar for this system?
 
