@@ -10,7 +10,25 @@ on:
       - "azure-infra/**"
       - ".github/workflows/terraform-azure.yml"
 
+  push:
+    branches:
+      - main
+    paths:
+      - "azure-infra/**"
+      - ".github/workflows/terraform-azure.yml"
+
   workflow_dispatch:
+    inputs:
+      deploy_container_app:
+        description: "Include the Container App in the plan"
+        required: true
+        type: boolean
+        default: false
+      container_image_tag:
+        description: "Image tag to use when deploy_container_app=true"
+        required: true
+        type: string
+        default: latest
 
 permissions:
   contents: read
@@ -41,6 +59,7 @@ jobs:
         run: terraform validate
 
   plan:
+    if: ${{ github.event_name != 'pull_request' }}
     name: Terraform Plan (Dev)
     needs: validate
     runs-on: ubuntu-latest
@@ -79,20 +98,30 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Disable remote backend for CI plan
+      - name: Determine plan mode
         if: ${{ steps.azure_secrets.outputs.available == 'true' }}
+        id: plan_mode
         run: |
-          if [ -f backend.tf ]; then
-            mv backend.tf backend.tf.ci.disabled
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "deploy_container_app=${{ inputs.deploy_container_app }}" >> "$GITHUB_OUTPUT"
+            echo "container_image_tag=${{ inputs.container_image_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy_container_app=false" >> "$GITHUB_OUTPUT"
+            echo "container_image_tag=latest" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Terraform init
         if: ${{ steps.azure_secrets.outputs.available == 'true' }}
-        run: terraform init -input=false
+        run: terraform init -backend=false -input=false
 
       - name: Terraform plan
         if: ${{ steps.azure_secrets.outputs.available == 'true' }}
-        run: terraform plan -input=false -var-file=dev.tfvars -var="deploy_container_app=true" -out=tfplan
+        run: >-
+          terraform plan -input=false
+          -var-file=dev.tfvars
+          -var="deploy_container_app=${{ steps.plan_mode.outputs.deploy_container_app }}"
+          -var="container_image_tag=${{ steps.plan_mode.outputs.container_image_tag }}"
+          -out=tfplan
 
       - name: Render plan output
         if: ${{ steps.azure_secrets.outputs.available == 'true' }}

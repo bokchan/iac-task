@@ -85,7 +85,7 @@ Then update [azure-infra/dev.tfvars](azure-infra/dev.tfvars) with your real valu
 - `location` (if needed)
 - app settings (`echo_message`, `log_level`)
 
-### 3. Phase 1 - Bootstrap Infrastructure (No App Yet)
+### 3. Phase 1 - Bootstrap Infrastructure
 
 From project root:
 
@@ -93,30 +93,33 @@ From project root:
 cd azure-infra
 terraform init
 terraform plan -var-file=dev.tfvars
-terraform apply -var-file=dev.tfvars -var-file=bootstrap.tfvars
+terraform apply -var-file=dev.tfvars -auto-approve
 ```
 
 Capture outputs:
 
 - `container_registry_login_server`
+- `container_app_environment_name`
+- `resource_group_name`
 
-At this stage, `container_app_url` is expected to be null because `deploy_container_app = false` is set by [azure-infra/bootstrap.tfvars](azure-infra/bootstrap.tfvars).
+At this stage, `container_app_url` is expected to be null because `deploy_container_app = false` is set by [azure-infra/dev.tfvars](azure-infra/dev.tfvars).
+
+Important: the Container Apps environment can take 1-2 minutes to finish provisioning after this apply completes.
 
 ### 4. Build and Push Container Image
 
+```bash
 az login
 az account set --subscription <your-subscription-id>
 
-# Login to ACR
-az acr login --name <acr-name>
-
-# Build and push using existing app Dockerfile
 cd ..
-docker buildx build --platform linux/amd64 -f webapp/Dockerfile -t <acr-login-server>/webapp:<tag> ./webapp --push
+az acr login --name <acr-name>
+docker buildx build --platform linux/amd64 -f webapp/Dockerfile \
+   -t <acr-login-server>/webapp:latest ./webapp --push
+az acr repository show -n <acr-name> --repository webapp
 ```
 
-If you are running on Apple Silicon, the `--platform linux/amd64` flag is required. Without it,
-Azure Container Apps can fail with errors such as `no child with platform linux/amd64`.
+If you are running on Apple Silicon, the `--platform linux/amd64` flag is required. Without it, Azure Container Apps can fail with errors such as `no child with platform linux/amd64`.
 
 ### 5. Phase 2 - Deploy Container App
 
@@ -124,20 +127,30 @@ Deploy the app after the image exists in ACR:
 
 ```bash
 cd azure-infra
-terraform apply -var-file=dev.tfvars -var="deploy_container_app=true"
+terraform apply -var-file=dev.tfvars -var='deploy_container_app=true' -auto-approve
+```
+
+If Terraform reports `ManagedEnvironmentNotProvisioned`, wait 60 seconds and retry. If state is out of sync after an interrupted apply, import the existing environment and re-run apply:
+
+```bash
+terraform import azurerm_container_app_environment.main \
+   /subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.App/managedEnvironments/<env-name>
+terraform apply -var-file=dev.tfvars -var='deploy_container_app=true' -auto-approve
 ```
 
 Capture outputs:
 
 - `container_app_url`
 - `container_app_fqdn`
+- `container_app_name`
 
 ### 6. Update Deployed Image Tag
 
 Set `container_image_tag` in [azure-infra/dev.tfvars](azure-infra/dev.tfvars), then re-apply:
-### 3. Phase 1 - Bootstrap Infrastructure
+
+```bash
 cd azure-infra
-terraform apply -var-file=dev.tfvars -var="deploy_container_app=true"
+terraform apply -var-file=dev.tfvars -var='deploy_container_app=true' -auto-approve
 ```
 
 ### 7. Validate MVP Deployment
@@ -165,6 +178,8 @@ Deferred intentionally:
 - Multi-environment parity and production promotion flow
 
 ## Follow-Up: CI/CD Migration
+
+Current GitHub automation covers Terraform validate on pull requests and an Azure-authenticated Terraform plan on main or manual dispatch. Full image build, push, and apply automation is still follow-up work.
 
 Once manual Azure deployment is stable, replace AWS-specific GitHub actions in:
 

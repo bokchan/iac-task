@@ -194,6 +194,7 @@ cython_debug/
 *.tfstate.*
 *.tfplan
 *.tfplan.*
+tfplan
 *.plan
 *.plan.*
 crash.log
@@ -203,6 +204,9 @@ override.tf.json
 *_override.tf.json
 azure-infra/backend.*.hcl
 !azure-infra/backend.*.hcl.example
+
+# Generated presentation/export artifacts
+PRESENTATION_SLIDES_*.html
 
 # Ruff stuff:
 .ruff_cache/

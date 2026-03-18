@@ -122,8 +122,8 @@ Key: Zero long-lived credentials, complete automation -->
 ### Choice made
 
 - Use Terraform for the Azure MVP.
-- Bicep is Azure specific. Knowledge of Terraform is more transferable across clouds and tools.
-- Keep Pulumi as an explicit follow-up, not a second migration during MVP delivery.
+- Bicep is Azure specific, but Terraform is more transferable across clouds and tools.
+- Consider Pulumi as an alternative as a follow-up.
 
 <div class="tiny">
 
@@ -183,7 +183,7 @@ Senior angle: I mapped capabilities first, then decided what to keep, replace, o
 
 <div class="small">
 
-One-line story: GitHub Actions authenticates to Azure without secrets, deploys to Container Apps, and traffic plus logs flow through managed Azure services.
+One-line story: Azure hosts the app on Container Apps, managed identity secures image pull, and GitHub now has a secretless auth path for Terraform validation and planning.
 
 </div>
 
@@ -198,7 +198,7 @@ Narrate left-to-right: auth, authorization, deploy targets, runtime traffic, obs
 
 - Public Azure-hosted web app
 - Identity-based private registry access
-- Secretless CI/CD authentication from GitHub via OIDC federation
+- GitHub OIDC federation in place for Azure-authenticated Terraform planning
 - Simpler operational model than original AWS baseline
 
 ---
@@ -255,13 +255,13 @@ AI was an accelerator. Architecture decisions, risk acceptance, and validation r
 - Successful AWS to Azure MVP migration
 - Working Azure Container App with public ingress
 - Clean-slate reprovision validated
-- GitHub OIDC federation to Entra Service Principal with scoped RBAC for deployment
+- GitHub OIDC federation to Entra Service Principal with scoped RBAC for Terraform plan and future deployment automation
 
 ### Added hardening
 
 - ADRs for migration and architecture decisions
 - Remote state scaffolding for team-safe execution
-- GitHub Actions workflow for Terraform validate and plan artifact review
+- GitHub Actions workflow for Terraform validate and Azure-authenticated plan artifact review
 - Production guardrails to prevent accidental bootstrap behavior
 
 ---
@@ -271,7 +271,7 @@ AI was an accelerator. Architecture decisions, risk acceptance, and validation r
 | Area                 | Current State                                                           | Next Step                                                 |
 | -------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------- |
 | State management     | Local-first with remote backend scaffolding                             | Move fully to shared remote state                         |
-| Deployment           | OIDC trust and RBAC are in place; apply still mostly operator-triggered | Add protected environment gates and fully automated apply |
+| Deployment           | Terraform validate and bootstrap plan run in GitHub; image push and apply remain operator-triggered | Add protected environment gates, image build/push, and automated apply |
 | Security             | Managed identity and private registry pull                              | Add secret store integration and policy scanning          |
 | Platform reliability | Two-phase deploy and smoke checks                                       | Add drift detection and environment promotion             |
 | Cost control         | Dev scale-to-zero defaults                                              | Add budget alerts and environment-specific SKUs           |
@@ -295,7 +295,6 @@ This keeps the story grounded: MVP first, then platform hardening.
 ### Questions I would welcome
 
 - Was Terraform the right bridge technology from CDKTF?
-- At what point does a second IaC migration become justified?
 - How should AI usage be governed in infrastructure work?
 - What would be your production-readiness bar for this system?
 
@@ -307,17 +306,23 @@ This keeps the story grounded: MVP first, then platform hardening.
 
 ---
 
-
 ## **FastAPI Application Demo**
+
+Current dev demo URL. This hostname changes after clean reprovision.
+
+<a href="https://iac-task-dev-webapp--dhv8uhz.ambitiousmushroom-1cddb867.westeurope.azurecontainerapps.io/" target="_blank">Open current deployed app</a>
 
 ```
 🌐 Production-Ready FastAPI Application
 
 Live Demo:
-- GET /           → {"message": "Hello World"} (configurable)
+- GET /           → {"message": "Hello from Azure MVP"}
 - GET /health     → "OK" (load balancer checks)
-- GET /version    → {"version": "abc1234"} (deployment tracking)
+- GET /version    → {"version": "latest"}
 - GET /docs       → Interactive OpenAPI documentation
+
+Operational note:
+- Current URL is retrieved from `terraform output -raw container_app_url`
 
 Configuration:
 - Environment Variables: ECHO_MESSAGE, LOG_LEVEL, IMAGE_TAG
