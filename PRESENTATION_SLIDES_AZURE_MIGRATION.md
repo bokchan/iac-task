@@ -141,14 +141,14 @@ This is a senior trade-off slide.
 
 ## Design Choices
 
-| Decision          | Chosen Option            | Why                                   |
-| ----------------- | ------------------------ | ------------------------------------- |
-| Azure compute     | Container Apps           | Managed ingress, fast MVP             |
-| IaC language      | Terraform                | Native Azure support, low migration risk |
-| Registry auth     | Managed Identity + AcrPull | No static credentials               |
-| CI/CD auth        | GitHub OIDC -> Entra SP  | Secretless, scoped Azure access       |
-| Rollout model     | Bootstrap, then app deploy | Prevent first-run image failures    |
-| Delivery approach | AI + manual validation   | Faster delivery with human checks     |
+| Decision          | Chosen Option              | Why                                      |
+| ----------------- | -------------------------- | ---------------------------------------- |
+| Azure compute     | Container Apps             | Managed ingress, fast MVP                |
+| IaC language      | Terraform                  | Native Azure support, low migration risk |
+| Registry auth     | Managed Identity + AcrPull | No static credentials                    |
+| CI/CD auth        | GitHub OIDC -> Entra SP    | Secretless, scoped Azure access          |
+| Rollout model     | Bootstrap, then app deploy | Prevent first-run image failures         |
+| Delivery approach | AI + manual validation     | Faster delivery with human checks        |
 
 <!--
 This slide is where I show selection criteria, not tool fandom.
@@ -194,7 +194,7 @@ Narrate left-to-right: auth, authorization, deploy targets, runtime traffic, obs
 
 ---
 
-### Result
+## Result
 
 - Public Azure-hosted web app
 - Identity-based private registry access
@@ -255,13 +255,11 @@ AI was an accelerator. Architecture decisions, risk acceptance, and validation r
 - Successful AWS to Azure MVP migration
 - Working Azure Container App with public ingress
 - Clean-slate reprovision validated
-- Cost-aware defaults such as scale-to-zero
 - GitHub OIDC federation to Entra Service Principal with scoped RBAC for deployment
 
 ### Added hardening
 
 - ADRs for migration and architecture decisions
-- Risk register and rollback thinking
 - Remote state scaffolding for team-safe execution
 - GitHub Actions workflow for Terraform validate and plan artifact review
 - Production guardrails to prevent accidental bootstrap behavior
@@ -302,3 +300,94 @@ This keeps the story grounded: MVP first, then platform hardening.
 - What would be your production-readiness bar for this system?
 
 ## Thank you
+
+---
+
+## Extra Slides
+
+---
+
+
+## **FastAPI Application Demo**
+
+```
+🌐 Production-Ready FastAPI Application
+
+Live Demo:
+- GET /           → {"message": "Hello World"} (configurable)
+- GET /health     → "OK" (load balancer checks)
+- GET /version    → {"version": "abc1234"} (deployment tracking)
+- GET /docs       → Interactive OpenAPI documentation
+
+Configuration:
+- Environment Variables: ECHO_MESSAGE, LOG_LEVEL, IMAGE_TAG
+- Structured logging with configurable levels
+- Docker multi-stage build (security + performance)
+- Non-root execution (uid 999)
+
+```
+
+---
+
+## **Infrastructure as Code - Using classes**
+
+<div class="container">
+<div class="column">
+
+```python
+@dataclass
+class EcsServiceConfig:
+    """Configuration for the ECS Fargate service deployment."""
+
+    cpu: int = 512  # 0.5 vCPU
+    memory_limit_mb: int = 1024  # 1 GB
+    desired_count: int = 1
+    container_port: int = 8000
+    log_group_prefix: str = "andreas-applogs"  # CloudWatch log group prefix
+    application_settings: ApplicationSettings | None = (
+        None  # Will be set per environment
+    )
+```
+
+```python
+@dataclass
+class InfrastructureConfig:
+    """Root configuration for all
+    AWS infrastructure components."""
+
+    aws_account: str
+    aws_region: str
+    environment: str
+    project_name: str
+    github_repo: str  # Format: "owner/repo"
+    creator: str
+    ecr: EcrConfig
+    vpc: VpcConfig
+    ecs_service: EcsServiceConfig
+```
+
+</div>
+
+<div class="column">
+
+```python
+class AppStack(Stack):
+    """A CloudFormation stack that creates
+    the ECS service for the application."""
+
+    def __init__(
+        self,
+        scope: Construct,
+        construct_id: str,
+        config: InfrastructureConfig,
+        vpc_stack: VpcStack,
+        ecr_stack: EcrStack,
+        image_tag: str,
+        **kwargs,
+    ) -> None:
+```
+
+</div>
+</div>
+
+---

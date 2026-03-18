@@ -104,7 +104,6 @@ At this stage, `container_app_url` is expected to be null because `deploy_contai
 
 ### 4. Build and Push Container Image
 
-```bash
 az login
 az account set --subscription <your-subscription-id>
 
@@ -136,8 +135,7 @@ Capture outputs:
 ### 6. Update Deployed Image Tag
 
 Set `container_image_tag` in [azure-infra/dev.tfvars](azure-infra/dev.tfvars), then re-apply:
-
-```bash
+### 3. Phase 1 - Bootstrap Infrastructure
 cd azure-infra
 terraform apply -var-file=dev.tfvars -var="deploy_container_app=true"
 ```
@@ -153,9 +151,6 @@ Check these endpoints on `container_app_url`:
 - `/redoc`
 
 ## Design Decisions for MVP Best Practices
-
-Included in MVP:
-
 - HTTPS-only public ingress
 - Managed identity for private registry pull
 - Baseline observability with Log Analytics
@@ -194,9 +189,6 @@ The migration now includes additional governance and execution controls:
 
 Terraform now includes production guardrails in [azure-infra/main.tf](azure-infra/main.tf):
 
-- Guard against accidental `deploy_container_app = false` in production unless explicitly overridden
-- Keep destructive bootstrap behavior explicitly opt-in for production
-
 ## Troubleshooting
 
 ### Missing provider registration
@@ -227,3 +219,82 @@ If apply fails with `MANIFEST_UNKNOWN` or `no child with platform linux/amd64`:
 1. Push `webapp:<tag>` to the output ACR login server.
 2. Ensure image is built with `--platform linux/amd64`.
 3. Re-run: `terraform apply -var-file=dev.tfvars -var="deploy_container_app=true"`.
+
+### Container App Environment Not Provisioned
+
+**Error:** `ManagedEnvironmentNotProvisioned: The environment has not been provisioned successfully.`
+
+The Container App Environment created in Phase 1 provisions asynchronously and takes 1–2 minutes. Solutions:
+
+1. **Wait and retry** (simple):
+   ```bash
+   sleep 60
+   terraform apply -var-file=dev.tfvars -var='deploy_container_app=true' -auto-approve
+   ```
+
+2. **Import existing environment and retry** (if wait fails):
+   ```bash
+   # Get subscription and resource group from terraform output
+   terraform output resource_group_name
+   terraform output container_app_environment_name
+
+   # Import the environment into state
+   terraform import azurerm_container_app_environment.main \
+     /subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.App/managedEnvironments/<env-name>
+
+   # Retry apply
+   terraform apply -var-file=dev.tfvars -var='deploy_container_app=true' -auto-approve
+   ```
+
+3. **Verify provisioning state in Azure portal:**
+   - Go to Resource Group > Container Apps environments > `<env-name>`
+   - Check Provisioning State (should be "Succeeded")
+
+### Terraform State Out of Sync
+
+If Terraform state loses track of resources created in Azure (e.g., after interrupted apply):
+
+```bash
+# Refresh state from Azure
+terraform refresh -var-file=dev.tfvars
+
+# If specific resource is missing, import it
+terraform import <resource-type>.<name> <azure-resource-id>
+
+# Then re-plan and apply
+terraform apply -var-file=dev.tfvars -var='deploy_container_app=true'
+```
+
+### Clean Slate Redeployment
+
+To delete all Azure resources and start fresh:
+
+```bash
+# Destroy all Terraform-managed resources
+cd azure-infra
+terraform destroy -var-file=dev.tfvars -auto-approve
+
+# Or delete resource group directly (faster but less controlled)
+az group delete --name $(terraform output resource_group_name) --yes
+
+# Then re-start from Phase 1
+terraform apply -var-file=dev.tfvars -auto-approve
+```
+
+### Image Not Found in ACR
+
+If apply fails because the image is not in the container registry:
+
+```bash
+# Check if image exists
+az acr repository show -n <acr-name> --repository webapp
+
+# If not, build and push (Phase 4)
+cd ..
+docker buildx build --platform linux/amd64 -f webapp/Dockerfile \
+  -t <acr-login-server>/webapp:latest ./webapp --push
+
+# Then retry Container App creation
+cd azure-infra
+terraform apply -var-file=dev.tfvars -var='deploy_container_app=true'
+```
