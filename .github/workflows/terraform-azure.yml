@@ -1,0 +1,143 @@
+name: Terraform Azure Guardrails
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - "azure-infra/**"
+      - ".github/workflows/terraform-azure.yml"
+
+  push:
+    branches:
+      - main
+    paths:
+      - "azure-infra/**"
+      - ".github/workflows/terraform-azure.yml"
+
+  workflow_dispatch:
+    inputs:
+      deploy_container_app:
+        description: "Include the Container App in the plan"
+        required: true
+        type: boolean
+        default: false
+      container_image_tag:
+        description: "Image tag to use when deploy_container_app=true"
+        required: true
+        type: string
+        default: latest
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  validate:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: azure-infra
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform format check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init (validation mode)
+        run: terraform init -backend=false -input=false
+
+      - name: Terraform validate
+        run: terraform validate
+
+  plan:
+    name: Terraform Plan (Dev)
+    needs: validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: azure-infra
+    env:
+      TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      TFSTATE_RESOURCE_GROUP: ${{ vars.TFSTATE_RESOURCE_GROUP || 'iac-task-tfstate-rg' }}
+      TFSTATE_STORAGE_ACCOUNT: ${{ vars.TFSTATE_STORAGE_ACCOUNT || 'iactasktfstate' }}
+      TFSTATE_CONTAINER: ${{ vars.TFSTATE_CONTAINER || 'tfstate' }}
+      TFSTATE_KEY: ${{ vars.TFSTATE_KEY || 'azure-infra-dev.tfstate' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Check Azure secrets
+        id: azure_secrets
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          if [ -z "$AZURE_CLIENT_ID" ] || [ -z "$AZURE_TENANT_ID" ] || [ -z "$AZURE_SUBSCRIPTION_ID" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Azure secrets are not configured. Skipping Terraform plan steps."
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Azure login (OIDC)
+        if: ${{ steps.azure_secrets.outputs.available == 'true' }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Determine plan mode
+        if: ${{ steps.azure_secrets.outputs.available == 'true' }}
+        id: plan_mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "deploy_container_app=${{ inputs.deploy_container_app }}" >> "$GITHUB_OUTPUT"
+            echo "container_image_tag=${{ inputs.container_image_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy_container_app=false" >> "$GITHUB_OUTPUT"
+            echo "container_image_tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Terraform init
+        if: ${{ steps.azure_secrets.outputs.available == 'true' }}
+        run: >-
+          terraform init -input=false -reconfigure
+          -backend-config="resource_group_name=${TFSTATE_RESOURCE_GROUP}"
+          -backend-config="storage_account_name=${TFSTATE_STORAGE_ACCOUNT}"
+          -backend-config="container_name=${TFSTATE_CONTAINER}"
+          -backend-config="key=${TFSTATE_KEY}"
+
+      - name: Terraform plan
+        if: ${{ steps.azure_secrets.outputs.available == 'true' }}
+        run: >-
+          terraform plan -input=false -refresh=false
+          -var-file=dev.tfvars
+          -var="deploy_container_app=${{ steps.plan_mode.outputs.deploy_container_app }}"
+          -var="container_image_tag=${{ steps.plan_mode.outputs.container_image_tag }}"
+          -out=tfplan
+
+      - name: Render plan output
+        if: ${{ steps.azure_secrets.outputs.available == 'true' }}
+        run: terraform show -no-color tfplan > tfplan.txt
+
+      - name: Upload plan artifact
+        if: ${{ steps.azure_secrets.outputs.available == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-azure-dev-plan
+          path: azure-infra/tfplan.txt

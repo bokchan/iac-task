@@ -67,6 +67,23 @@ class AppStack(Stack):
             path="/health", interval=Duration.seconds(60)
         )
 
+        # Configure horizontal auto-scaling
+        # Task auto-scaling
+        scalable_target = fargate_service.service.auto_scale_task_count(
+            min_capacity=config.ecs_service.desired_count,
+            max_capacity=config.ecs_service.desired_count * 2,
+        )
+
+        # Scale based on CPU and memory utilization
+        scalable_target.scale_on_cpu_utilization(
+            "CpuScaling",
+            target_utilization_percent=70,
+        )
+        scalable_target.scale_on_memory_utilization(
+            "MemoryScaling",
+            target_utilization_percent=70,
+        )
+
         # Output the URL of the load balancer
         CfnOutput(
             self,

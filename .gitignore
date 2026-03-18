@@ -182,11 +182,31 @@ cython_debug/
 .abstra/
 
 # Visual Studio Code
-#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
+#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore
 #  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#  and can be added to the global gitignore or merged into this file. However, if you prefer, 
+#  and can be added to the global gitignore or merged into this file. However, if you prefer,
 #  you could uncomment the following to ignore the entire vscode folder
 # .vscode/
+
+# Terraform local cache and state
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.*
+tfplan
+*.plan
+*.plan.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+azure-infra/backend.*.hcl
+!azure-infra/backend.*.hcl.example
+
+# Generated presentation/export artifacts
+PRESENTATION_SLIDES_*.html
 
 # Ruff stuff:
 .ruff_cache/
@@ -207,8 +227,16 @@ marimo/_lsp/
 __marimo__/
 
 # User specific
-docs
 .DS_STORE
+
+# Keep docs ignored by default; track only migration governance artifacts.
+docs/*
+!docs/adr/
+docs/adr/*
+!docs/adr/0001-iac-language-and-migration-strategy.md
+!docs/adr/0002-azure-target-architecture-and-phased-rollout.md
+!docs/migration-risk-register.md
+!docs/terraform-state-strategy.md
 
 # IDE
 .vscode
