@@ -125,7 +125,7 @@ jobs:
       - name: Terraform plan
         if: ${{ steps.azure_secrets.outputs.available == 'true' }}
         run: >-
-          terraform plan -input=false
+          terraform plan -input=false -refresh=false
           -var-file=dev.tfvars
           -var="deploy_container_app=${{ steps.plan_mode.outputs.deploy_container_app }}"
           -var="container_image_tag=${{ steps.plan_mode.outputs.container_image_tag }}"
