@@ -20,6 +20,7 @@ locals {
   github_oidc_client_id                   = var.create_github_oidc_identity ? azuread_application.github_oidc[0].client_id : var.existing_github_oidc_client_id
   github_oidc_service_principal_object_id = var.create_github_oidc_identity ? azuread_service_principal.github_oidc[0].object_id : data.azuread_service_principal.github_oidc_existing[0].object_id
   github_oidc_application_object_id       = var.create_github_oidc_identity ? azuread_application.github_oidc[0].object_id : var.existing_github_oidc_application_object_id
+  github_oidc_application_id              = local.github_oidc_application_object_id != null ? "/applications/${local.github_oidc_application_object_id}" : null
 }
 
 resource "azuread_application" "github_oidc" {
@@ -42,7 +43,7 @@ resource "azuread_service_principal" "github_oidc" {
 resource "azuread_application_federated_identity_credential" "github_oidc" {
   count = var.create_github_federated_credential ? 1 : 0
 
-  application_id = local.github_oidc_application_object_id
+  application_id = local.github_oidc_application_id
   display_name   = var.github_oidc_federated_credential_name
   description    = "GitHub Actions OIDC federation"
   audiences      = var.github_oidc_audiences
