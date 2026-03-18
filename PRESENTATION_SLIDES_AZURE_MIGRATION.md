@@ -65,7 +65,7 @@ Key message:
 
 ---
 
-## Presentation Flow
+## Agenda
 
 1. Starting point: existing AWS/CDKTF solution
 2. Migration drivers and decision points
@@ -122,12 +122,12 @@ Key: Zero long-lived credentials, complete automation -->
 ### Choice made
 
 - Use Terraform for the Azure MVP.
+- Bicep is Azure specific. Knowledge of Terraform is more transferable across clouds and tools.
 - Keep Pulumi as an explicit follow-up, not a second migration during MVP delivery.
 
 <div class="tiny">
 
-Reference for the exercise assumption: HashiCorp CDKTF repository status and sunset context
-https://github.com/hashicorp/terraform-cdk
+HashiCorp CDKTF repository status and sunset context https://github.com/hashicorp/terraform-cdk
 
 </div>
 
@@ -141,13 +141,14 @@ This is a senior trade-off slide.
 
 ## Design Choices
 
-| Decision             | Chosen Option                      | Why                                                    |
-| -------------------- | ---------------------------------- | ------------------------------------------------------ |
-| Azure compute target | Azure Container Apps               | Low ops overhead, public ingress, fast MVP |
-| IaC language         | Terraform                          | Direct provider support, shortest path to delivery |
-| Registry auth        | Managed Identity + AcrPull         | No admin credentials, no long-lived secrets |
-| Rollout model        | Two-phase bootstrap + app deploy   | Avoid first-run failures before image exists |
-| Delivery approach    | AI-assisted with manual validation | Faster iteration with retained engineering control |
+| Decision          | Chosen Option            | Why                                   |
+| ----------------- | ------------------------ | ------------------------------------- |
+| Azure compute     | Container Apps           | Managed ingress, fast MVP             |
+| IaC language      | Terraform                | Native Azure support, low migration risk |
+| Registry auth     | Managed Identity + AcrPull | No static credentials               |
+| CI/CD auth        | GitHub OIDC -> Entra SP  | Secretless, scoped Azure access       |
+| Rollout model     | Bootstrap, then app deploy | Prevent first-run image failures    |
+| Delivery approach | AI + manual validation   | Faster delivery with human checks     |
 
 <!--
 This slide is where I show selection criteria, not tool fandom.
@@ -177,30 +178,18 @@ Senior angle: I mapped capabilities first, then decided what to keep, replace, o
 
 ## Azure Target Architecture
 
-```mermaid
-flowchart LR
-  User[Internet User] --> Ingress[Azure Container Apps Ingress]
-  Repo[GitHub Repository] --> Workflow[Manual or CI Terraform Workflow]
-  Workflow --> RG[Azure Resource Group]
-  RG --> ACR[Azure Container Registry]
-  RG --> LAW[Log Analytics Workspace]
-  RG --> CAE[Container Apps Environment]
-  RG --> UAMI[User Assigned Managed Identity]
-  CAE --> App[Azure Container App]
-  UAMI --> App
-  ACR --> App
-  App --> Ingress
-  App --> Health[Health Probes /health]
-  App --> Logs[Application Logs]
-  Logs --> LAW
-```
+<!-- ![alt text](<docs/media/Azure Arch.png>) -->
+<img src="docs/media/Azure Arch.png"  height="580">
+
+<div class="small">
+
+One-line story: GitHub Actions authenticates to Azure without secrets, deploys to Container Apps, and traffic plus logs flow through managed Azure services.
+
+</div>
 
 <!--
-Talk track:
-- Deliberately small MVP architecture.
-- Registry access is identity-based.
-- Observability is included from day one.
-- Network hardening beyond public ingress is deferred, not ignored.
+Use this slide when time is short.
+Narrate left-to-right: auth, authorization, deploy targets, runtime traffic, observability.
 -->
 
 ---
@@ -209,6 +198,7 @@ Talk track:
 
 - Public Azure-hosted web app
 - Identity-based private registry access
+- Secretless CI/CD authentication from GitHub via OIDC federation
 - Simpler operational model than original AWS baseline
 
 ---
@@ -233,7 +223,6 @@ This is one of the strongest slides.
 -->
 
 ---
-
 
 ## How I Used AI
 
@@ -267,6 +256,7 @@ AI was an accelerator. Architecture decisions, risk acceptance, and validation r
 - Working Azure Container App with public ingress
 - Clean-slate reprovision validated
 - Cost-aware defaults such as scale-to-zero
+- GitHub OIDC federation to Entra Service Principal with scoped RBAC for deployment
 
 ### Added hardening
 
@@ -280,20 +270,20 @@ AI was an accelerator. Architecture decisions, risk acceptance, and validation r
 
 ## Improvement Backlog
 
-| Area | Current State | Next Step |
-|---|---|---|
-| State management | Local-first with remote backend scaffolding | Move fully to shared remote state |
-| Deployment | Manual plus validated Terraform workflow | Add Azure OIDC CI/CD apply path |
-| Security | Managed identity and private registry pull | Add secret store integration and policy scanning |
-| Platform reliability | Two-phase deploy and smoke checks | Add drift detection and environment promotion |
-| Cost control | Dev scale-to-zero defaults | Add budget alerts and environment-specific SKUs |
+| Area                 | Current State                                                           | Next Step                                                 |
+| -------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------- |
+| State management     | Local-first with remote backend scaffolding                             | Move fully to shared remote state                         |
+| Deployment           | OIDC trust and RBAC are in place; apply still mostly operator-triggered | Add protected environment gates and fully automated apply |
+| Security             | Managed identity and private registry pull                              | Add secret store integration and policy scanning          |
+| Platform reliability | Two-phase deploy and smoke checks                                       | Add drift detection and environment promotion             |
+| Cost control         | Dev scale-to-zero defaults                                              | Add budget alerts and environment-specific SKUs           |
 
 ---
 
 ## Next 90 Days (Production Path)
 
 1. Move fully to shared remote state with access control and locking.
-2. Implement Azure OIDC CI/CD apply pipeline with approval gates.
+2. Keep OIDC auth, then enforce protected environments and approval gates for apply.
 3. Add policy/security checks, drift detection, and budget alerts.
 
 <!--
