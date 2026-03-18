@@ -58,6 +58,24 @@ resource "azuread_application_federated_identity_credential" "github_oidc" {
   }
 }
 
+resource "azuread_application_federated_identity_credential" "github_oidc_pr" {
+  count = var.create_github_federated_credential ? 1 : 0
+
+  application_id = local.github_oidc_application_id
+  display_name   = "${var.github_oidc_federated_credential_name}-pr"
+  description    = "GitHub Actions OIDC federation for pull requests"
+  audiences      = var.github_oidc_audiences
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:${var.github_repository_owner}/${var.github_repository_name}:pull_request"
+
+  lifecycle {
+    precondition {
+      condition     = local.github_oidc_application_object_id != null
+      error_message = "Application object_id is required to create federated credential. Set existing_github_oidc_application_object_id when reusing an existing app."
+    }
+  }
+}
+
 resource "azurerm_role_assignment" "github_oidc_rg_contributor" {
   count                = var.assign_github_oidc_rg_contributor ? 1 : 0
   scope                = azurerm_resource_group.main.id

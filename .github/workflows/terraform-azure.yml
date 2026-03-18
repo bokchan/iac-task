@@ -59,7 +59,6 @@ jobs:
         run: terraform validate
 
   plan:
-    if: ${{ github.event_name != 'pull_request' }}
     name: Terraform Plan (Dev)
     needs: validate
     runs-on: ubuntu-latest

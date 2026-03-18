@@ -183,7 +183,7 @@ Senior angle: I mapped capabilities first, then decided what to keep, replace, o
 
 <div class="small">
 
-One-line story: Azure hosts the app on Container Apps, managed identity secures image pull, and GitHub now has a secretless auth path for Terraform validation and planning.
+One-line story: Azure hosts the app on Container Apps, managed identity secures image pull, and GitHub authenticates secretlessly to run Terraform validate and plan on every pull request and push to main.
 
 </div>
 
@@ -198,7 +198,7 @@ Narrate left-to-right: auth, authorization, deploy targets, runtime traffic, obs
 
 - Public Azure-hosted web app
 - Identity-based private registry access
-- GitHub OIDC federation in place for Azure-authenticated Terraform planning
+- GitHub OIDC federation for Azure-authenticated Terraform plan on pull requests and main
 - Simpler operational model than original AWS baseline
 
 ---
@@ -261,7 +261,7 @@ AI was an accelerator. Architecture decisions, risk acceptance, and validation r
 
 - ADRs for migration and architecture decisions
 - Remote state scaffolding for team-safe execution
-- GitHub Actions workflow for Terraform validate and Azure-authenticated plan artifact review
+- GitHub Actions workflow for Terraform validate and Azure-authenticated plan on pull requests and main
 - Production guardrails to prevent accidental bootstrap behavior
 
 ---
@@ -271,7 +271,7 @@ AI was an accelerator. Architecture decisions, risk acceptance, and validation r
 | Area                 | Current State                                                           | Next Step                                                 |
 | -------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------- |
 | State management     | Local-first with remote backend scaffolding                             | Move fully to shared remote state                         |
-| Deployment           | Terraform validate and bootstrap plan run in GitHub; image push and apply remain operator-triggered | Add protected environment gates, image build/push, and automated apply |
+| Deployment           | Terraform validate and plan run in GitHub on PRs and main; image push and apply remain operator-triggered | Add protected environment gates, image build/push, and automated apply |
 | Security             | Managed identity and private registry pull                              | Add secret store integration and policy scanning          |
 | Platform reliability | Two-phase deploy and smoke checks                                       | Add drift detection and environment promotion             |
 | Cost control         | Dev scale-to-zero defaults                                              | Add budget alerts and environment-specific SKUs           |
